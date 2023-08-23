@@ -45,9 +45,9 @@ class Model(liLimProblem: LiLimProblem) {
 
     val routeLengthsInvariant = RouteLength(vrp.routes, n, v, (from, to) => distanceAndTimeMatrix(from)(to))
     val movingVehiclesInvariant = MovingVehicles(vrp.routes, v)
-    val unroutedNodePenalty = 1000000
+    val unroutedNodePenalty = 1000000000
 
-    val obj = Objective(setSum(vrp.unrouted) * unroutedNodePenalty + setSum(movingVehiclesInvariant)*100 + sum(routeLengthsInvariant))
+    val obj = Objective(setSum(vrp.unrouted, x => 1) * unroutedNodePenalty + setSum(movingVehiclesInvariant, x => 1)*1000000 + sum(routeLengthsInvariant))
     vrp.m.close()
     obj
   }
