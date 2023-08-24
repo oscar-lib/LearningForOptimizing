@@ -7,6 +7,8 @@ import oscar.cbls.core.search.Move
 import oscar.cbls.core.search.MoveFound
 
 
+
+
 abstract class AbstractLearningCombinator(name : String) extends Neighborhood(name) {
 
   def getNextNeighborhood : Neighborhood
