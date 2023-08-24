@@ -18,7 +18,7 @@ object Parser {
 
 
     @tailrec
-    def extractNodesAndDemands(lines: Iterator[String], liLimNodes: List[LiLimNode] = List.empty, liLimDemands: List[LiLimDemand] = List.empty): (List[LiLimNode],List[LiLimDemand]) = {
+    def extractNodesAndDemands(lines: Iterator[String], liLimNodes: List[LiLimNode] = List.empty, liLimDemands: List[LiLimCouple] = List.empty): (List[LiLimNode],List[LiLimCouple]) = {
       if(lines.hasNext) {
         val next = lines.next().split("\\t\\s*").map(_.toInt)
         val nodeId = next(0)
@@ -30,11 +30,11 @@ object Parser {
         val duration = multFactor * next(6)
         val pickUp = next(7)
         val dropOff = next(8)
-        val node = LiLimNode(nodeId,(x,y),earliestArrivalTime,latestArrivalTime,duration)
+        val node = LiLimNode(nodeId,(x,y),earliestArrivalTime,latestArrivalTime,duration, quantity)
         val demand =
-          if(pickUp == 0) Some(LiLimDemand(nodeId,dropOff,quantity))
-          else None
-        extractNodesAndDemands(lines, liLimNodes :+ node, if(pickUp == 0) liLimDemands :+ demand.get else liLimDemands)
+          if(pickUp == 0) List(LiLimCouple(nodeId,dropOff))
+          else List.empty
+        extractNodesAndDemands(lines, liLimNodes :+ node, liLimDemands ::: demand)
       } else {
         (liLimNodes,liLimDemands)
       }
@@ -52,10 +52,10 @@ object Parser {
 case class LiLimProblem(
                        vehicles: List[LiLimVehicle],
                        nodes: List[LiLimNode],
-                       demands: List[LiLimDemand]
+                       demands: List[LiLimCouple]
                     )
 
 case class LiLimDepot(positionXY: (Int,Int))
-case class LiLimVehicle(depot: LiLimDepot, capacity: Int)
-case class LiLimNode(nodeId: Int, positionXY: (Int,Int), earliestArrival: Int, latestArrival: Int, duration: Int)
-case class LiLimDemand(fromNodeId: Int, toNodeId: Int, quantity: Int)
+case class LiLimVehicle(depot: LiLimDepot, capacity: Long)
+case class LiLimNode(nodeId: Int, positionXY: (Int,Int), earliestArrival: Int, latestArrival: Int, duration: Int, quantity: Long)
+case class LiLimCouple(fromNodeId: Int, toNodeId: Int)

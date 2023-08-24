@@ -3,7 +3,12 @@ package pdptw
 import oscar.cbls._
 import oscar.cbls.business.routing.invariants.MovingVehicles
 import oscar.cbls.business.routing.invariants.global.RouteLength
+import oscar.cbls.business.routing.invariants.timeWindow.{TimeWindowConstraint, TransferFunction}
+import oscar.cbls.business.routing.invariants.vehicleCapacity.GlobalVehicleCapacityConstraint
 import oscar.cbls.business.routing.model.VRP
+import oscar.cbls.business.routing.vehicleOfNodes
+import oscar.cbls.core.objective.CascadingObjective
+import oscar.cbls.lib.constraint.EQ
 
 object Model {
 
@@ -34,6 +39,22 @@ class Model(liLimProblem: LiLimProblem) {
   lazy val pdpProblem: VRP = generateVRPProblem()
   lazy val objectiveFunction: Objective = generateObjectiveFunction(pdpProblem: VRP)
 
+  lazy val timeWindows: Array[TransferFunction] = Array.tabulate(n)(node =>
+    if (node < v) {
+      TransferFunction.identifyTransferFunction(node)
+    } else {
+      TransferFunction.createFromEarliestAndLatestArrivalTime(
+        node,
+        liLimProblem.nodes(node - v).earliestArrival,
+        liLimProblem.nodes(node - v).latestArrival,
+        liLimProblem.nodes(node - v).duration)
+    }
+  )
+
+  val vehiclesCapacity: Array[Long] = liLimProblem.vehicles.map(_.capacity).toArray
+  val contentVariationAtNode: Array[Long] = Array.fill(v)(0L) ++ liLimProblem.nodes.map(_.quantity).toArray
+  val precedences: List[(Int,Int)] = liLimProblem.demands.map(d => (d.fromNodeId,d.toNodeId))
+
 
   private def generateVRPProblem(): VRP = {
 		val store = new Store()
@@ -45,9 +66,23 @@ class Model(liLimProblem: LiLimProblem) {
 
     val routeLengthsInvariant = RouteLength(vrp.routes, n, v, (from, to) => distanceAndTimeMatrix(from)(to))
     val movingVehiclesInvariant = MovingVehicles(vrp.routes, v)
+    val timeWindowViolations = Array.tabulate(v)(vehicle => CBLSIntVar(vrp.m,0,Domain.coupleToDomain(0,1),s"TimeWindow constraint on vehicle $vehicle"))
+    val timeWindowConstraint = TimeWindowConstraint(vrp.routes,n,v,timeWindows,distanceAndTimeMatrix,timeWindowViolations)
+    val vehicleCapacityViolations = Array.tabulate(v)(vehicle => CBLSIntVar(vrp.m,0,name = s"TimeWindow constraint on vehicle $vehicle"))
+    val vehicleCapacityConstraint = new GlobalVehicleCapacityConstraint(vrp.routes,n,v,vehiclesCapacity,contentVariationAtNode, vehicleCapacityViolations)
+    val precedenceInvariant = precedence(vrp.routes, precedences)
+    val vehicleOfNodesNow = vehicleOfNodes(vrp.routes, v)
+    val precedencesConstraints = new ConstraintSystem(vrp.m)
+    for (start <- precedenceInvariant.nodesStartingAPrecedence)
+      precedencesConstraints.add(EQ(vehicleOfNodesNow(start), vehicleOfNodesNow(precedenceInvariant.nodesEndingAPrecedenceStartedAt(start).head)))
+    precedencesConstraints.add(EQ(0, precedenceInvariant))
     val unroutedNodePenalty = 1000000000
 
-    val obj = Objective(setSum(vrp.unrouted, x => 1) * unroutedNodePenalty + setSum(movingVehiclesInvariant, x => 1)*1000000 + sum(routeLengthsInvariant))
+    val obj = CascadingObjective(
+      sum(vehicleCapacityViolations),
+      sum(timeWindowViolations),
+      precedencesConstraints,
+      setSum(vrp.unrouted, x => 1) * unroutedNodePenalty + setSum(movingVehiclesInvariant, x => 1)*1000000 + sum(routeLengthsInvariant))
     vrp.m.close()
     obj
   }
