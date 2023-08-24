@@ -1,13 +1,14 @@
 package pdptw
 
+import java.io.File
 import scala.annotation.tailrec
 import scala.io.Source
 
 object Parser {
   private val multFactor = 1000
-	def apply(fileName: String): LiLimProblem = {
+	def apply(file: File): LiLimProblem = {
 
-    val s = Source.fromFile(fileName)
+    val s = Source.fromFile(file)
     val lines = s.getLines()
 
     val Array(v, capacity, _) = lines.next().split("\\t\\s*").map(_.toInt)

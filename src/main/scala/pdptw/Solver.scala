@@ -7,9 +7,12 @@ import oscar.cbls.business.routing.model.helpers.DistanceHelper
 import oscar.cbls.business.routing.neighborhood.{InsertPointUnroutedFirst, OnePointMove}
 import oscar.cbls.core.search.{Best, First, Neighborhood}
 
-class Solver(distancesMatrix: Array[Array[Long]], pdptw: VRP, obj: Objective) {
+case class Solver(oscarModel: Model) {
+  private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix
+  private val pdptw: VRP = oscarModel.pdpProblem
+  private val obj: Objective = oscarModel.objectiveFunction
 
-  val closestRelevantNeighbors = Array.tabulate(pdptw.n)(DistanceHelper.lazyClosestPredecessorsOfNode(distancesMatrix,_ => pdptw.nodes)(_))
+  private val closestRelevantNeighbors = Array.tabulate(pdptw.n)(DistanceHelper.lazyClosestPredecessorsOfNode(distancesAndTimeMatrix, _ => pdptw.nodes)(_))
 
 
   def onePointInsert(k: Int, listOfPointsToInsert: Option[List[Int]] = None, hotRestart: Boolean = false, best: Boolean = false): Neighborhood = {
@@ -36,10 +39,10 @@ class Solver(distancesMatrix: Array[Array[Long]], pdptw: VRP, obj: Objective) {
     )
   }
 
-  def solve(): Unit = {
+  def solve(verbosity: Int): Unit = {
     val search = bestSlopeFirst(List(onePointInsert(10),onePointMove(20)))
 
-    search.verbose = 1
+    search.verbose = verbosity
     search.doAllMoves(obj = obj)
 
     println(pdptw.toString())
