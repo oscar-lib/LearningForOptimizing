@@ -1,10 +1,7 @@
 package combinator
 
-import oscar.cbls.core.search.Neighborhood
+import oscar.cbls.core.search.{AcceptanceCriterion, Move, MoveFound, Neighborhood, NeighborhoodCombinator, NoMoveFound, SearchResult}
 import oscar.cbls.core.objective.Objective
-import oscar.cbls.core.search.{AcceptanceCriterion, SearchResult,NoMoveFound}
-import oscar.cbls.core.search.Move
-import oscar.cbls.core.search.MoveFound
 
 
 

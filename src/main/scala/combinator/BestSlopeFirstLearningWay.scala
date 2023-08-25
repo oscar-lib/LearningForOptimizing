@@ -47,7 +47,7 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
       case NoMoveFound =>
         tabuNeighborhoodIndex = neighborhoodHeap.removeFirst():: tabuNeighborhoodIndex
       case MoveFound(_) =>
-        neighborhoodSlope(currentNeighborhoodIndex) = ???
+        neighborhoodSlope(currentNeighborhoodIndex) = neighborhood.profiler.commonProfilingData.gain/Math.max(neighborhood.profiler.commonProfilingData.timeSpentMillis,1)
         neighborhoodHeap.notifyChange(currentNeighborhoodIndex)
         insertNeighborhoodList(tabuNeighborhoodIndex)
     }

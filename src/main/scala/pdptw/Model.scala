@@ -10,6 +10,8 @@ import oscar.cbls.business.routing.vehicleOfNodes
 import oscar.cbls.core.objective.CascadingObjective
 import oscar.cbls.lib.constraint.EQ
 
+import scala.collection.immutable.HashMap
+
 object Model {
 
   def apply(liLimProblem: LiLimProblem): Model = {
@@ -53,12 +55,14 @@ class Model(liLimProblem: LiLimProblem) {
 
   val vehiclesCapacity: Array[Long] = liLimProblem.vehicles.map(_.capacity).toArray
   val contentVariationAtNode: Array[Long] = Array.fill(v)(0L) ++ liLimProblem.nodes.map(_.quantity).toArray
-  val precedences: List[(Int,Int)] = liLimProblem.demands.map(d => (d.fromNodeId,d.toNodeId))
+  val precedences: List[(Int,Int)] = liLimProblem.demands.map(d => (d.fromNodeId+v-1,d.toNodeId+v-1))
+  val pickupPointToDeliveryPoint: HashMap[Int,Int] = HashMap.from(precedences)
+  val deliveryPointToPickupPoint: HashMap[Int,Int] = HashMap.from(precedences.map(couple => (couple._2,couple._1)))
 
 
   private def generateVRPProblem(): VRP = {
 		val store = new Store()
-		val vrp = new VRP(store, n, v)
+		val vrp = new VRP(store, n, v, debug = false)
     vrp
   }
 
