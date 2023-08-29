@@ -32,12 +32,12 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
 
   insertNeighborhoodList(l.indices.toList)
 
-  override def getNextNeighborhood: Neighborhood = {
+  override def getNextNeighborhood: Option[Neighborhood] = {
     if (neighborhoodHeap.isEmpty)
-      NoMoveNeighborhood
+      None
     else {
       currentNeighborhoodIndex = neighborhoodHeap.getFirst
-      neighborhoodArray(currentNeighborhoodIndex)
+      Some(neighborhoodArray(currentNeighborhoodIndex))
     }
   }
 
@@ -52,12 +52,5 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
         insertNeighborhoodList(tabuNeighborhoodIndex)
     }
   }
-
-
-  override def continue : Boolean = {
-    neighborhoodHeap.isEmpty
-  }
-
-
 
 }

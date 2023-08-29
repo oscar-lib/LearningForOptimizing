@@ -91,22 +91,26 @@ object main extends App {
     solver.solve(verbosity)
   }
 
-  private val solverConfig = parser.parse(args,NoConfig()).get
+  parser.parse(args,NoConfig()) match {
+    case None =>
+    case Some(solverConfig) => 
+      solverConfig match {
+        case _: NoConfig =>
+          println("Error: No Command Given")
+          println("Try --help for more information")
+        case i: SolveInstanceConfig => solveProblem(i.instance, i.verbosity)
 
-  solverConfig match {
-    case _: NoConfig => throw new Error("Unexpected Error, no config was found")
-    case i: SolveInstanceConfig => solveProblem(i.instance, i.verbosity)
+        case s: SolveSeriesConfig =>
+          val dir = new File(s"examples/pdptw_${s.seriesSize}")
+          val files = dir.listFiles.filter(_.isFile)
+          files.foreach(x => solveProblem(x, s.verbosity))
 
-    case s: SolveSeriesConfig =>
-      val dir = new File(s"examples/pdptw_${s.seriesSize}")
-      val files = dir.listFiles.filter(_.isFile)
-      files.foreach(x => solveProblem(x, s.verbosity))
+        case a: SolveAllConfig =>
+          val dir = new File(s"examples")
+          val dirs = dir.listFiles
+          val files = dirs.flatMap(_.listFiles.filter(_.isFile))
+          files.foreach(x => solveProblem(x, a.verbosity))
 
-    case a: SolveAllConfig =>
-      val dir = new File(s"examples")
-      val dirs = dir.listFiles
-      val files = dirs.flatMap(_.listFiles.filter(_.isFile))
-      files.foreach(x => solveProblem(x, a.verbosity))
-
+      }
   }
 }

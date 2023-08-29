@@ -22,6 +22,8 @@ case class Solver(oscarModel: Model) {
 
   def solve(verbosity: Int): Unit = {
     val search = bestSlopeFirst(List(simpleNeighborhoods.couplePointInsert(pdptw.n/2),simpleNeighborhoods.couplePointMove(pdptw.n/2), simpleNeighborhoods.onePointMove(pdptw.n)))
+    // val search = new BestSlopeFirstLearningWay(List(simpleNeighborhoods.couplePointInsert(pdptw.n/2),simpleNeighborhoods.couplePointMove(pdptw.n/2),simpleNeighborhoods.onePointMove(pdptw.n)))
+
 
     search.verbose = verbosity
     search.doAllMoves(obj = obj)
@@ -29,6 +31,7 @@ case class Solver(oscarModel: Model) {
     search.profilingOnConsole()
 
     println(pdptw.toString())
+    println(obj)
   }
 
 }
