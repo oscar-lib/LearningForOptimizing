@@ -28,14 +28,14 @@ class Model(liLimProblem: LiLimProblem) {
   // Quote : "The value of travel time is equal to the value of distance."
 	lazy val distanceAndTimeMatrix: Array[Array[Long]] =
     Array.tabulate(n)(from => {
-      val fromNode =
+      val fromPosition =
         if (from < v) liLimProblem.vehicles(from).depot.positionXY
         else liLimProblem.nodes(oscarIdToLiLimId(from)).positionXY
       Array.tabulate(n)(to => {
-        val toNode =
+        val toPosition =
           if (to < v) liLimProblem.vehicles(to).depot.positionXY
           else liLimProblem.nodes(oscarIdToLiLimId(to)).positionXY
-        math.sqrt(Math.pow(fromNode._1 - toNode._1,2) + Math.pow(fromNode._2 - toNode._2,2)).ceil.toLong
+        math.sqrt(Math.pow(fromPosition._1 - toPosition._1,2) + Math.pow(fromPosition._2 - toPosition._2,2)).ceil.toLong
       })
     })
   lazy val pdpProblem: VRP = generateVRPProblem()

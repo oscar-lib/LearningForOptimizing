@@ -14,22 +14,23 @@ case class Solver(oscarModel: Model) {
 
   // Relevant predecessors definition for each node (here any node can be the predecessor of another node)
   val relevantPredecessorsOfNodes =
-    TransferFunction.relevantPredecessorsOfNodes(pdptw.n, pdptw.v, oscarModel.timeWindows, oscarModel.distanceAndTimeMatrix)
+    TransferFunction.relevantPredecessorsOfNodes(pdptw.n, pdptw.v, oscarModel.timeWindows, distancesAndTimeMatrix)
   // Sort them lazily by distance
   val closestRelevantNeighborsByDistance =
-    Array.tabulate(pdptw.n)(DistanceHelper.lazyClosestPredecessorsOfNode(oscarModel.distanceAndTimeMatrix, relevantPredecessorsOfNodes)(_))
+    Array.tabulate(pdptw.n)(DistanceHelper.lazyClosestPredecessorsOfNode(distancesAndTimeMatrix, relevantPredecessorsOfNodes)(_))
 
   private val simpleNeighborhoods = SimpleNeighborhoods(pdptw, oscarModel, closestRelevantNeighborsByDistance)
 
 
   def solve(verbosity: Int): Unit = {
     val search =
-      new BestSlopeFirstLearningWay(
+      //new BestSlopeFirstLearningWay(
+      bestSlopeFirst(
         List(
-          simpleNeighborhoods.couplePointInsertUnroutedFirst(pdptw.n/2),
-          simpleNeighborhoods.couplePointMove(pdptw.n/2),
-          simpleNeighborhoods.onePointMove(pdptw.n))
-      ) //onExhaustRestartAfter(simpleNeighborhoods.multipleRemoveCouples(10),5,obj)
+          simpleNeighborhoods.couplePointInsertUnroutedFirst(pdptw.n/10),
+          simpleNeighborhoods.couplePointMove(pdptw.n/10),
+          simpleNeighborhoods.onePointMove(pdptw.n/10))
+      ) onExhaustRestartAfter(simpleNeighborhoods.multipleRemoveCouples(pdptw.n/5),5,obj)
 
     search.verbose = verbosity
     search.doAllMoves(obj = obj)

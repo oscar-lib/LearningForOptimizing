@@ -13,7 +13,7 @@ object Parser {
 
     val Array(v, capacity, _) = lines.next().split("\\t\\s*").map(_.toInt)
     val Array(_,depotX,depotY) =  lines.next().split("\\t\\s*").map(_.toInt).take(3)
-    val depot = LiLimDepot((depotX,depotY))
+    val depot = LiLimDepot((multFactor*depotX,multFactor*depotY))
     val vehicles = List.fill(v)(LiLimVehicle(depot,capacity))
 
 
