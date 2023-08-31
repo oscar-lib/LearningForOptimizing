@@ -44,7 +44,7 @@ object Parser {
 
     s.close()
 
-    LiLimProblem(vehicles, nodes, demands)
+    LiLimProblem(vehicles, nodes, demands,multFactor)
   }
 }
 
@@ -52,7 +52,8 @@ object Parser {
 case class LiLimProblem(
                        vehicles: List[LiLimVehicle],
                        nodes: List[LiLimNode],
-                       demands: List[LiLimCouple]
+                       demands: List[LiLimCouple],
+                       multFactor: Int
                     )
 
 case class LiLimDepot(positionXY: (Int,Int))
