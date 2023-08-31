@@ -86,6 +86,8 @@ class Model(liLimProblem: LiLimProblem) {
   val precedences: List[(Int,Int)] = liLimProblem.demands.map(d => (d.fromNodeId+v-1,d.toNodeId+v-1))
   val pickupPointToDeliveryPoint: HashMap[Int,Int] = HashMap.from(precedences)
   val deliveryPointToPickupPoint: HashMap[Int,Int] = HashMap.from(precedences.map(couple => (couple._2,couple._1)))
+  val isPickupPoint: Array[Boolean] = Array.tabulate(n)(node => if (node < v) false else pickupPointToDeliveryPoint.keys.exists(_ == node))
+  val isDeliveryPoint: Array[Boolean] = Array.tabulate(n)(node => if (node < v) false else deliveryPointToPickupPoint.keys.exists(_ == node))
 	// Constraint
   val precedenceInvariant: Precedence = precedence(pdpProblem.routes, precedences)
   val precedencesConstraints = new ConstraintSystem(pdpProblem.m)
