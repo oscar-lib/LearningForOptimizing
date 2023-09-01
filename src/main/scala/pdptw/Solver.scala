@@ -20,6 +20,7 @@ case class Solver(oscarModel: Model) {
   // Relevant predecessors definition for each node (here any node can be the predecessor of another node)
   val relevantSuccessorsOfNodes =
     TransferFunction.relevantSuccessorsOfNodes(pdptw.n, pdptw.v, oscarModel.timeWindows, distancesAndTimeMatrix)
+  // Lazily sort the relevant successors by distance
   val closestRelevantSuccessorsByDistance =
     Array.tabulate(pdptw.n)(DistanceHelper.lazyClosestPredecessorsOfNode(distancesAndTimeMatrix, relevantSuccessorsOfNodes)(_))
 
@@ -28,21 +29,21 @@ case class Solver(oscarModel: Model) {
 
 
   def solve(verbosity: Int): Unit = {
-    // val search =
-    //   bestSlopeFirst(
-    //     List(
-    //       simpleNeighborhoods.couplePointInsertUnroutedFirst(pdptw.n/10,best = false),
-    //       simpleNeighborhoods.couplePointMove(pdptw.n/10),
-    //       simpleNeighborhoods.onePointMove(pdptw.n/10))
-    //   ) //onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),10,obj)
+//     val search =
+//       bestSlopeFirst(
+//         List(
+//           simpleNeighborhoods.couplePointInsertUnroutedFirst(pdptw.n/10,best = false),
+//           simpleNeighborhoods.couplePointMove(pdptw.n/10),
+//           simpleNeighborhoods.onePointMove(pdptw.n/10))
+//       ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),2,obj)
     val search =
       new BestSlopeFirstLearningWay(
         List(
-          simpleNeighborhoods.couplePointInsertUnroutedFirst(20),
-          simpleNeighborhoods.couplePointInsertRoutedFirst(20),
-          simpleNeighborhoods.couplePointMove(20),
-          simpleNeighborhoods.onePointMove(20))
-      ) //onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
+          simpleNeighborhoods.couplePointInsertUnroutedFirst(10),
+          simpleNeighborhoods.couplePointInsertRoutedFirst(10),
+          simpleNeighborhoods.couplePointMove(10),
+          simpleNeighborhoods.onePointMove(10))
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
 
     search.verbose = verbosity
     search.doAllMoves(obj = obj)

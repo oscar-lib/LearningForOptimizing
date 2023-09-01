@@ -171,7 +171,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
   // BEWARE that this Neighborhood as is will never generate accepted moves because
   // the resulting move will deteriorate the objective function.
   // It has to be encapsulate in a combinator that accept all moves (see multipleRemoveCouples (==> .acceptAll()))
-  def removeCouple(pickUpPointsToRemove: () => Iterable[Int] =
+  def couplePointRemove(pickUpPointsToRemove: () => Iterable[Int] =
                    routedPickups): Neighborhood ={
     dynAndThen(onePointRemove(() => pickUpPointsToRemove()), (move: RemovePointMove) => {
       val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.pointToRemove)
@@ -180,8 +180,8 @@ case class SimpleNeighborhoods(pdptw: VRP,
   }
 
   // In a single movement remove nbOfCoupleToRemove couples
-  def multipleRemoveCouples(nbOfCoupleToRemove: Int): Neighborhood = {
-    atomic(removeCouple().acceptAll(), _ > nbOfCoupleToRemove)
+  def multipleCouplesPointRemove(nbOfCoupleToRemove: Int): Neighborhood = {
+    atomic(couplePointRemove().acceptAll(), _ > nbOfCoupleToRemove)
   }
 
   // Remove all couples of the specified vehicle
