@@ -6,9 +6,10 @@ import oscar.cbls.business.routing.invariants.global.RouteLength
 import oscar.cbls.business.routing.invariants.timeWindow.{TimeWindowConstraint, TransferFunction}
 import oscar.cbls.business.routing.invariants.vehicleCapacity.GlobalVehicleCapacityConstraint
 import oscar.cbls.business.routing.model.VRP
+import oscar.cbls.business.routing.model.extensions.Chains
 import oscar.cbls.business.routing.vehicleOfNodes
 import oscar.cbls.core.objective.CascadingObjective
-import oscar.cbls.lib.constraint.EQ
+import oscar.cbls.lib.constraint.{EQ, G}
 import oscar.cbls.lib.invariant.seq.Precedence
 
 import scala.collection.immutable.HashMap
@@ -25,6 +26,9 @@ class Model(liLimProblem: LiLimProblem) {
   //////////// VRP ////////////
   private val v: Int = liLimProblem.vehicles.length
   private val n: Int = v + liLimProblem.nodes.length
+  // To avoid empty route
+  val unroutedNodePenalty = 1000000000
+  val usedVehiclePenalty = 1000000
   lazy val pdpProblem: VRP = new VRP(new Store(), n, v, debug = false)
 
   private val oscarIdToLiLimId: Array[Int] = Array.tabulate(n)(oscarId => Math.max(0,oscarId-v))
@@ -47,7 +51,8 @@ class Model(liLimProblem: LiLimProblem) {
   val vehicleOfNodesNow: Array[CBLSIntVar] = vehicleOfNodes(pdpProblem.routes, v)
 
 
-  lazy val objectiveFunction: Objective = generateObjectiveFunction(pdpProblem: VRP)
+  lazy val (obj,objPerVehicle,unroutedNodePenaltyObj): (Objective,Array[Objective],Objective) =
+    generateObjectiveFunctions(pdpProblem)
 
   //////////// Time Windows ////////////
 
@@ -84,10 +89,11 @@ class Model(liLimProblem: LiLimProblem) {
 
   // Precedences data
   val precedences: List[(Int,Int)] = liLimProblem.demands.map(d => (d.fromNodeId+v-1,d.toNodeId+v-1))
-  val pickupPointToDeliveryPoint: HashMap[Int,Int] = HashMap.from(precedences)
-  val deliveryPointToPickupPoint: HashMap[Int,Int] = HashMap.from(precedences.map(couple => (couple._2,couple._1)))
-  val isPickupPoint: Array[Boolean] = Array.tabulate(n)(node => if (node < v) false else pickupPointToDeliveryPoint.keys.exists(_ == node))
-  val isDeliveryPoint: Array[Boolean] = Array.tabulate(n)(node => if (node < v) false else deliveryPointToPickupPoint.keys.exists(_ == node))
+  val chains: Chains = new Chains(pdpProblem, precedences.map(x => List(x._1,x._2)))
+  def pickupOf(delivery: Int): Int = chains.lastNodeInChainOfNode(delivery)
+  def deliveryOf(pickup: Int): Int = chains.firstNodeInChainOfNode(pickup)
+  def isPickupPoint(point: Int): Boolean = chains.isHead(point)
+  def isDeliveryPoint(point: Int): Boolean = chains.isLast(point)
 	// Constraint
   val precedenceInvariant: Precedence = precedence(pdpProblem.routes, precedences)
   val precedencesConstraints = new ConstraintSystem(pdpProblem.m)
@@ -96,20 +102,28 @@ class Model(liLimProblem: LiLimProblem) {
   precedencesConstraints.add(EQ(0, precedenceInvariant))
 
 
-  private def generateObjectiveFunction(vrp: VRP): Objective = {
-    // To avoid empty route
-    val unroutedNodePenalty = 1000000000
-    val usedVehiclePenalty = 1000000
+  private def generateObjectiveFunctions(vrp: VRP): (Objective, Array[Objective], Objective) = {
 
+    val unroutedNodePenaltyObj = (vrp.n - length(vrp.routes))*unroutedNodePenalty
     // Cascading : if the first strong constraint is violated, no need to continue
     val obj = CascadingObjective(
       sum(vehicleCapacityViolations),
       sum(timeWindowViolations),
       precedencesConstraints,
       // nb of unrouted nodes times penalty + nb of moving vehicles times penalty + route length
-      setSum(vrp.unrouted, x => 1) * unroutedNodePenalty + setSum(movingVehiclesInvariant, x => 1)*usedVehiclePenalty + sum(routeLengthsInvariant))
+      unroutedNodePenaltyObj + setSum(movingVehiclesInvariant, x => 1)*usedVehiclePenalty + sum(routeLengthsInvariant))
+    val objPerVehicle =
+      Array.tabulate(v)(vehicle => {
+        CascadingObjective(
+          vehicleCapacityViolations(vehicle),
+          timeWindowViolations(vehicle),
+          precedencesConstraints,
+          setSum(movingVehiclesInvariant, x => if (x == vehicle) 1 else 0) * usedVehiclePenalty * usedVehiclePenalty + routeLengthsInvariant(vehicle))
+      })
+
+
     vrp.m.close()
-    obj
+    (obj,objPerVehicle,unroutedNodePenaltyObj)
   }
 
   override def toString: String = {

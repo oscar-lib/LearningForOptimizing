@@ -8,7 +8,7 @@ import oscar.cbls.business.routing.model.helpers.DistanceHelper
 case class Solver(oscarModel: Model) {
   private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix
   private val pdptw: VRP = oscarModel.pdpProblem
-  private val obj: Objective = oscarModel.objectiveFunction
+  private val obj: Objective = oscarModel.obj
 
   // Relevant predecessors definition for each node (here any node can be the predecessor of another node)
   val relevantPredecessorsOfNodes =
@@ -24,7 +24,7 @@ case class Solver(oscarModel: Model) {
 
 
   private val simpleNeighborhoods = SimpleNeighborhoods(pdptw, oscarModel, closestRelevantPredecessorsByDistance, closestRelevantSuccessorsByDistance)
-
+	private val vlsn: LearningForOptimizingVLSN = LearningForOptimizingVLSN(pdptw, oscarModel, closestRelevantPredecessorsByDistance)
 
   def solve(verbosity: Int): Unit = {
     val search =
@@ -35,7 +35,7 @@ case class Solver(oscarModel: Model) {
           simpleNeighborhoods.couplePointInsertRoutedFirst(20),
           simpleNeighborhoods.couplePointMove(20),
           simpleNeighborhoods.onePointMove(20))
-      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10) exhaust vlsn.vlsn(),5,obj)
 
     search.verbose = verbosity
     search.doAllMoves(obj = obj)

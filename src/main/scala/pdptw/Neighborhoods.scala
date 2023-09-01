@@ -12,9 +12,9 @@ case class SimpleNeighborhoods(pdptw: VRP,
                                closestRelevantSuccessors: Array[Iterable[Int]]) {
 
   val routedPickups: () => Iterable[Int] =
-    () => pdptw.routed().intersect(oscarModel.pickupPointToDeliveryPoint.keys.toSet)
+    () => pdptw.routed().intersect(oscarModel.chains.heads.toSet)
   val unRoutedPickups: () => Iterable[Int] =
-    () => pdptw.unrouted().intersect(oscarModel.pickupPointToDeliveryPoint.keys.toSet)
+    () => pdptw.unrouted().intersect(oscarModel.chains.heads.toSet)
 
 
   ///////////////////////////////////////
@@ -139,7 +139,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
                                      hotRestart: Boolean = false,
                                      best: Boolean = false): Neighborhood = {
     dynAndThen(onePointInsertUnroutedFirst(k, pickUpPointsToInsert, hotRestart, best), (move: InsertPointMove) => {
-      val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.insertedPoint)
+      val deliveryPoint = oscarModel.pickupOf(move.insertedPoint)
       onePointInsertUnroutedFirst(k, () => List(deliveryPoint), hotRestart, best)
     }) name "One couple insert unrouted first"
   }
@@ -151,7 +151,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
                                    hotRestart: Boolean = false,
                                    best: Boolean = false): Neighborhood = {
     dynAndThen(onePointInsertRoutedFirst(k, insertAfterPoints, hotRestart, best), (move: InsertPointMove) => {
-      val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.insertedPoint)
+      val deliveryPoint = oscarModel.pickupOf(move.insertedPoint)
       onePointInsertUnroutedFirst(k, () => List(deliveryPoint), hotRestart, best)
     }) name "One couple insert routed first"
   }
@@ -162,7 +162,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
                        hotRestart: Boolean = false,
                        best: Boolean = false): Neighborhood = {
     dynAndThen(onePointMove(k, pickUpPointsToMove, hotRestart, best), (move: OnePointMoveMove) => {
-      val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.movedPoint)
+      val deliveryPoint = oscarModel.pickupOf(move.movedPoint)
       onePointMove(k, () => List(deliveryPoint), hotRestart, best)
     }) name "One couple move"
   }
@@ -174,7 +174,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
   def removeCouple(pickUpPointsToRemove: () => Iterable[Int] =
                    routedPickups): Neighborhood ={
     dynAndThen(onePointRemove(() => pickUpPointsToRemove()), (move: RemovePointMove) => {
-      val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.pointToRemove)
+      val deliveryPoint = oscarModel.pickupOf(move.pointToRemove)
       onePointRemove(() => List(deliveryPoint))
     }) name "One couple remove"
   }
@@ -190,10 +190,10 @@ case class SimpleNeighborhoods(pdptw: VRP,
     var nbOfPickupToRemove: Int = 0
     atomic(
       dynAndThen(onePointRemove(() => pickUpsToRemove), (move: RemovePointMove) => {
-        val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.pointToRemove)
+        val deliveryPoint = oscarModel.pickupOf(move.pointToRemove)
         onePointRemove(() => List(deliveryPoint))
     }).acceptAll(), _ > nbOfPickupToRemove) onQuery {
-      pickUpsToRemove = pdptw.getRouteOfVehicle(vehicle()).intersect(oscarModel.pickupPointToDeliveryPoint.keys.toList)
+      pickUpsToRemove = pdptw.getRouteOfVehicle(vehicle()).intersect(oscarModel.chains.heads)
       nbOfPickupToRemove = pickUpsToRemove.length
     } name "Empty route of vehicle"
   }
