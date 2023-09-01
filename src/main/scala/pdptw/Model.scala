@@ -42,10 +42,13 @@ class Model(liLimProblem: LiLimProblem) {
         math.sqrt(Math.pow(fromPosition._1 - toPosition._1,2) + Math.pow(fromPosition._2 - toPosition._2,2)).ceil.toLong
       })
     })
-  val routeLengthsInvariant: Array[CBLSIntVar] = RouteLength(pdpProblem.routes, n, v, (from, to) => distanceAndTimeMatrix(from)(to))
-  val movingVehiclesInvariant: MovingVehicles = MovingVehicles(pdpProblem.routes, v)
-  val vehicleOfNodesNow: Array[CBLSIntVar] = vehicleOfNodes(pdpProblem.routes, v)
 
+  // Invariant keeping the lenght of each vehicle's route
+  val routeLengthsInvariant: Array[CBLSIntVar] = RouteLength(pdpProblem.routes, n, v, (from, to) => distanceAndTimeMatrix(from)(to))
+  // Invariant keeping the moving vehicle in a Set
+  val movingVehiclesInvariant: MovingVehicles = MovingVehicles(pdpProblem.routes, v)
+  // Invariant, for each node we maintain it's current vehicle (v if not routed)
+  val vehicleOfNodesNow: Array[CBLSIntVar] = vehicleOfNodes(pdpProblem.routes, v)
 
   lazy val objectiveFunction: Objective = generateObjectiveFunction(pdpProblem: VRP)
 
@@ -64,19 +67,23 @@ class Model(liLimProblem: LiLimProblem) {
     }
   )
   // Constraint
+  // An array keeping the time window violation (0 ==> no violation, 1 ==> violation) of each vehicle
   val timeWindowViolations: Array[CBLSIntVar] =
     Array.tabulate(v)(vehicle => CBLSIntVar(pdpProblem.m, 0, Domain.coupleToDomain(0, 1), s"TimeWindow constraint on vehicle $vehicle"))
+  // The constraint maintaining the above invariant
   val timeWindowConstraint: TimeWindowConstraint =
     TimeWindowConstraint(pdpProblem.routes, n, v, timeWindows, distanceAndTimeMatrix, timeWindowViolations)
 
   //////////// Capacity ////////////
 
-  // Capacity data
+  // Capacity data, vehicle capacity and the charge picked up/dropped off at each point
   val vehiclesCapacity: Array[Long] = liLimProblem.vehicles.map(_.capacity).toArray
   val contentVariationAtNode: Array[Long] = Array.fill(v)(0L) ++ liLimProblem.nodes.map(_.quantity).toArray
   // Constraint
+  // An array keeping the capacity violation (0 ==> no violation, 1 ==> violation) of each vehicle
   val vehicleCapacityViolations: Array[CBLSIntVar] =
-    Array.tabulate(v)(vehicle => CBLSIntVar(pdpProblem.m, 0, name = s"TimeWindow constraint on vehicle $vehicle"))
+    Array.tabulate(v)(vehicle => CBLSIntVar(pdpProblem.m, 0, name = s"Capacity constraint on vehicle $vehicle"))
+  // The constraint maintaining the above invariant
   val vehicleCapacityConstraint: GlobalVehicleCapacityConstraint =
     new GlobalVehicleCapacityConstraint(pdpProblem.routes, n, v, vehiclesCapacity, contentVariationAtNode, vehicleCapacityViolations)
 
@@ -90,9 +97,11 @@ class Model(liLimProblem: LiLimProblem) {
   val isDeliveryPoint: Array[Boolean] = Array.tabulate(n)(node => if (node < v) false else deliveryPointToPickupPoint.keys.exists(_ == node))
 	// Constraint
   val precedenceInvariant: Precedence = precedence(pdpProblem.routes, precedences)
+  // Ensuring that pickup and dropoff node are on same vehicle.
   val precedencesConstraints = new ConstraintSystem(pdpProblem.m)
   for (start <- precedenceInvariant.nodesStartingAPrecedence)
     precedencesConstraints.add(EQ(vehicleOfNodesNow(start), vehicleOfNodesNow(precedenceInvariant.nodesEndingAPrecedenceStartedAt(start).head)))
+  // Ensuring that dropOff node follows pickUp node
   precedencesConstraints.add(EQ(0, precedenceInvariant))
 
 
@@ -117,7 +126,7 @@ class Model(liLimProblem: LiLimProblem) {
     	s"=======\n" +
       s"Unrouted nodes : ${pdpProblem.unrouted.value.size}\n" +
       s"Number of used vehicles : ${movingVehiclesInvariant.value.size}\n" +
-      s"Total route length : ${routeLengthsInvariant.map(_.value).sum/liLimProblem.multFactor}\n\n" +
+      s"Total route length : ${routeLengthsInvariant.map(_.value).sum.toDouble/liLimProblem.multFactor}\n\n" +
       movingVehiclesInvariant.value.toList.map(vehicle => pdpProblem.getRouteOfVehicle(vehicle).drop(1).map(x => x - v + 1).mkString(" ")).mkString("\n")
   }
 

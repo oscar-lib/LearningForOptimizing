@@ -1,5 +1,6 @@
 package pdptw
 
+import combinator.BestSlopeFirstLearningWay
 import oscar.cbls._
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
 import oscar.cbls.business.routing.model.VRP
@@ -28,14 +29,14 @@ case class Solver(oscarModel: Model) {
 
   def solve(verbosity: Int): Unit = {
     val search =
-      //new BestSlopeFirstLearningWay(
-      bestSlopeFirst(
+      new BestSlopeFirstLearningWay(
+//      bestSlopeFirst(
         List(
           simpleNeighborhoods.couplePointInsertUnroutedFirst(20),
           simpleNeighborhoods.couplePointInsertRoutedFirst(20),
           simpleNeighborhoods.couplePointMove(20),
           simpleNeighborhoods.onePointMove(20))
-      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
+      ) //onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
 
     search.verbose = verbosity
     search.doAllMoves(obj = obj)

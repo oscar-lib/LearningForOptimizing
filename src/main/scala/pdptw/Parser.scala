@@ -5,6 +5,8 @@ import scala.annotation.tailrec
 import scala.io.Source
 
 object Parser {
+  // The result of the benchmark is usually expressed in double.
+  // We cannot deal with double within oscar therefore we multiply it by a factor and then divide it again.
   private val multFactor = 1000
 	def apply(file: File): LiLimProblem = {
 
