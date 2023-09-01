@@ -5,3 +5,4 @@ resolvers += ("Artifactory OscaR-CETIC" at "http://maven.oscar.cetic.be/artifact
 libraryDependencies ++= Seq(
   "oscar" %% "oscar-cbls" % "5.0.0-SNAPSHOT",
   "com.github.scopt" %% "scopt" % "4.0.0")
+

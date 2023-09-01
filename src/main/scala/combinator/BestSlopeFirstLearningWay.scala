@@ -11,15 +11,21 @@ import scala.annotation.tailrec
 
 class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearningCombinator("NewBSF") {
 
-  case class NeighborhoodData(slope : Float,
-    exhausted : Boolean)
-
+ // The neighborhood in an Array form
   private val neighborhoodArray = l.toArray
-  private val neighborhoodSlope : Array[Long] = neighborhoodArray.map(_ => Long.MaxValue)
+  // The array to store the slope of the neighborhood
+  private val neighborhoodSlope : Array[Long] = neighborhoodArray.map(_ => Long.MaxValue) 
+  // A heap to get the neighborhood with the highest slope
   private val neighborhoodHeap = new BinomialHeapWithMove[Int](neighborhoodSlope,l.length)
+  // The current Neighborhood that has been used
   private var currentNeighborhoodIndex : Int = -1
+  // The list of neighborhood that will not be used (because they did not find any moves)
   private var tabuNeighborhoodIndex : List[Int] = Nil
+  // The list of index
+  private val indicesList = l.indices.toList
 
+
+  // A method to insert a list of neighborhood in the heap
   @tailrec
   private def insertNeighborhoodList(l : List[Int]) : Unit= {
     l match {
@@ -30,12 +36,19 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
     }
   }
 
-  insertNeighborhoodList(l.indices.toList)
+  insertNeighborhoodList(indicesList)
+
 
   override def getNextNeighborhood: Option[Neighborhood] = {
-    if (neighborhoodHeap.isEmpty)
+    // If the heap is empty: we do not have any neighborhood
+    if (neighborhoodHeap.isEmpty) {
+      // Reseting the state of the neighborhood
+      insertNeighborhoodList(indicesList)
+      tabuNeighborhoodIndex = Nil
       None
+    }
     else {
+      // Getting the first neighborhood of the heap
       currentNeighborhoodIndex = neighborhoodHeap.getFirst
       Some(neighborhoodArray(currentNeighborhoodIndex))
     }
@@ -45,10 +58,15 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
     neighborhood: Neighborhood): Unit = {
     m match {
       case NoMoveFound =>
+        // If no move have been found, removing the neighborhood from the heap
+        // and putting it in the tabu neighborhood list
         tabuNeighborhoodIndex = neighborhoodHeap.removeFirst():: tabuNeighborhoodIndex
       case MoveFound(_) =>
-        neighborhoodSlope(currentNeighborhoodIndex) = neighborhood.profiler.commonProfilingData.gain/Math.max(neighborhood.profiler.commonProfilingData.timeSpentMillis,1)
+        // Updating the slope of the neighborhood
+        neighborhoodSlope(currentNeighborhoodIndex) = - (neighborhood.profiler.commonProfilingData.gain * 1000)/Math.max(neighborhood.profiler.commonProfilingData.timeSpentMillis,1)
+        // Notifying the heap so that it updates the positions
         neighborhoodHeap.notifyChange(currentNeighborhoodIndex)
+        // Resetting the tabu list (maybe the last move deblocked some of them)
         insertNeighborhoodList(tabuNeighborhoodIndex)
     }
   }
