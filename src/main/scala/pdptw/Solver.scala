@@ -28,9 +28,15 @@ case class Solver(oscarModel: Model) {
 
 
   def solve(verbosity: Int): Unit = {
+    // val search =
+    //   bestSlopeFirst(
+    //     List(
+    //       simpleNeighborhoods.couplePointInsertUnroutedFirst(pdptw.n/10,best = false),
+    //       simpleNeighborhoods.couplePointMove(pdptw.n/10),
+    //       simpleNeighborhoods.onePointMove(pdptw.n/10))
+    //   ) //onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),10,obj)
     val search =
       new BestSlopeFirstLearningWay(
-//      bestSlopeFirst(
         List(
           simpleNeighborhoods.couplePointInsertUnroutedFirst(20),
           simpleNeighborhoods.couplePointInsertRoutedFirst(20),

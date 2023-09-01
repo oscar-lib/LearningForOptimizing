@@ -16,7 +16,7 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
   // The array to store the slope of the neighborhood
   private val neighborhoodSlope : Array[Long] = neighborhoodArray.map(_ => Long.MaxValue) 
   // A heap to get the neighborhood with the highest slope
-  private val neighborhoodHeap = new BinomialHeapWithMove[Int](neighborhoodSlope,l.length)
+  private val neighborhoodHeap = new BinomialHeapWithMove[Int](neighborhoodSlope,l.length + 1)
   // The current Neighborhood that has been used
   private var currentNeighborhoodIndex : Int = -1
   // The list of neighborhood that will not be used (because they did not find any moves)
@@ -68,6 +68,7 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
         neighborhoodHeap.notifyChange(currentNeighborhoodIndex)
         // Resetting the tabu list (maybe the last move deblocked some of them)
         insertNeighborhoodList(tabuNeighborhoodIndex)
+        tabuNeighborhoodIndex = Nil
     }
   }
 
