@@ -122,12 +122,36 @@ class Model(liLimProblem: LiLimProblem) {
   }
 
   override def toString: String = {
+    case class PointData(coupleId : Int,
+      routingId : Int,
+      problemId : Int,
+      prefix : String)
+
+    val pointsData : Array[Option[PointData]] = (0 until n).toArray.map(nId => {
+      if (nId < v)
+        None
+      else {
+        val coupleAndIndex = liLimProblem.demands.zipWithIndex.filter(p => (p._1.fromNodeId + v - 1) == nId || (p._1.toNodeId + v -1) == nId)(0)
+        Some(PointData(coupleAndIndex._2,
+          nId,
+          nId-v+1,
+          if (coupleAndIndex._1.fromNodeId + v -1 == nId) "p" else "d"))
+        }
+    })
+
     s"\n\nResult\n" +
-    	s"=======\n" +
-      s"Unrouted nodes : ${pdpProblem.unrouted.value.size}\n" +
-      s"Number of used vehicles : ${movingVehiclesInvariant.value.size}\n" +
-      s"Total route length : ${routeLengthsInvariant.map(_.value).sum.toDouble/liLimProblem.multFactor}\n\n" +
-      movingVehiclesInvariant.value.toList.map(vehicle => pdpProblem.getRouteOfVehicle(vehicle).drop(1).map(x => x - v + 1).mkString(" ")).mkString("\n")
+    s"=======\n" +
+    s"Unrouted nodes : ${pdpProblem.unrouted.value.size}\n" +
+    s"Number of used vehicles : ${movingVehiclesInvariant.value.size}\n" +
+    s"Total route length : ${routeLengthsInvariant.map(_.value).sum.toDouble/liLimProblem.multFactor}\n\n" +
+    movingVehiclesInvariant.value.toList.map(vehicle => {
+      pdpProblem.getRouteOfVehicle(vehicle).drop(1).map(x => {
+        val pData = pointsData(x).get
+//        s"${pData.prefix}${pData.coupleId}(${pData.routingId},${pData.problemId})"
+        s"${pData.prefix}${pData.coupleId}"
+      }).mkString("->")
+    }).mkString("\n")
+//      movingVehiclesInvariant.value.toList.map(vehicle => pdpProblem.getRouteOfVehicle(vehicle).drop(1).map(x => x - v + 1).mkString(" ")).mkString("\n")
   }
 
 
