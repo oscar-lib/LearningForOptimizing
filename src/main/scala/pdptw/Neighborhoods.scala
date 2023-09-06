@@ -5,6 +5,7 @@ import oscar.cbls.business.routing.neighborhood.{InsertPointRoutedFirst, InsertP
 import oscar.cbls.core.search.{Best, First, Neighborhood}
 import oscar.cbls._
 import oscar.cbls.business.routing._
+import oscar.cbls.lib.search.combinators.Atomic
 
 case class SimpleNeighborhoods(pdptw: VRP,
                                oscarModel: Model,
@@ -200,7 +201,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
 
   // Removes all couples of several vehicles (random vehicle selection)
   def emptyMultiplesVehicle(nbOfVehicleToEmpty: Int): Neighborhood = {
-    emptyVehicle().maxMoves(nbOfVehicleToEmpty)
+    Atomic(emptyVehicle(),_ > nbOfVehicleToEmpty)
   }
 
 }
