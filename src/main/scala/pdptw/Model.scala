@@ -30,15 +30,15 @@ class Model(liLimProblem: LiLimProblem) {
   private val oscarIdToLiLimId: Array[Int] = Array.tabulate(n)(oscarId => Math.max(0,oscarId-v))
 
   // Quote : "The value of travel time is equal to the value of distance."
+  val nodePositions: Array[(Int,Int)] = Array.tabulate(n)(node => {
+    if(node < v) liLimProblem.vehicles(node).depot.positionXY
+    else liLimProblem.nodes(oscarIdToLiLimId(node)).positionXY
+  })
 	lazy val distanceAndTimeMatrix: Array[Array[Long]] =
     Array.tabulate(n)(from => {
-      val fromPosition =
-        if (from < v) liLimProblem.vehicles(from).depot.positionXY
-        else liLimProblem.nodes(oscarIdToLiLimId(from)).positionXY
+      val fromPosition = nodePositions(from)
       Array.tabulate(n)(to => {
-        val toPosition =
-          if (to < v) liLimProblem.vehicles(to).depot.positionXY
-          else liLimProblem.nodes(oscarIdToLiLimId(to)).positionXY
+        val toPosition = nodePositions(to)
         math.sqrt(Math.pow(fromPosition._1 - toPosition._1,2) + Math.pow(fromPosition._2 - toPosition._2,2)).ceil.toLong
       })
     })

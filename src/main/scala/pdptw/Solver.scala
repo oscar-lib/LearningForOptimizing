@@ -2,9 +2,11 @@ package pdptw
 
 import combinator.BestSlopeFirstLearningWay
 import oscar.cbls._
+import oscar.cbls.business.routing.display
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.business.routing.model.helpers.DistanceHelper
+import oscar.cbls.business.routing.visu.RoutingMapTypes
 
 case class Solver(oscarModel: Model) {
   private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix
@@ -28,7 +30,18 @@ case class Solver(oscarModel: Model) {
   private val simpleNeighborhoods = SimpleNeighborhoods(pdptw, oscarModel, closestRelevantPredecessorsByDistance, closestRelevantSuccessorsByDistance)
 
 
-  def solve(verbosity: Int): Unit = {
+  def solve(verbosity: Int, displaySolution: Boolean, fileName: String): Unit = {
+    val displayDelay = 100 //ms
+    val demoDisplay =
+      if(displaySolution)
+        display(
+          pdptw,
+          oscarModel.nodePositions.map(xy => (xy._1.toDouble, xy._2.toDouble)),
+          None,
+          displayDelay,
+          RoutingMapTypes.BasicRoutingMap,
+          title = fileName)
+      else null
 //     val search =
 //       bestSlopeFirst(
 //         List(
@@ -36,7 +49,7 @@ case class Solver(oscarModel: Model) {
 //           simpleNeighborhoods.couplePointMove(pdptw.n/10),
 //           simpleNeighborhoods.onePointMove(pdptw.n/10))
 //       ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),2,obj)
-    val search =
+    var search =
       new BestSlopeFirstLearningWay(
         List(
           simpleNeighborhoods.couplePointInsertUnroutedFirst(10),
@@ -45,8 +58,10 @@ case class Solver(oscarModel: Model) {
           simpleNeighborhoods.onePointMove(10))
       ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
 
+    if(displaySolution) search = search.afterMove(demoDisplay.drawRoutes())
     search.verbose = verbosity
     search.doAllMoves(obj = obj)
+    if(displaySolution) demoDisplay.drawRoutes(force = true)
 
     if(verbosity > 1) {
       search.profilingOnConsole()
