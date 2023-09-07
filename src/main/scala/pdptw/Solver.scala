@@ -58,7 +58,7 @@ case class Solver(oscarModel: Model) {
           simpleNeighborhoods.onePointMove(10))
       ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
 
-    if(displaySolution) search = search.afterMove(demoDisplay.drawRoutes())
+    if(displaySolution) search = search.afterMove(demoDisplay.drawRoutes()).showObjectiveFunction(oscarModel.objectiveFunction)
     search.verbose = verbosity
     search.doAllMoves(obj = obj)
     if(displaySolution) demoDisplay.drawRoutes(force = true)
