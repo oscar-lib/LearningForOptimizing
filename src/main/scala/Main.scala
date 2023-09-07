@@ -9,7 +9,7 @@ import scala.jdk.CollectionConverters.IteratorHasAsScala
 object main extends App {
 
   abstract class Config()
-  case class SolveInstanceConfig(instance: File = null, verbosity: Int = 0,bandit : Boolean = false) extends Config()
+  case class SolveInstanceConfig(instance: File = null, verbosity: Int = 0,bandit : Boolean = false, display: Boolean = false) extends Config()
   case class SolveSeriesConfig(seriesSize: Int = 0, verbosity: Int = 0,bandit : Boolean = false) extends Config()
   case class SolveAllConfig(verbosity: Int = 0,bandit : Boolean = false) extends Config()
   case class NoConfig() extends Config()
@@ -43,6 +43,12 @@ object main extends App {
             "    - 4 : Every tried value is printed (AVOID THIS if you don't want to be flooded")
           .action((x, c) => c match {
             case conf: SolveInstanceConfig => conf.copy(verbosity = x)
+            case _ => throw new Error("Unexpected Error")
+          }),
+        opt[Unit]("display")
+          .text("Display the solution resolution on a map")
+          .action((x,c) => c match {
+            case conf: SolveInstanceConfig => conf.copy(display = true)
             case _ => throw new Error("Unexpected Error")
           })
       )
@@ -105,11 +111,11 @@ object main extends App {
       )
   }
 
-  private def solveProblem(file: File, verbosity: Int,bandit : Boolean): Unit = {
+  private def solveProblem(file: File, verbosity: Int, bandit : Boolean, display: Boolean): Unit = {
     val instanceProblem: LiLimProblem = Parser(file)
     val oscarModel: Model = Model(instanceProblem)
     val solver: Solver = Solver(oscarModel,bandit)
-    solver.solve(verbosity)
+    solver.solve(verbosity,display,file.getName)
   }
 
   parser.parse(args,NoConfig()) match {
@@ -119,19 +125,18 @@ object main extends App {
         case _: NoConfig =>
           println("Error: No Command Given")
           println("Try --help for more information")
-        case i: SolveInstanceConfig => solveProblem(i.instance, i.verbosity,i.bandit)
+        case i: SolveInstanceConfig => solveProblem(i.instance, i.verbosity,i.bandit, i.display)
 
         case s: SolveSeriesConfig =>
           val dir = new File(s"examples/pdptw_${s.seriesSize}")
           val files = dir.listFiles.filter(_.isFile)
-          files.foreach(x => solveProblem(x, s.verbosity,s.bandit))
+          files.foreach(x => solveProblem(x, s.verbosity,s.bandit, display = false))
 
         case a: SolveAllConfig =>
           val dir = new File(s"examples")
           val dirs = dir.listFiles
           val files = dirs.flatMap(_.listFiles.filter(_.isFile))
-          files.foreach(x => solveProblem(x, a.verbosity,a.bandit))
-
+          files.foreach(x => solveProblem(x, a.verbosity,a.bandit, display = false))
       }
   }
 }
