@@ -7,6 +7,8 @@ import oscar.cbls._
 import oscar.cbls.business.routing._
 import oscar.cbls.lib.search.combinators.Atomic
 
+import scala.util.Random
+
 case class SimpleNeighborhoods(pdptw: VRP,
                                oscarModel: Model,
                                closestRelevantPredecessors: Array[Iterable[Int]],
@@ -16,6 +18,10 @@ case class SimpleNeighborhoods(pdptw: VRP,
     () => pdptw.routed().intersect(oscarModel.pickupPointToDeliveryPoint.keys.toSet)
   val unRoutedPickups: () => Iterable[Int] =
     () => pdptw.unrouted().intersect(oscarModel.pickupPointToDeliveryPoint.keys.toSet)
+
+  private def randVehicle(): () => Int ={
+    () => Random.shuffle(Array.tabulate(pdptw.v)(x => x).filter(x => pdptw.getRouteOfVehicle(x).drop(1).nonEmpty)).head
+  }
 
 
   ///////////////////////////////////////
@@ -186,7 +192,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
   }
 
   // Remove all couples of the specified vehicle
-  def emptyVehicle(vehicle: () => Int = () => oscarModel.movingVehiclesInvariant.value.unsorted.head): Neighborhood ={
+  def emptyVehicle(vehicle: () => Int = randVehicle()): Neighborhood ={
     var pickUpsToRemove: List[Int] = List.empty
     var nbOfPickupToRemove: Int = 0
     atomic(
