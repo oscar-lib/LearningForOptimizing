@@ -8,6 +8,13 @@ import scala.util.Random
 import scala.annotation.tailrec
 
 
+case class NeighborhoodStatistics(
+  nbCall : Int,
+  nbFound : Int,
+  nbNotFound : Int,
+  totalTime : Long,
+  totalGain : Long)
+
 /*
  * Score
  * aggrégation historique
@@ -29,6 +36,7 @@ class BanditCombinator(l : List[Neighborhood],
   private var totalCurrentNeighWeight : Double = 1
   private var currentNbRestart = 0
   private var currentIndex = 0
+  protected val neighStatistics : Array[NeighborhoodStatistics] = Array.fill(nbNeigh)(NeighborhoodStatistics(0,0,0,0,0))
 
   private def reinit : Unit = {
     nbAvailableNeigh = nbNeigh
