@@ -6,7 +6,7 @@ import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.business.routing.model.helpers.DistanceHelper
 
-case class Solver(oscarModel: Model) {
+case class Solver(oscarModel: Model,bandit : Boolean) {
   private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix
   private val pdptw: VRP = oscarModel.pdpProblem
   private val obj: Objective = oscarModel.objectiveFunction
@@ -34,17 +34,19 @@ case class Solver(oscarModel: Model) {
       simpleNeighborhoods.couplePointInsertRoutedFirst(10),
       simpleNeighborhoods.couplePointMove(10),
       simpleNeighborhoods.onePointMove(10))
-    // val search =
-    //   bestSlopeFirst(
-    //     neighList
-    //   ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),2,obj)
-
-    // val search = new BanditCombinator(neighList,
-    //   simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),
-    //   5)
-    val search =
-      new BestSlopeFirstLearningWay(neighList
-      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
+    val search = if (bandit) {
+      new BanditCombinator(neighList,
+        simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),
+        5)
+    }
+    else {
+      bestSlopeFirst(
+        neighList
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),2,obj)
+    }
+      //   val search =
+      // new BestSlopeFirstLearningWay(neighList
+      // ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
 
     search.verbose = verbosity
     search.doAllMoves(obj = obj)

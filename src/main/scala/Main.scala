@@ -9,9 +9,9 @@ import scala.jdk.CollectionConverters.IteratorHasAsScala
 object main extends App {
 
   abstract class Config()
-  case class SolveInstanceConfig(instance: File = null, verbosity: Int = 0) extends Config()
-  case class SolveSeriesConfig(seriesSize: Int = 0, verbosity: Int = 0) extends Config()
-  case class SolveAllConfig(verbosity: Int = 0) extends Config()
+  case class SolveInstanceConfig(instance: File = null, verbosity: Int = 0,bandit : Boolean = false) extends Config()
+  case class SolveSeriesConfig(seriesSize: Int = 0, verbosity: Int = 0,bandit : Boolean = false) extends Config()
+  case class SolveAllConfig(verbosity: Int = 0,bandit : Boolean = false) extends Config()
   case class NoConfig() extends Config()
 
   private val parser = new OptionParser[Config]("LearningForOptimizing") {
@@ -24,6 +24,13 @@ object main extends App {
           .text("Required: The input file containing the problem")
           .action((x, c) => c match {
             case conf: SolveInstanceConfig => conf.copy(instance = x)
+            case _ => throw new Error("Unexpected Error")
+          }),
+        opt[Unit]("bandit")
+          .abbr("b")
+          .text("Use this flag to use the bandit algorithm. By default, bestSlopeFirst is used")
+          .action((x,c) => c match {
+            case conf:SolveInstanceConfig => conf.copy(bandit = true)
             case _ => throw new Error("Unexpected Error")
           }),
         opt[Int]("verbosity")
@@ -49,6 +56,13 @@ object main extends App {
           .text("Required: The size (100,200,400,600,800,1000) of the instances to solve (fetching all of them)")
           .action((x, c) => c match {
             case conf: SolveSeriesConfig => conf.copy(seriesSize = x)
+            case _ => throw new Error("Unexpected Error")
+          }),
+        opt[Unit]("bandit")
+          .abbr("b")
+          .text("Use this flag to use the bandit algorithm. By default, bestSlopeFirst is used")
+          .action((x,c) => c match {
+            case conf:SolveSeriesConfig => conf.copy(bandit = true)
             case _ => throw new Error("Unexpected Error")
           }),
         opt[Int]("verbosity")
@@ -80,14 +94,21 @@ object main extends App {
           .action((x, c) => c match {
             case conf: SolveAllConfig => conf.copy(verbosity = x)
             case _ => throw new Error("Unexpected Error")
+          }),
+        opt[Unit]("bandit")
+          .abbr("b")
+          .text("Use this flag to use the bandit algorithm. By default, bestSlopeFirst is used")
+          .action((x,c) => c match {
+            case conf:SolveAllConfig => conf.copy(bandit = true)
+            case _ => throw new Error("Unexpected Error")
           })
       )
   }
 
-  private def solveProblem(file: File, verbosity: Int): Unit = {
+  private def solveProblem(file: File, verbosity: Int,bandit : Boolean): Unit = {
     val instanceProblem: LiLimProblem = Parser(file)
     val oscarModel: Model = Model(instanceProblem)
-    val solver: Solver = Solver(oscarModel)
+    val solver: Solver = Solver(oscarModel,bandit)
     solver.solve(verbosity)
   }
 
@@ -98,18 +119,18 @@ object main extends App {
         case _: NoConfig =>
           println("Error: No Command Given")
           println("Try --help for more information")
-        case i: SolveInstanceConfig => solveProblem(i.instance, i.verbosity)
+        case i: SolveInstanceConfig => solveProblem(i.instance, i.verbosity,i.bandit)
 
         case s: SolveSeriesConfig =>
           val dir = new File(s"examples/pdptw_${s.seriesSize}")
           val files = dir.listFiles.filter(_.isFile)
-          files.foreach(x => solveProblem(x, s.verbosity))
+          files.foreach(x => solveProblem(x, s.verbosity,s.bandit))
 
         case a: SolveAllConfig =>
           val dir = new File(s"examples")
           val dirs = dir.listFiles
           val files = dirs.flatMap(_.listFiles.filter(_.isFile))
-          files.foreach(x => solveProblem(x, a.verbosity))
+          files.foreach(x => solveProblem(x, a.verbosity,a.bandit))
 
       }
   }

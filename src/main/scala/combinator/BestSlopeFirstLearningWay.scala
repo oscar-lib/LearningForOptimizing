@@ -63,7 +63,6 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
         tabuNeighborhoodIndex = neighborhoodHeap.removeFirst():: tabuNeighborhoodIndex
       case MoveFound(_) =>
         // Updating the slope of the neighborhood
-        println(neighborhoodSlope.toArray.mkString(";"))
         neighborhoodSlope(currentNeighborhoodIndex) = - (neighborhood.profiler.commonProfilingData.gain * 1000)/Math.max(neighborhood.profiler.commonProfilingData.timeSpentMillis,1)
         // Notifying the heap so that it updates the positions
         neighborhoodHeap.notifyChange(currentNeighborhoodIndex)

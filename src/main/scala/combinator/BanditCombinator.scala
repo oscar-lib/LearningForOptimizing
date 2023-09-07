@@ -23,7 +23,7 @@ class BanditCombinator(l : List[Neighborhood],
   // private val shortTermNeighProbability : Array[Double] = Array.tabulate(nbNeigh)(i => longTermNeighProbability(i))
 
 
-  private val rand = new Random(1000)
+  private val rand = new Random(2000)
   private var authorizedNeighborhood : Array[Boolean] = Array.fill(nbNeigh)(true)
   private var nbAvailableNeigh = nbNeigh
   private var totalCurrentNeighWeight : Double = 1
@@ -63,12 +63,10 @@ class BanditCombinator(l : List[Neighborhood],
   override def getNextNeighborhood: Option[Neighborhood] = {
     if (nbAvailableNeigh == 0) {
       if (currentNbRestart == maxRestart) {
-        reinit
         currentNbRestart = 0
         None
       }
       else {
-        reinit
         currentNbRestart += 1
         Some(restartNeigh)
       }
@@ -89,7 +87,8 @@ class BanditCombinator(l : List[Neighborhood],
         case MoveFound(m) =>
           reinit
       }
-    }
+    } else
+        reinit
   }
 
 
