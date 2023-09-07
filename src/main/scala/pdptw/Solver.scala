@@ -1,6 +1,6 @@
 package pdptw
 
-import combinator.BestSlopeFirstLearningWay
+import combinator.{BestSlopeFirstLearningWay,BanditCombinator}
 import oscar.cbls._
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
 import oscar.cbls.business.routing.model.VRP
@@ -29,20 +29,21 @@ case class Solver(oscarModel: Model) {
 
 
   def solve(verbosity: Int): Unit = {
-//     val search =
-//       bestSlopeFirst(
-//         List(
-//           simpleNeighborhoods.couplePointInsertUnroutedFirst(pdptw.n/10,best = false),
-//           simpleNeighborhoods.couplePointMove(pdptw.n/10),
-//           simpleNeighborhoods.onePointMove(pdptw.n/10))
-//       ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),2,obj)
+    val neighList = List(
+      simpleNeighborhoods.couplePointInsertUnroutedFirst(10),
+      simpleNeighborhoods.couplePointInsertRoutedFirst(10),
+      simpleNeighborhoods.couplePointMove(10),
+      simpleNeighborhoods.onePointMove(10))
+    // val search =
+    //   bestSlopeFirst(
+    //     neighList
+    //   ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),2,obj)
+
+    // val search = new BanditCombinator(neighList,
+    //   simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),
+    //   5)
     val search =
-      new BestSlopeFirstLearningWay(
-        List(
-          simpleNeighborhoods.couplePointInsertUnroutedFirst(10),
-          simpleNeighborhoods.couplePointInsertRoutedFirst(10),
-          simpleNeighborhoods.couplePointMove(10),
-          simpleNeighborhoods.onePointMove(10))
+      new BestSlopeFirstLearningWay(neighList
       ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
 
     search.verbose = verbosity
