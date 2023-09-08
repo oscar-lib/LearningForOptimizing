@@ -36,14 +36,20 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
     val objValue = obj.value
     println(s"$objValue $bestKnown")
     val totalReward = 0.5 + (bestKnown - objValue).toDouble / (2 * bestKnown)
+    val totalRewardSig = 1/(1 + Math.exp(-5 * (totalReward - 0.5)))
     if (objValue < bestKnown)
       bestKnown = objValue
     val totalGain = neighStats.map(_.totalGain).sum
-    val res = Array.tabulate(nbNeigh)(i => neighStats(i).totalGain.toDouble * totalReward / totalGain)
+    val res = Array.tabulate(nbNeigh)(i => {
+      if (objValue < bestKnown)
+        neighStats(i).totalGain.toDouble * totalRewardSig / totalGain
+      else
+        (totalGain - neighStats(i).totalGain).toDouble * totalRewardSig/totalGain
+    })
     val totalRes = res.sum
     for (i <- 0 until nbNeigh)
       res(i) = res(i)/totalRes
-    println(s"reward: ${res.mkString(";")}")
+    println(s"reward: ${res.mkString(";")} (totalReward : $totalReward - $totalRewardSig)")
 
     res
   }
@@ -76,11 +82,11 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
       )
     }
     else {
-      // bestSlopeFirst(
-      //   neighList
-      // ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),2,obj)
-      new BestSlopeFirstLearningWay(neighList
-      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
+      bestSlopeFirst(
+        neighList
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),10,obj)
+      // new BestSlopeFirstLearningWay(neighList
+      // ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),10,obj)
 
     }
 

@@ -62,7 +62,7 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
         // and putting it in the tabu neighborhood list
         tabuNeighborhoodIndex = neighborhoodHeap.removeFirst():: tabuNeighborhoodIndex
       case MoveFound(_) =>
-        val profilingData = NeighborhoodUtils.getProfilingData(neighborhood)
+        val profilingData = NeighborhoodUtils.getProfiler(neighborhood)
         // Updating the slope of the neighborhood
         println(profilingData.gain)
         neighborhoodSlope(currentNeighborhoodIndex) = - (profilingData.gain * 1000)/Math.max(profilingData.timeSpentMillis,1)

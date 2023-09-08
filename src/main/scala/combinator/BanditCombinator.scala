@@ -112,7 +112,7 @@ class BanditCombinator(l : List[Neighborhood],
 
   override def learn(m: SearchResult, neighborhood: Neighborhood): Unit = {
     if (neighborhood != restartNeigh) {
-      val profilingData = NeighborhoodUtils.getProfilingData(neighborhood)
+      val profilingData = NeighborhoodUtils.getProfiler(neighborhood)
       val stats = neighStatistics(currentIndex)
       m match {
         case NoMoveFound =>
