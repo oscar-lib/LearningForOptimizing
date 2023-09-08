@@ -1,6 +1,6 @@
 package pdptw
 
-import combinator.{BestSlopeFirstLearningWay,BanditCombinator}
+import combinator.{BanditCombinator, BestSlopeFirstLearningWay}
 import oscar.cbls._
 import oscar.cbls.business.routing.display
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
@@ -8,6 +8,8 @@ import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.business.routing.model.helpers.DistanceHelper
 import oscar.cbls.business.routing.visu.RoutingMapTypes
 import combinator.NeighborhoodStatistics
+
+import scala.concurrent.duration.{Duration, DurationInt}
 
 case class Solver(oscarModel: Model,bandit : Boolean) {
   private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix
@@ -55,7 +57,8 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
   }
 
 
-  def solve(verbosity: Int, displaySolution: Boolean, fileName: String): Unit = {
+  def solve(verbosity: Int, displaySolution: Boolean, fileName: String, timeout: Int): Unit = {
+    val withTimeout = timeout < Int.MaxValue
     val displayDelay = 100 //ms
     val demoDisplay =
       if (displaySolution)
@@ -77,20 +80,22 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
     var search = if (bandit) {
       new BanditCombinator(neighList,
         simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),
-        15,
+        if(withTimeout) Int.MaxValue else 15,
         stats => rewardFunction(stats,neighList.length)
       )
     }
     else {
       bestSlopeFirst(
         neighList
-      ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),10,obj)
+      ) onExhaustRestartAfter (simpleNeighborhoods.emptyVehicle(),0,obj,
+        minRestarts = if(withTimeout)Int.MaxValue else 15)
       // new BestSlopeFirstLearningWay(neighList
       // ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),10,obj)
 
     }
 
     if(displaySolution) search = search.afterMove(demoDisplay.drawRoutes()).showObjectiveFunction(oscarModel.objectiveFunction)
+    if(withTimeout) search = search.weakTimeout(Duration(timeout,"second"))
     search.verbose = verbosity
     search.doAllMoves(obj = obj)
     if(displaySolution) demoDisplay.drawRoutes(force = true)

@@ -9,9 +9,18 @@ import scala.jdk.CollectionConverters.IteratorHasAsScala
 object main extends App {
 
   abstract class Config()
-  case class SolveInstanceConfig(instance: File = null, verbosity: Int = 0,bandit : Boolean = false, display: Boolean = false) extends Config()
-  case class SolveSeriesConfig(seriesSize: Int = 0, verbosity: Int = 0,bandit : Boolean = false) extends Config()
-  case class SolveAllConfig(verbosity: Int = 0,bandit : Boolean = false) extends Config()
+  case class SolveInstanceConfig(instance: File = null,
+                                 verbosity: Int = 0,
+                                 bandit : Boolean = false,
+                                 display: Boolean = false,
+                                 timeout: Int = Int.MaxValue) extends Config()
+  case class SolveSeriesConfig(seriesSize: Int = 0,
+                               verbosity: Int = 0,
+                               bandit : Boolean = false,
+                               timeout: Int = Int.MaxValue) extends Config()
+  case class SolveAllConfig(verbosity: Int = 0,
+                            bandit : Boolean = false,
+                            timeout: Int = Int.MaxValue) extends Config()
   case class NoConfig() extends Config()
 
   private val parser = new OptionParser[Config]("LearningForOptimizing") {
@@ -50,6 +59,12 @@ object main extends App {
           .action((x,c) => c match {
             case conf: SolveInstanceConfig => conf.copy(display = true)
             case _ => throw new Error("Unexpected Error")
+          }),
+        opt[Int]("timeout")
+          .text("Add a weak time out to the search")
+          .action((x,c) => c match {
+            case conf: SolveInstanceConfig => conf.copy(timeout = x)
+            case _ => throw new Error("Unexpected Error")
           })
       )
 
@@ -82,6 +97,12 @@ object main extends App {
           .action((x, c) => c match {
             case conf: SolveSeriesConfig => conf.copy(verbosity = x)
             case _ => throw new Error("Unexpected Error")
+          }),
+        opt[Int]("timeout")
+          .text("Add a weak time out to the search")
+          .action((x, c) => c match {
+            case conf: SolveInstanceConfig => conf.copy(timeout = x)
+            case _ => throw new Error("Unexpected Error")
           })
       )
 
@@ -107,15 +128,21 @@ object main extends App {
           .action((x,c) => c match {
             case conf:SolveAllConfig => conf.copy(bandit = true)
             case _ => throw new Error("Unexpected Error")
+          }),
+        opt[Int]("timeout")
+          .text("Add a weak time out to the search")
+          .action((x, c) => c match {
+            case conf: SolveInstanceConfig => conf.copy(timeout = x)
+            case _ => throw new Error("Unexpected Error")
           })
       )
   }
 
-  private def solveProblem(file: File, verbosity: Int, bandit : Boolean, display: Boolean): Unit = {
+  private def solveProblem(file: File, verbosity: Int, bandit : Boolean, display: Boolean, timeout: Int): Unit = {
     val instanceProblem: LiLimProblem = Parser(file)
     val oscarModel: Model = Model(instanceProblem)
     val solver: Solver = Solver(oscarModel,bandit)
-    solver.solve(verbosity,display,file.getName)
+    solver.solve(verbosity,display,file.getName,timeout)
   }
 
   parser.parse(args,NoConfig()) match {
@@ -125,18 +152,18 @@ object main extends App {
         case _: NoConfig =>
           println("Error: No Command Given")
           println("Try --help for more information")
-        case i: SolveInstanceConfig => solveProblem(i.instance, i.verbosity,i.bandit, i.display)
+        case i: SolveInstanceConfig => solveProblem(i.instance, i.verbosity,i.bandit, i.display, i.timeout)
 
         case s: SolveSeriesConfig =>
           val dir = new File(s"examples/pdptw_${s.seriesSize}")
           val files = dir.listFiles.filter(_.isFile)
-          files.foreach(x => solveProblem(x, s.verbosity,s.bandit, display = false))
+          files.foreach(x => solveProblem(x, s.verbosity,s.bandit, display = false, s.timeout))
 
         case a: SolveAllConfig =>
           val dir = new File(s"examples")
           val dirs = dir.listFiles
           val files = dirs.flatMap(_.listFiles.filter(_.isFile))
-          files.foreach(x => solveProblem(x, a.verbosity,a.bandit, display = false))
+          files.foreach(x => solveProblem(x, a.verbosity,a.bandit, display = false, a.timeout))
       }
   }
 }
