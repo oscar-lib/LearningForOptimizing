@@ -26,8 +26,8 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
   private var lastSelectedIdx: Int = -1; // index of the last selected neighborhood
 
   private var nTriesWithoutSuccess = 0; // number of last calls without any success
-  private var maxNTriesWithoutSuccess = 200; // thresholds for the number of last calls without any success
-  private var maxSlope = 0.0; // stores (and updates) the maximum slope ever observed
+  private val maxNTriesWithoutSuccess = 200; // thresholds for the number of last calls without any success
+  private var maxSlope = 1.0; // stores (and updates) the maximum slope ever observed
   private var maxRunTimeObserved: Long = 1; // max run time experienced by a neighborhood
 
   /** The method that provides a neighborhood.
@@ -47,8 +47,8 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
       neighborhood_idx = weights.zipWithIndex.maxBy(_._1)._2;
     } else {
       val cumulativeWeights = weights.scanLeft(0.0)(_ + _).tail
-      // Draw a random number between 0 and 1
-      val randomDraw = Random.nextDouble()
+      // Draw a random number between 0 and and sum of weights
+      val randomDraw = Random.nextDouble() * weights.sum
       // Find the interval into which the drawn number falls
       neighborhood_idx = cumulativeWeights.indexWhere(randomDraw <= _);
       if (neighborhood_idx == -1)
@@ -68,14 +68,15 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
     val improved = hasImproved(neighborhood)
     nTriesWithoutSuccess = if (improved) 0 else nTriesWithoutSuccess + 1;
     // updates the max run time observed
-    val lastDuration = neighborhood.profiler.commonProfilingData._lastCallDurationNano;
+    val lastDuration = NeighborhoodUtils.lastCallDuration(neighborhood);
     maxRunTimeObserved = Math.max(maxRunTimeObserved, lastDuration)
+    val r = reward(m, neighborhood)
     if (nSelected(lastSelectedIdx) == 1) {
       // initialize the average weight
-      weights(lastSelectedIdx) = reward(m, neighborhood);
+      weights(lastSelectedIdx) = r
     } else {
       // update average weight
-      weights(lastSelectedIdx) = weights(lastSelectedIdx) + (reward(m, neighborhood) - weights(lastSelectedIdx)) / nSelected(lastSelectedIdx);
+      weights(lastSelectedIdx) = weights(lastSelectedIdx) + (r - weights(lastSelectedIdx)) / nSelected(lastSelectedIdx);
     }
   }
 
@@ -132,7 +133,8 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
    * @return reward associated to the runtime of the last call of the neighborhood
    */
   private def rewardEff(m: SearchResult, neighborhood: Neighborhood): Double = {
-    1 - neighborhood.profiler.commonProfilingData._lastCallDurationNano / maxRunTimeObserved;
+    val duration = NeighborhoodUtils.lastCallDuration(neighborhood)
+    1.0 - duration.toDouble / maxRunTimeObserved.toDouble
   }
 
   /**
@@ -144,37 +146,8 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
    * @return reward associated to the slope found by the neighborhood
    */
   private def rewardSlope(m: SearchResult, neighborhood: Neighborhood): Double = {
-    val currentSlope = slope(neighborhood)
-    maxSlope = Math.max(maxSlope, currentSlope)
-    slope(neighborhood) / maxSlope
+    val currentSlope = NeighborhoodUtils.slope(neighborhood)
+    maxSlope = Math.max(maxSlope, Math.abs(currentSlope))
+    Math.abs(currentSlope / maxSlope)
   }
-
-  /**
-   * Gives the slope (gain over time) from a neighborhood
-   *
-   * @param neighborhood the neighborhood from which the slope must be computed
-   * @return slope from a neighborhood
-   */
-  private def slope(neighborhood: Neighborhood): Double = {
-    var slope = 0.0
-    // dear God, forgive me for my sins
-    neighborhood match {
-      // DynAndThen does not set correctly the profiler information, need to cast to retrieve it correctly
-      case n: NeighborhoodCombinator =>
-        if (n.subNeighborhoods.length == 1) {
-          n.subNeighborhoods.head match {
-            case dat: DynAndThen[_] =>
-              slope = - (dat.profiler.commonProfilingData.gain * 1000) / Math.max(dat.profiler.commonProfilingData.timeSpentMillis, 1)
-            case _ =>
-              slope = -(n.profiler.commonProfilingData.gain * 1000) / Math.max(neighborhood.profiler.commonProfilingData.timeSpentMillis, 1)
-          }
-        } else {
-          slope = -(n.profiler.commonProfilingData.gain * 1000) / Math.max(neighborhood.profiler.commonProfilingData.timeSpentMillis, 1)
-        }
-      case _ =>
-        slope = -(neighborhood.profiler.commonProfilingData.gain * 1000) / Math.max(neighborhood.profiler.commonProfilingData.timeSpentMillis, 1);
-    }
-    slope
-  }
-
 }
