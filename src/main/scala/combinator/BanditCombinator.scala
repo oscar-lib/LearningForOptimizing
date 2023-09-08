@@ -22,9 +22,12 @@ case class NeighborhoodStatistics(
  * aggrégation historique
  * Choix des voisinages
  */
-abstract class BanditCombinator(l : List[Neighborhood],
+class BanditCombinator(l : List[Neighborhood],
   restartNeigh : Neighborhood,
-  maxRestart : Int) extends AbstractLearningCombinator("BanditCombinator"){
+  maxRestart : Int,
+  computeReward : Array[NeighborhoodStatistics] => Array[Double],
+  ignoreFst : Boolean = true,
+) extends AbstractLearningCombinator("BanditCombinator"){
 
   private val nbNeigh : Int = l.length
 
@@ -38,6 +41,7 @@ abstract class BanditCombinator(l : List[Neighborhood],
   private var totalCurrentNeighWeight : Double = 1
   private var currentNbRestart = 0
   private var currentIndex = 0
+  private var nbConsideredRestart = 0
   protected val neighStatistics : Array[NeighborhoodStatistics] = Array.fill(nbNeigh)(NeighborhoodStatistics())
 
   private def reinitStats : Unit = {
@@ -53,12 +57,17 @@ abstract class BanditCombinator(l : List[Neighborhood],
 
   @tailrec
   private def getIndex(proba : Double,res : Int,accu : Double) : Int = {
-    val nextIndex = if (res == nbNeigh) 0 else res + 1
+    //println(s"$proba $accu $res ${authorizedNeighborhood(res)} ${neighProbability.mkString(";")}")
+    val nextIndex = if (res >= nbNeigh - 1) 0 else res + 1
     if (authorizedNeighborhood(res)) {
       if (neighProbability(res) + accu > proba)
         res
-      else
-        getIndex(proba,nextIndex,accu + neighProbability(res))
+      else {
+        if (neighProbability(res) == 0)
+          getIndex(proba,nextIndex,accu + 0.1)
+        else
+          getIndex(proba,nextIndex,accu + neighProbability(res))
+      }
     } else {
       getIndex(proba,nextIndex,accu)
     }
@@ -66,6 +75,7 @@ abstract class BanditCombinator(l : List[Neighborhood],
 
   private def getNextIndex : Int = {
     val nextFloat = rand.nextDouble() * totalCurrentNeighWeight
+    //println("GetIndex")
     getIndex(nextFloat,0,0)
   }
 
@@ -92,11 +102,13 @@ abstract class BanditCombinator(l : List[Neighborhood],
     }
   }
 
-  def updateProbability(reward : Array[Int]) : Unit = {
-
+  def updateProbability(reward : Array[Double]) : Unit = {
+    for (i <- 0 until nbNeigh) neighProbability(i) = (neighProbability(i) * nbConsideredRestart + reward(i))/(nbConsideredRestart + 1)
+    println(neighProbability.mkString(";"))
+    nbConsideredRestart += 1
   }
 
-  def rewardPerNeighborhood : Array[Int]
+  // def rewardPerNeighborhood : Array[Int]
 
   override def learn(m: SearchResult, neighborhood: Neighborhood): Unit = {
     if (neighborhood != restartNeigh) {
@@ -125,13 +137,10 @@ abstract class BanditCombinator(l : List[Neighborhood],
           reinitTabu
       }
     } else {
-      updateProbability(rewardPerNeighborhood)
+      if (!ignoreFst || currentNbRestart > 1)
+        updateProbability(computeReward(neighStatistics).toArray)
       reinitTabu
     }
   }
 
-
-
-
 }
-
