@@ -6,7 +6,8 @@ import oscar.cbls.business.routing.invariants.global.RouteLength
 import oscar.cbls.business.routing.invariants.timeWindow.{TimeWindowConstraint, TransferFunction}
 import oscar.cbls.business.routing.invariants.vehicleCapacity.GlobalVehicleCapacityConstraint
 import oscar.cbls.business.routing.model.VRP
-import oscar.cbls.business.routing.vehicleOfNodes
+import oscar.cbls.business.routing.model.extensions.Chains
+import oscar.cbls.business.routing.{ChainsHelper, vehicleOfNodes}
 import oscar.cbls.core.objective.CascadingObjective
 import oscar.cbls.lib.constraint.EQ
 import oscar.cbls.lib.invariant.seq.Precedence
@@ -91,10 +92,11 @@ class Model(liLimProblem: LiLimProblem) {
 
   // Precedences data
   val precedences: List[(Int,Int)] = liLimProblem.demands.map(d => (d.fromNodeId+v-1,d.toNodeId+v-1))
-  val pickupPointToDeliveryPoint: HashMap[Int,Int] = HashMap.from(precedences)
-  val deliveryPointToPickupPoint: HashMap[Int,Int] = HashMap.from(precedences.map(couple => (couple._2,couple._1)))
-  val isPickupPoint: Array[Boolean] = Array.tabulate(n)(node => if (node < v) false else pickupPointToDeliveryPoint.keys.exists(_ == node))
-  val isDeliveryPoint: Array[Boolean] = Array.tabulate(n)(node => if (node < v) false else deliveryPointToPickupPoint.keys.exists(_ == node))
+  val chains: Chains = new Chains(pdpProblem,precedences.map(p => List(p._1,p._2)))
+  def pickupPointToDeliveryPoint(pickup: Int): Int = chains.lastNodeInChainOfNode(pickup)
+  def deliveryPointToPickupPoint(delivery: Int): Int = chains.firstNodeInChainOfNode(delivery)
+  def isPickupPoint(node: Int): Boolean = chains.isHead(node)
+  def isDeliveryPoint(node: Int): Boolean = chains.isLast(node)
 	// Constraint
   val precedenceInvariant: Precedence = precedence(pdpProblem.routes, precedences)
   // Ensuring that pickup and dropoff node are on same vehicle.
