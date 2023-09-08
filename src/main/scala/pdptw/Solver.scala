@@ -55,13 +55,13 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
         5)
     }
     else {
-      bestSlopeFirst(
-        neighList
-      ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),2,obj)
+      // bestSlopeFirst(
+      //   neighList
+      // ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(),2,obj)
+      new BestSlopeFirstLearningWay(neighList
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
+
     }
-      //   val search =
-      // new BestSlopeFirstLearningWay(neighList
-      // ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),5,obj)
 
     if(displaySolution) search = search.afterMove(demoDisplay.drawRoutes()).showObjectiveFunction(oscarModel.objectiveFunction)
     search.verbose = verbosity

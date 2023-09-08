@@ -6,21 +6,23 @@ import oscar.cbls.core.search.NoMoveFound
 import oscar.cbls.core.search.MoveFound
 import scala.util.Random
 import scala.annotation.tailrec
+import oscar.cbls.core.computation.IntValue
 
 
 case class NeighborhoodStatistics(
-  nbCall : Int,
-  nbFound : Int,
-  nbNotFound : Int,
-  totalTime : Long,
-  totalGain : Long)
+  nbCall : Int = 0,
+  nbFound : Int = 0,
+  nbNotFound : Int = 0,
+  totalTimeNano : Long = 0,
+  totalTimeNotFoundNano : Long = 0,
+  totalGain : Long = 0)
 
 /*
  * Score
  * aggrégation historique
  * Choix des voisinages
  */
-class BanditCombinator(l : List[Neighborhood],
+abstract class BanditCombinator(l : List[Neighborhood],
   restartNeigh : Neighborhood,
   maxRestart : Int) extends AbstractLearningCombinator("BanditCombinator"){
 
@@ -30,15 +32,20 @@ class BanditCombinator(l : List[Neighborhood],
   // private val shortTermNeighProbability : Array[Double] = Array.tabulate(nbNeigh)(i => longTermNeighProbability(i))
 
 
-  private val rand = new Random(2000)
+  private val rand = new Random(3000)
   private var authorizedNeighborhood : Array[Boolean] = Array.fill(nbNeigh)(true)
   private var nbAvailableNeigh = nbNeigh
   private var totalCurrentNeighWeight : Double = 1
   private var currentNbRestart = 0
   private var currentIndex = 0
-  protected val neighStatistics : Array[NeighborhoodStatistics] = Array.fill(nbNeigh)(NeighborhoodStatistics(0,0,0,0,0))
+  protected val neighStatistics : Array[NeighborhoodStatistics] = Array.fill(nbNeigh)(NeighborhoodStatistics())
 
-  private def reinit : Unit = {
+  private def reinitStats : Unit = {
+    for (i <- 0 until nbNeigh)
+      neighStatistics(i) = NeighborhoodStatistics()
+  }
+
+  private def reinitTabu : Unit = {
     nbAvailableNeigh = nbNeigh
     totalCurrentNeighWeight = 1
     for (i <- 0 until nbNeigh) authorizedNeighborhood(i) = true
@@ -85,18 +92,42 @@ class BanditCombinator(l : List[Neighborhood],
     }
   }
 
+  def updateProbability(reward : Array[Int]) : Unit = {
 
+  }
+
+  def rewardPerNeighborhood : Array[Int]
 
   override def learn(m: SearchResult, neighborhood: Neighborhood): Unit = {
     if (neighborhood != restartNeigh) {
+      val profilingData = NeighborhoodUtils.getProfilingData(neighborhood)
+      val stats = neighStatistics(currentIndex)
       m match {
         case NoMoveFound =>
+          neighStatistics(currentIndex) =
+            NeighborhoodStatistics(stats.nbCall + 1,
+              stats.nbFound,
+              stats.nbNotFound + 1,
+              stats.totalTimeNano + profilingData._lastCallDurationNano,
+              stats.totalTimeNotFoundNano + profilingData._lastCallDurationNano,
+              stats.totalGain + profilingData._lastCallGain)
           addToTabu(currentIndex)
         case MoveFound(m) =>
-          reinit
+          neighStatistics(currentIndex) =
+            NeighborhoodStatistics(
+              stats.nbCall + 1,
+              stats.nbFound + 1,
+              stats.nbNotFound,
+              stats.totalTimeNano + profilingData._lastCallDurationNano,
+              stats.totalTimeNotFoundNano + profilingData._lastCallDurationNano,
+              stats.totalGain + profilingData._lastCallGain
+          )
+          reinitTabu
       }
-    } else
-        reinit
+    } else {
+      updateProbability(rewardPerNeighborhood)
+      reinitTabu
+    }
   }
 
 

@@ -106,7 +106,6 @@ class Model(liLimProblem: LiLimProblem) {
   // Ensuring that dropOff node follows pickUp node
   precedencesConstraints.add(EQ(0, precedenceInvariant))
 
-
   private def generateObjectiveFunction(vrp: VRP): Objective = {
     // To avoid empty route
     val unroutedNodePenalty = 1000000000

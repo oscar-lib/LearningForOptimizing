@@ -62,8 +62,10 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
         // and putting it in the tabu neighborhood list
         tabuNeighborhoodIndex = neighborhoodHeap.removeFirst():: tabuNeighborhoodIndex
       case MoveFound(_) =>
+        val profilingData = NeighborhoodUtils.getProfilingData(neighborhood)
         // Updating the slope of the neighborhood
-        neighborhoodSlope(currentNeighborhoodIndex) = - (neighborhood.profiler.commonProfilingData.gain * 1000)/Math.max(neighborhood.profiler.commonProfilingData.timeSpentMillis,1)
+        println(profilingData.gain)
+        neighborhoodSlope(currentNeighborhoodIndex) = - (profilingData.gain * 1000)/Math.max(profilingData.timeSpentMillis,1)
         // Notifying the heap so that it updates the positions
         neighborhoodHeap.notifyChange(currentNeighborhoodIndex)
         // Resetting the tabu list (maybe the last move deblocked some of them)
