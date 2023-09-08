@@ -254,12 +254,9 @@ case class SimpleNeighborhoods(pdptw: VRP,
 
   // Removes all couples of several vehicles (random vehicle selection)
   def emptyMultiplesVehicle(nbOfVehicleToEmpty: Int): Neighborhood = {
-    println("toto")
-    println(nbOfVehicleToEmpty)
-    println(oscarModel.movingVehiclesInvariant.value)
     Atomic(emptyVehicle(),nbIt => {
-      println(oscarModel.pdpProblem)
-      println(nbIt)
+      // println(oscarModel.pdpProblem)
+      // println(nbIt)
       nbIt >= nbOfVehicleToEmpty
     })
   }

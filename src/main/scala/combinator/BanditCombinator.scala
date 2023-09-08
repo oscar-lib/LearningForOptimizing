@@ -6,14 +6,16 @@ import oscar.cbls.core.search.NoMoveFound
 import oscar.cbls.core.search.MoveFound
 import scala.util.Random
 import scala.annotation.tailrec
+import oscar.cbls.core.computation.IntValue
 
 
 case class NeighborhoodStatistics(
-  nbCall : Int,
-  nbFound : Int,
-  nbNotFound : Int,
-  totalTime : Long,
-  totalGain : Long)
+  nbCall : Int = 0,
+  nbFound : Int = 0,
+  nbNotFound : Int = 0,
+  totalTimeNano : Long = 0,
+  totalTimeNotFoundNano : Long = 0,
+  totalGain : Long = 0)
 
 /*
  * Score
@@ -22,7 +24,10 @@ case class NeighborhoodStatistics(
  */
 class BanditCombinator(l : List[Neighborhood],
   restartNeigh : Neighborhood,
-  maxRestart : Int) extends AbstractLearningCombinator("BanditCombinator"){
+  maxRestart : Int,
+  computeReward : Array[NeighborhoodStatistics] => Array[Double],
+  ignoreFst : Boolean = true,
+) extends AbstractLearningCombinator("BanditCombinator"){
 
   private val nbNeigh : Int = l.length
 
@@ -30,15 +35,21 @@ class BanditCombinator(l : List[Neighborhood],
   // private val shortTermNeighProbability : Array[Double] = Array.tabulate(nbNeigh)(i => longTermNeighProbability(i))
 
 
-  private val rand = new Random(2000)
+  private val rand = new Random(3000)
   private var authorizedNeighborhood : Array[Boolean] = Array.fill(nbNeigh)(true)
   private var nbAvailableNeigh = nbNeigh
   private var totalCurrentNeighWeight : Double = 1
   private var currentNbRestart = 0
   private var currentIndex = 0
-  protected val neighStatistics : Array[NeighborhoodStatistics] = Array.fill(nbNeigh)(NeighborhoodStatistics(0,0,0,0,0))
+  private var nbConsideredRestart = 0
+  protected val neighStatistics : Array[NeighborhoodStatistics] = Array.fill(nbNeigh)(NeighborhoodStatistics())
 
-  private def reinit : Unit = {
+  private def reinitStats : Unit = {
+    for (i <- 0 until nbNeigh)
+      neighStatistics(i) = NeighborhoodStatistics()
+  }
+
+  private def reinitTabu : Unit = {
     nbAvailableNeigh = nbNeigh
     totalCurrentNeighWeight = 1
     for (i <- 0 until nbNeigh) authorizedNeighborhood(i) = true
@@ -46,12 +57,17 @@ class BanditCombinator(l : List[Neighborhood],
 
   @tailrec
   private def getIndex(proba : Double,res : Int,accu : Double) : Int = {
-    val nextIndex = if (res == nbNeigh) 0 else res + 1
+    //println(s"$proba $accu $res ${authorizedNeighborhood(res)} ${neighProbability.mkString(";")}")
+    val nextIndex = if (res >= nbNeigh - 1) 0 else res + 1
     if (authorizedNeighborhood(res)) {
       if (neighProbability(res) + accu > proba)
         res
-      else
-        getIndex(proba,nextIndex,accu + neighProbability(res))
+      else {
+        if (neighProbability(res) == 0)
+          getIndex(proba,nextIndex,accu + 0.1)
+        else
+          getIndex(proba,nextIndex,accu + neighProbability(res))
+      }
     } else {
       getIndex(proba,nextIndex,accu)
     }
@@ -59,6 +75,7 @@ class BanditCombinator(l : List[Neighborhood],
 
   private def getNextIndex : Int = {
     val nextFloat = rand.nextDouble() * totalCurrentNeighWeight
+    //println("GetIndex")
     getIndex(nextFloat,0,0)
   }
 
@@ -85,22 +102,45 @@ class BanditCombinator(l : List[Neighborhood],
     }
   }
 
+  def updateProbability(reward : Array[Double]) : Unit = {
+    for (i <- 0 until nbNeigh) neighProbability(i) = (neighProbability(i) * nbConsideredRestart + reward(i))/(nbConsideredRestart + 1)
+    println(neighProbability.mkString(";"))
+    nbConsideredRestart += 1
+  }
 
+  // def rewardPerNeighborhood : Array[Int]
 
   override def learn(m: SearchResult, neighborhood: Neighborhood): Unit = {
     if (neighborhood != restartNeigh) {
+      val profilingData = NeighborhoodUtils.getProfiler(neighborhood)
+      val stats = neighStatistics(currentIndex)
       m match {
         case NoMoveFound =>
+          neighStatistics(currentIndex) =
+            NeighborhoodStatistics(stats.nbCall + 1,
+              stats.nbFound,
+              stats.nbNotFound + 1,
+              stats.totalTimeNano + profilingData._lastCallDurationNano,
+              stats.totalTimeNotFoundNano + profilingData._lastCallDurationNano,
+              stats.totalGain + profilingData._lastCallGain)
           addToTabu(currentIndex)
         case MoveFound(m) =>
-          reinit
+          neighStatistics(currentIndex) =
+            NeighborhoodStatistics(
+              stats.nbCall + 1,
+              stats.nbFound + 1,
+              stats.nbNotFound,
+              stats.totalTimeNano + profilingData._lastCallDurationNano,
+              stats.totalTimeNotFoundNano + profilingData._lastCallDurationNano,
+              stats.totalGain + profilingData._lastCallGain
+          )
+          reinitTabu
       }
-    } else
-        reinit
+    } else {
+      if (!ignoreFst || currentNbRestart > 1)
+        updateProbability(computeReward(neighStatistics).toArray)
+      reinitTabu
+    }
   }
 
-
-
-
 }
-
