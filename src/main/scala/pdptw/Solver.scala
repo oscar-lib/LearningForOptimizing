@@ -1,6 +1,6 @@
 package pdptw
 
-import combinator.{BanditCombinator, BestSlopeFirstLearningWay, EpsilonGreedyBandit, NeighborhoodStatistics}
+import combinator.{BanditCombinator, BestSlopeFirstLearningWay, RandomCombinator, EpsilonGreedyBandit, NeighborhoodStatistics}
 import oscar.cbls._
 import oscar.cbls.business.routing.display
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
@@ -95,6 +95,10 @@ case class Solver(oscarModel: Model, bandit: String) {
         neighList
       ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case "random" =>
+        new RandomCombinator(neighList
+        ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(), 0, obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15)
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(

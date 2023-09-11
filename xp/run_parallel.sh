@@ -1,6 +1,6 @@
 # run the experiments in parallel, using as many CPU cores as available
 # supposed to be called at the root of the project
-declare -a BanditType=("epsilonGreedy" "bestSlopeFirst" "bandit")
+declare -a BanditType=("epsilonGreedy" "bestSlopeFirst" "bandit" "random")
 timeout=300  # timeout in seconds
 nRuns=10   # number of time an instance is run (to take randomness into account)
 myDate=`printf '%(%Y-%m-%d_%H_%M_%S)T\n' -1`
