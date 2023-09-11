@@ -190,7 +190,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
   // Insert a couple of node using the onePointInsertUnroutedFirst for both pickup and it's delivery
   def couplePointInsertUnroutedFirst(k: Int,
                                      pickUpPointsToInsert: () => Iterable[Int] = unRoutedPickups,
-                                     hotRestart: Boolean = false,
+    hotRestart: Boolean = false,
                                      best: Boolean = false): Neighborhood = {
     dynAndThen(pickupInsertUnroutedFirst(k, pickUpPointsToInsert, hotRestart, best), (move: InsertPointMove) => {
       val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.insertedPoint)

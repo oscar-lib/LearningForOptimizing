@@ -35,20 +35,25 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
 
   def rewardFunction(neighStats : Array[NeighborhoodStatistics],nbNeigh : Int) : Array[Double] = {
     println("Compute Reward")
+    println(neighStats.mkString(";"))
     val objValue = obj.value
     println(s"$objValue $bestKnown")
     val totalReward = 0.5 + (bestKnown - objValue).toDouble / (2 * bestKnown)
     val totalRewardSig = 1/(1 + Math.exp(-5 * (totalReward - 0.5)))
-    if (objValue < bestKnown)
-      bestKnown = objValue
     val totalGain = neighStats.map(_.totalGain).sum
     val res = Array.tabulate(nbNeigh)(i => {
-      if (objValue < bestKnown)
+      if (objValue < bestKnown) {
+        println("Best")
         neighStats(i).totalGain.toDouble * totalRewardSig / totalGain
-      else
+      }
+      else {
+        println("Not Best")
         (totalGain - neighStats(i).totalGain).toDouble * totalRewardSig/totalGain
+      }
     })
     val totalRes = res.sum
+    if (objValue < bestKnown)
+      bestKnown = objValue
     for (i <- 0 until nbNeigh)
       res(i) = res(i)/totalRes
     println(s"reward: ${res.mkString(";")} (totalReward : $totalReward - $totalRewardSig)")
@@ -81,8 +86,9 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
       new BanditCombinator(neighList,
         simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),
         if(withTimeout) Int.MaxValue else 15,
+        obj,
         stats => rewardFunction(stats,neighList.length)
-      )
+      )// saveBestAndRestoreOnExhaust(obj)
     }
     else {
       bestSlopeFirst(
@@ -95,7 +101,7 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
     }
 
     if(displaySolution) search = search.afterMove(demoDisplay.drawRoutes()).showObjectiveFunction(oscarModel.objectiveFunction)
-    if(withTimeout) search = search.weakTimeout(Duration(timeout,"second"))
+    if(withTimeout) search = (search.weakTimeout(Duration(timeout,"second"))) saveBestAndRestoreOnExhaust(obj)
     search.verbose = verbosity
     search.doAllMoves(obj = obj)
     if(displaySolution) demoDisplay.drawRoutes(force = true)

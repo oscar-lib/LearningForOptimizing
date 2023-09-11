@@ -7,6 +7,7 @@ import oscar.cbls.core.search.MoveFound
 import scala.util.Random
 import scala.annotation.tailrec
 import oscar.cbls.core.computation.IntValue
+import oscar.cbls.core.objective.Objective
 
 
 case class NeighborhoodStatistics(
@@ -25,11 +26,15 @@ case class NeighborhoodStatistics(
 class BanditCombinator(l : List[Neighborhood],
   restartNeigh : Neighborhood,
   maxRestart : Int,
+  obj : Objective,
   computeReward : Array[NeighborhoodStatistics] => Array[Double],
   ignoreFst : Boolean = true,
 ) extends AbstractLearningCombinator("BanditCombinator"){
 
   private val nbNeigh : Int = l.length
+
+  // private var bestSolution = obj.model.solution(true)
+  // private var bestKnown = obj.value
 
   private val neighProbability : Array[Double] = Array.fill(nbNeigh)(1D/ nbNeigh)
   // private val shortTermNeighProbability : Array[Double] = Array.tabulate(nbNeigh)(i => longTermNeighProbability(i))
@@ -89,6 +94,7 @@ class BanditCombinator(l : List[Neighborhood],
     if (nbAvailableNeigh == 0) {
       if (currentNbRestart == maxRestart) {
         currentNbRestart = 0
+        // obj.model.restoreSolution(bestSolution)
         None
       }
       else {
@@ -103,7 +109,8 @@ class BanditCombinator(l : List[Neighborhood],
   }
 
   def updateProbability(reward : Array[Double]) : Unit = {
-    for (i <- 0 until nbNeigh) neighProbability(i) = (neighProbability(i) * nbConsideredRestart + reward(i))/(nbConsideredRestart + 1)
+    println(neighProbability.mkString(";"))
+    for (i <- 0 until nbNeigh) neighProbability(i) = (neighProbability(i) * (nbConsideredRestart + 1) + reward(i))/(nbConsideredRestart + 2)
     println(neighProbability.mkString(";"))
     nbConsideredRestart += 1
   }
@@ -137,6 +144,10 @@ class BanditCombinator(l : List[Neighborhood],
           reinitTabu
       }
     } else {
+      // if (obj.value < bestKnown) {
+      //   bestKnown = obj.value
+      //   bestSolution = obj.model.solution(true)
+      // }
       if (!ignoreFst || currentNbRestart > 1)
         updateProbability(computeReward(neighStatistics).toArray)
       reinitTabu
