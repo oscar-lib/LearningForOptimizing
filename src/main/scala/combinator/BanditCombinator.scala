@@ -4,6 +4,7 @@ import oscar.cbls.core.search.Neighborhood
 import oscar.cbls.core.search.SearchResult
 import oscar.cbls.core.search.NoMoveFound
 import oscar.cbls.core.search.MoveFound
+
 import scala.util.Random
 import scala.annotation.tailrec
 import oscar.cbls.core.computation.IntValue
@@ -29,7 +30,7 @@ class BanditCombinator(l : List[Neighborhood],
   obj : Objective,
   computeReward : Array[NeighborhoodStatistics] => Array[Double],
   ignoreFst : Boolean = true,
-) extends AbstractLearningCombinator("BanditCombinator"){
+) extends AbstractLearningCombinator("BanditCombinator", l: _*){
 
   private val nbNeigh : Int = l.length
 
@@ -109,9 +110,9 @@ class BanditCombinator(l : List[Neighborhood],
   }
 
   def updateProbability(reward : Array[Double]) : Unit = {
-    println(neighProbability.mkString(";"))
+    println("Probabilities before applying rewards : " + neighProbability.mkString(";"))
     for (i <- 0 until nbNeigh) neighProbability(i) = (neighProbability(i) * (nbConsideredRestart + 1) + reward(i))/(nbConsideredRestart + 2)
-    println(neighProbability.mkString(";"))
+    println("Probabilities after applying rewards : " + neighProbability.mkString(";"))
     nbConsideredRestart += 1
   }
 
@@ -138,7 +139,7 @@ class BanditCombinator(l : List[Neighborhood],
               stats.nbFound + 1,
               stats.nbNotFound,
               stats.totalTimeNano + profilingData._lastCallDurationNano,
-              stats.totalTimeNotFoundNano + profilingData._lastCallDurationNano,
+              stats.totalTimeNotFoundNano,
               stats.totalGain + profilingData._lastCallGain
           )
           reinitTabu

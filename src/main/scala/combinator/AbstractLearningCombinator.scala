@@ -20,7 +20,7 @@ import scala.annotation.tailrec
   * @param name The name of the Combinator
   */
 
-abstract class AbstractLearningCombinator(name : String) extends Neighborhood(name) {
+abstract class AbstractLearningCombinator(name : String, neighborhoods: Neighborhood*) extends NeighborhoodCombinator(neighborhoods: _*) {
 
   /** The method that provides a neighborhood.
     *

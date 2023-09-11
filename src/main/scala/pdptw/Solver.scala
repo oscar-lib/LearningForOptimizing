@@ -78,9 +78,20 @@ case class Solver(oscarModel: Model, bandit: String) {
 
     val neighList = List(
       simpleNeighborhoods.couplePointInsertUnroutedFirst(10),
+      simpleNeighborhoods.couplePointInsertUnroutedFirst(10,best = true),
       simpleNeighborhoods.couplePointInsertRoutedFirst(10),
+      simpleNeighborhoods.couplePointInsertRoutedFirst(10,best = true),
       simpleNeighborhoods.couplePointMove(10),
-      simpleNeighborhoods.onePointMove(10))
+      simpleNeighborhoods.couplePointMove(10, best = true),
+      simpleNeighborhoods.onePointMove(10),
+      simpleNeighborhoods.onePointMove(10, best = true),
+      /*simpleNeighborhoods.doubleCouplePointMove(2),
+      simpleNeighborhoods.doubleCouplePointMove(2,best = true),
+      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2),
+      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2,best = true),*/
+      simpleNeighborhoods.segmentExchanges(pdptw.n),
+      simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
+    )
     var search = bandit.toLowerCase() match {
       case "bandit" => new BanditCombinator(neighList,
         simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
@@ -118,6 +129,7 @@ case class Solver(oscarModel: Model, bandit: String) {
       println(pdptw.toString())
       println(obj)
     }
+    search.profilingOnConsole()
     println(oscarModel.toString)
   }
 
