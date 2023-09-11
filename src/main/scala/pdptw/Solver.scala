@@ -1,21 +1,20 @@
 package pdptw
 
-import combinator.{BanditCombinator, BestSlopeFirstLearningWay}
+import combinator.{BanditCombinator, BestSlopeFirstLearningWay, EpsilonGreedyBandit, NeighborhoodStatistics}
 import oscar.cbls._
 import oscar.cbls.business.routing.display
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.business.routing.model.helpers.DistanceHelper
 import oscar.cbls.business.routing.visu.RoutingMapTypes
-import combinator.NeighborhoodStatistics
 
 import scala.concurrent.duration.{Duration, DurationInt}
 
-case class Solver(oscarModel: Model,bandit : Boolean) {
+case class Solver(oscarModel: Model, bandit: String) {
   private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix
   private val pdptw: VRP = oscarModel.pdpProblem
   private val obj: Objective = oscarModel.objectiveFunction
-  private var bestKnown : Long = obj.value
+  private var bestKnown: Long = obj.value
 
   // Relevant predecessors definition for each node (here any node can be the predecessor of another node)
   val relevantPredecessorsOfNodes =
@@ -33,13 +32,13 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
 
   private val simpleNeighborhoods = SimpleNeighborhoods(pdptw, oscarModel, closestRelevantPredecessorsByDistance, closestRelevantSuccessorsByDistance)
 
-  def rewardFunction(neighStats : Array[NeighborhoodStatistics],nbNeigh : Int) : Array[Double] = {
+  def rewardFunction(neighStats: Array[NeighborhoodStatistics], nbNeigh: Int): Array[Double] = {
     println("Compute Reward")
     println(neighStats.mkString(";"))
     val objValue = obj.value
     println(s"$objValue $bestKnown")
     val totalReward = 0.5 + (bestKnown - objValue).toDouble / (2 * bestKnown)
-    val totalRewardSig = 1/(1 + Math.exp(-5 * (totalReward - 0.5)))
+    val totalRewardSig = 1 / (1 + Math.exp(-5 * (totalReward - 0.5)))
     val totalGain = neighStats.map(_.totalGain).sum
     val res = Array.tabulate(nbNeigh)(i => {
       if (objValue < bestKnown) {
@@ -48,14 +47,14 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
       }
       else {
         println("Not Best")
-        (totalGain - neighStats(i).totalGain).toDouble * totalRewardSig/totalGain
+        (totalGain - neighStats(i).totalGain).toDouble * totalRewardSig / totalGain
       }
     })
     val totalRes = res.sum
     if (objValue < bestKnown)
       bestKnown = objValue
     for (i <- 0 until nbNeigh)
-      res(i) = res(i)/totalRes
+      res(i) = res(i) / totalRes
     println(s"reward: ${res.mkString(";")} (totalReward : $totalReward - $totalRewardSig)")
 
     res
@@ -82,31 +81,35 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
       simpleNeighborhoods.couplePointInsertRoutedFirst(10),
       simpleNeighborhoods.couplePointMove(10),
       simpleNeighborhoods.onePointMove(10))
-    var search = if (bandit) {
-      new BanditCombinator(neighList,
-        simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),
-        if(withTimeout) Int.MaxValue else 15,
+    var search = bandit.toLowerCase() match {
+      case "bandit" => new BanditCombinator(neighList,
+        simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+        if (withTimeout) Int.MaxValue else 15,
         obj,
-        stats => rewardFunction(stats,neighList.length)
-      )// saveBestAndRestoreOnExhaust(obj)
-    }
-    else {
-      bestSlopeFirst(
+        stats => rewardFunction(stats, neighList.length)
+      )
+      case "epsilongreedy" => new EpsilonGreedyBandit(neighList
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(), 0, obj,
+        minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case "bestslopefirst" => bestSlopeFirst(
         neighList
-      ) onExhaustRestartAfter (simpleNeighborhoods.emptyVehicle(),0,obj,
-        minRestarts = if(withTimeout)Int.MaxValue else 15)
-      // new BestSlopeFirstLearningWay(neighList
-      // ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),10,obj)
-
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(), 0, obj,
+        minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case _ =>
+        println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
+        bestSlopeFirst(
+          neighList
+        ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(), 0, obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15)
     }
 
-    if(displaySolution) search = search.afterMove(demoDisplay.drawRoutes()).showObjectiveFunction(oscarModel.objectiveFunction)
-    if(withTimeout) search = (search.weakTimeout(Duration(timeout,"second"))) saveBestAndRestoreOnExhaust(obj)
+    if (displaySolution) search = search.afterMove(demoDisplay.drawRoutes()).showObjectiveFunction(oscarModel.objectiveFunction)
+    if (withTimeout) search = (search.weakTimeout(Duration(timeout, "second"))) saveBestAndRestoreOnExhaust (obj)
     search.verbose = verbosity
     search.doAllMoves(obj = obj)
-    if(displaySolution) demoDisplay.drawRoutes(force = true)
+    if (displaySolution) demoDisplay.drawRoutes(force = true)
 
-    if(verbosity > 1) {
+    if (verbosity > 1) {
       search.profilingOnConsole()
       println(pdptw.toString())
       println(obj)
