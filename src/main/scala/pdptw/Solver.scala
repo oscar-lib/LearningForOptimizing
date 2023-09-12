@@ -37,6 +37,28 @@ case class Solver(oscarModel: Model, bandit: String) {
     println(neighStats.mkString(";"))
     val objValue = obj.value
     println(s"$objValue $bestKnown")
+    val totalReward = 0.5 + (bestKnown - objValue).toDouble / (2 * bestKnown)
+    val totalRewardSig = 1 / (1 + Math.exp(-5 * (totalReward - 0.5)))
+    val totalGain = neighStats.map(_.totalGain).sum
+    val res = Array.tabulate(nbNeigh)(i => {
+      if (objValue < bestKnown) neighStats(i).totalGain.toDouble * totalRewardSig / totalGain
+      else (totalGain - neighStats(i).totalGain).toDouble * totalRewardSig / totalGain
+    })
+    val totalRes = res.sum
+    if (objValue < bestKnown)
+      bestKnown = objValue
+    for (i <- 0 until nbNeigh)
+      res(i) = res(i) / totalRes
+    println(s"reward: ${res.mkString(";")} (totalReward : $totalReward - $totalRewardSig)")
+
+    res
+  }
+
+  def rewardFunctionAfterMove(neighStats: Array[NeighborhoodStatistics], nbNeigh: Int): Array[Double] = {
+//    println("Compute Reward")
+//    println(neighStats.mkString(";"))
+    val objValue = obj.value
+//    println(s"$objValue $bestKnown")
     var totalReward = 1
 //    if (objValue < bestKnown) {
 //      totalReward = 1
@@ -48,7 +70,7 @@ case class Solver(oscarModel: Model, bandit: String) {
       bestKnown = objValue
     var res = Array.fill(nbNeigh)(0.0)
     for (i <- 0 until nbNeigh) {
-      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
+//      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
       if (neighStats(i).nbFound > 0) {
         res(i) = res(i) + totalReward
       } else if (neighStats(i).nbNotFound > 0) {
@@ -75,7 +97,7 @@ case class Solver(oscarModel: Model, bandit: String) {
 //        res(i) = res(i) + tr
 //      }
 //    }
-    println(s"reward: ${res.mkString(";")} (totalReward : $totalReward)")
+//    println(s"reward: ${res.mkString(";")} (totalReward : $totalReward)")
 
     res
   }
@@ -118,6 +140,13 @@ case class Solver(oscarModel: Model, bandit: String) {
         obj,
         stats => rewardFunction(stats, neighList.length)
       ) //saveBestAndRestoreOnExhaust(obj)
+      case "banditaftermove" => new BanditCombinator(neighList,
+        simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+        if (withTimeout) Int.MaxValue else 15,
+        obj,
+        stats => rewardFunctionAfterMove(stats, neighList.length),
+        afterMove = true
+      )
       case "banditrollingaverage" => new BanditCombinator(neighList,
         simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
         if (withTimeout) Int.MaxValue else 15,

@@ -27,6 +27,7 @@ class BanditCombinator(l : List[Neighborhood],
   obj : Objective,
   computeReward : Array[NeighborhoodStatistics] => Array[Double],
   ignoreFst : Boolean = true,
+  afterMove: Boolean = false,
   rollingAverage: Boolean = false
 ) extends AbstractLearningCombinator("BanditCombinator", l: _*){
 
@@ -110,11 +111,18 @@ class BanditCombinator(l : List[Neighborhood],
   }
 
   def updateProbability(reward : Array[Double]) : Unit = {
+    println("Probabilities before applying rewards : " + neighProbability.mkString(";"))
+    for (i <- 0 until nbNeigh) neighProbability(i) = (neighProbability(i) * (nbConsideredRestart + 1) + reward(i))/(nbConsideredRestart + 2)
+    println("Probabilities after applying rewards : " + neighProbability.mkString(";"))
+    nbConsideredRestart += 1
+  }
+
+  def updateProbabilityAfterMove(reward: Array[Double]): Unit = {
     println(neighProbability.mkString(";"))
-    var cumulativeRound : Double = 0
-    var t : Double = 0
+    var cumulativeRound: Double = 0
+    var t: Double = 0
     for (i <- 0 until nbNeigh) {
-      neighProbability(i) = neighProbability(i) * ((reward(i)+totalRewardRounds)/totalRewardRounds);
+      neighProbability(i) = neighProbability(i) * ((reward(i) + totalRewardRounds) / totalRewardRounds);
       cumulativeRound = cumulativeRound + (reward(i)).abs;
       t = t + neighProbability(i)
     }
@@ -125,7 +133,7 @@ class BanditCombinator(l : List[Neighborhood],
     if (totalRewardRounds > 2000) {
       totalRewardRounds = totalRewardRounds - 1000;
       for (i <- 0 until nbNeigh) {
-        neighProbability(i) = neighProbability(i) * 0.5 + 1/nbNeigh
+        neighProbability(i) = neighProbability(i) * 0.5 + 1 / nbNeigh
       }
     }
     println(neighProbability.mkString(";"))
@@ -161,8 +169,8 @@ class BanditCombinator(l : List[Neighborhood],
         case NoMoveFound =>
           neighStatistics(currentIndex) =
             NeighborhoodStatistics(stats.nbCall + 1,
-              0,  //stats.nbFound,
-              1,  //stats.nbNotFound + 1,
+              if (afterMove) 0 else stats.nbFound,
+              if (afterMove) 1 else stats.nbNotFound + 1,
               stats.totalTimeNano + profilingData._lastCallDurationNano,
               stats.totalTimeNotFoundNano + profilingData._lastCallDurationNano,
               stats.totalGain + profilingData._lastCallGain)
@@ -171,15 +179,15 @@ class BanditCombinator(l : List[Neighborhood],
           neighStatistics(currentIndex) =
             NeighborhoodStatistics(
               stats.nbCall + 1,
-              1, //stats.nbFound + 1,
-              0, //stats.nbNotFound,
+              if (afterMove) 1 else stats.nbFound + 1,
+              if (afterMove) 0 else stats.nbNotFound,
               stats.totalTimeNano + profilingData._lastCallDurationNano,
               stats.totalTimeNotFoundNano,
               stats.totalGain + profilingData._lastCallGain
           )
           reinitTabu()
       }
-      updateProbability(computeReward(neighStatistics).toArray)
+      if (afterMove) updateProbabilityAfterMove(computeReward(neighStatistics))
     } else {
       // if (obj.value < bestKnown) {
       //   bestKnown = obj.value
@@ -188,6 +196,8 @@ class BanditCombinator(l : List[Neighborhood],
       if (!ignoreFst || currentNbRestart > 1) {
         if (rollingAverage) {
           updateProbabilityRollingAverage(computeReward(neighStatistics))
+        } else if (afterMove) {
+          updateProbabilityAfterMove(computeReward(neighStatistics))
         } else {
           updateProbability(computeReward(neighStatistics))
         }
