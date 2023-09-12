@@ -48,6 +48,7 @@ class BanditCombinator(l : List[Neighborhood],
   private var currentIndex = 0
   private var nbConsideredRestart = 0
   protected val neighStatistics : Array[NeighborhoodStatistics] = Array.fill(nbNeigh)(NeighborhoodStatistics())
+  private var totalRewardRounds: Double = 100
 
   private def reinitStats : Unit = {
     for (i <- 0 until nbNeigh)
@@ -110,7 +111,18 @@ class BanditCombinator(l : List[Neighborhood],
 
   def updateProbability(reward : Array[Double]) : Unit = {
     println(neighProbability.mkString(";"))
-    for (i <- 0 until nbNeigh) neighProbability(i) = (neighProbability(i) * (nbConsideredRestart + 1) + reward(i))/(nbConsideredRestart + 2)
+    var cumulativeRound : Double = 0
+    var t : Double = 0
+    for (i <- 0 until nbNeigh) {
+      neighProbability(i) = neighProbability(i) * ((reward(i)+totalRewardRounds)/totalRewardRounds);
+      cumulativeRound = cumulativeRound + (reward(i)).abs;
+      t = t + neighProbability(i)
+    }
+    for (i <- 0 until nbNeigh) {
+      neighProbability(i) = neighProbability(i) / t
+    }
+    totalRewardRounds = totalRewardRounds + cumulativeRound
+    if (totalRewardRounds > 2000) totalRewardRounds = totalRewardRounds - 1000
     println(neighProbability.mkString(";"))
     nbConsideredRestart += 1
   }
@@ -125,8 +137,8 @@ class BanditCombinator(l : List[Neighborhood],
         case NoMoveFound =>
           neighStatistics(currentIndex) =
             NeighborhoodStatistics(stats.nbCall + 1,
-              stats.nbFound,
-              stats.nbNotFound + 1,
+              0,  //stats.nbFound,
+              1,  //stats.nbNotFound + 1,
               stats.totalTimeNano + profilingData._lastCallDurationNano,
               stats.totalTimeNotFoundNano + profilingData._lastCallDurationNano,
               stats.totalGain + profilingData._lastCallGain)
@@ -135,14 +147,15 @@ class BanditCombinator(l : List[Neighborhood],
           neighStatistics(currentIndex) =
             NeighborhoodStatistics(
               stats.nbCall + 1,
-              stats.nbFound + 1,
-              stats.nbNotFound,
+              1, //stats.nbFound + 1,
+              0, //stats.nbNotFound,
               stats.totalTimeNano + profilingData._lastCallDurationNano,
               stats.totalTimeNotFoundNano + profilingData._lastCallDurationNano,
               stats.totalGain + profilingData._lastCallGain
           )
           reinitTabu
       }
+      updateProbability(computeReward(neighStatistics).toArray)
     } else {
       // if (obj.value < bestKnown) {
       //   bestKnown = obj.value

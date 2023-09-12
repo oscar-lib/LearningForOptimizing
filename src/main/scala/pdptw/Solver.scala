@@ -61,6 +61,33 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
     res
   }
 
+  def basicRewardFunction(neighStats: Array[NeighborhoodStatistics], nbNeigh: Int): Array[Double] = {
+    println("Compute Reward")
+    println(neighStats.mkString(";"))
+    val objValue = obj.value
+    println(s"$objValue $bestKnown")
+    var totalReward = 1
+//    if (objValue < bestKnown) {
+//      totalReward = 1
+//    } else {
+//      totalReward = -1
+//    }
+
+    if (objValue < bestKnown)
+      bestKnown = objValue
+    var res = Array.fill(nbNeigh)(0.0)
+    for (i <- 0 until nbNeigh) {
+      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
+      if (neighStats(i).nbFound > 0) {
+        res(i) = res(i) + totalReward
+      } else {
+        //res(i) = res(i) - 0.1*totalReward
+      }
+    }
+    println(s"reward: ${res.mkString(";")} (totalReward : $totalReward)")
+
+    res
+  }
 
   def solve(verbosity: Int, displaySolution: Boolean, fileName: String, timeout: Int): Unit = {
     val withTimeout = timeout < Int.MaxValue
@@ -87,7 +114,7 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
         simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),
         if(withTimeout) Int.MaxValue else 15,
         obj,
-        stats => rewardFunction(stats,neighList.length)
+        stats => basicRewardFunction(stats,neighList.length)
       )// saveBestAndRestoreOnExhaust(obj)
     }
     else {
