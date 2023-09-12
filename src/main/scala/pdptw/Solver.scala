@@ -51,10 +51,30 @@ case class Solver(oscarModel: Model, bandit: String) {
       println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
       if (neighStats(i).nbFound > 0) {
         res(i) = res(i) + totalReward
-      } else {
-        //res(i) = res(i) - 0.1*totalReward
+      } else if (neighStats(i).nbNotFound > 0) {
+        res(i) = res(i) - 0.4*totalReward
       }
     }
+
+//    var foundBetter = 0
+//    var foundWorse = 0
+//    for (i <- 0 until nbNeigh) {
+//      if (neighStats(i).nbFound > 0) {
+//        foundBetter = 1
+//      }
+//      if (neighStats(i).nbNotFound > 0) {
+//        foundWorse = 1
+//      }
+//    }
+//    var tr : Double = 0.0
+//    if (foundBetter == 1) tr = totalReward
+//    else if (foundWorse == 1) tr = -0.3 * totalReward
+//    for (i <- 0 until nbNeigh) {
+//      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
+//      if (neighStats(i).nbFound > 0 || neighStats(i).nbNotFound > 0) {
+//        res(i) = res(i) + tr
+//      }
+//    }
     println(s"reward: ${res.mkString(";")} (totalReward : $totalReward)")
 
     res
@@ -84,10 +104,10 @@ case class Solver(oscarModel: Model, bandit: String) {
       simpleNeighborhoods.couplePointMove(10, best = true),
       simpleNeighborhoods.onePointMove(10) name "1_PM_10 - first",
       simpleNeighborhoods.onePointMove(10, best = true) name "1_PM_10 - best",
-      simpleNeighborhoods.doubleCouplePointMove(2),
-      simpleNeighborhoods.doubleCouplePointMove(2,best = true),
-      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2),
-      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2,best = true),
+//      simpleNeighborhoods.doubleCouplePointMove(2),
+//      simpleNeighborhoods.doubleCouplePointMove(2,best = true),
+//      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2),
+//      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2,best = true),
       simpleNeighborhoods.segmentExchanges(pdptw.n),
       simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
     )
