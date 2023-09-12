@@ -122,7 +122,12 @@ class BanditCombinator(l : List[Neighborhood],
       neighProbability(i) = neighProbability(i) / t
     }
     totalRewardRounds = totalRewardRounds + cumulativeRound
-    if (totalRewardRounds > 2000) totalRewardRounds = totalRewardRounds - 1000
+    if (totalRewardRounds > 2000) {
+      totalRewardRounds = totalRewardRounds - 1000;
+      for (i <- 0 until nbNeigh) {
+//        neighProbability(i) = neighProbability(i) * 0.5 + 0.25
+      }
+    }
     println(neighProbability.mkString(";"))
     nbConsideredRestart += 1
   }
