@@ -94,7 +94,7 @@ case class Solver(oscarModel: Model, bandit: String) {
         stats => rewardFunction(stats, neighList.length)
       ) //saveBestAndRestoreOnExhaust(obj)
       case "epsilongreedy" => new EpsilonGreedyBandit(neighList
-      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 1, obj,
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
       case "bestslopefirst" => bestSlopeFirst(
         neighList
