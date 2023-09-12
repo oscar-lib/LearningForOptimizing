@@ -49,12 +49,12 @@ class BanditCombinator(l : List[Neighborhood],
   private var nbConsideredRestart = 0
   protected val neighStatistics : Array[NeighborhoodStatistics] = Array.fill(nbNeigh)(NeighborhoodStatistics())
 
-  private def reinitStats : Unit = {
+  private def reinitStats() : Unit = {
     for (i <- 0 until nbNeigh)
       neighStatistics(i) = NeighborhoodStatistics()
   }
 
-  private def reinitTabu : Unit = {
+  private def reinitTabu() : Unit = {
     nbAvailableNeigh = nbNeigh
     totalCurrentNeighWeight = 1
     for (i <- 0 until nbNeigh) authorizedNeighborhood(i) = true
@@ -160,7 +160,7 @@ class BanditCombinator(l : List[Neighborhood],
               stats.totalTimeNotFoundNano,
               stats.totalGain + profilingData._lastCallGain
           )
-          reinitTabu
+          reinitTabu()
       }
     } else {
       // if (obj.value < bestKnown) {
