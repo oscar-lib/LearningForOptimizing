@@ -119,20 +119,21 @@ case class Solver(oscarModel: Model, bandit: String) {
 
     val neighList = List(
       simpleNeighborhoods.couplePointInsertUnroutedFirst(10),
-      simpleNeighborhoods.couplePointInsertUnroutedFirst(10,best = true),
+//      simpleNeighborhoods.couplePointInsertUnroutedFirst(10,best = true),
       simpleNeighborhoods.couplePointInsertRoutedFirst(10),
-      simpleNeighborhoods.couplePointInsertRoutedFirst(10,best = true),
+//      simpleNeighborhoods.couplePointInsertRoutedFirst(10,best = true),
       simpleNeighborhoods.couplePointMove(10),
-      simpleNeighborhoods.couplePointMove(10, best = true),
+//      simpleNeighborhoods.couplePointMove(10, best = true),
       simpleNeighborhoods.onePointMove(10) name "1_PM_10 - first",
-      simpleNeighborhoods.onePointMove(10, best = true) name "1_PM_10 - best",
+//      simpleNeighborhoods.onePointMove(10, best = true) name "1_PM_10 - best",
 //      simpleNeighborhoods.doubleCouplePointMove(2),
 //      simpleNeighborhoods.doubleCouplePointMove(2,best = true),
-//      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2),
+      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2),
 //      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2,best = true),
       simpleNeighborhoods.segmentExchanges(pdptw.n),
-      simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
+//      simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
     )
+    var isBSF = false
     var search = bandit.toLowerCase() match {
       case "bandit" => new BanditCombinator(neighList,
         simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
@@ -157,16 +158,19 @@ case class Solver(oscarModel: Model, bandit: String) {
       case "epsilongreedy" => new EpsilonGreedyBandit(neighList
       ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
-      case "bestslopefirst" => bestSlopeFirst(
-        neighList
-      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
-        minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case "bestslopefirst" =>
+        isBSF = true
+        bestSlopeFirst(
+          neighList
+        ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15)
       case "random" =>
         new RandomCombinator(neighList
         ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15)
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
+        isBSF = true
         bestSlopeFirst(
           neighList
         ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
@@ -185,6 +189,6 @@ case class Solver(oscarModel: Model, bandit: String) {
       println(obj)
     }
     println(oscarModel.toString)
+    println("bestObj=" + {if (isBSF) oscarModel.objectiveFunction.value else bestKnown})
   }
-
 }
