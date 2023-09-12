@@ -15,6 +15,16 @@ class RandomCombinator(l : List[Neighborhood]) extends AbstractLearningCombinato
   private var nValid = l.length;
   private var lastIndexTried = 0;
 
+  private def authorizeAll(): Unit = {
+    for (i <- l.indices) authorizedNeighborhood(i) = true
+    nValid = l.length;
+  }
+
+  override def reset(): Unit = {
+    authorizeAll()
+    super.reset()
+  }
+
   /** The method that provides a neighborhood.
    *
    * @return Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
@@ -42,8 +52,7 @@ class RandomCombinator(l : List[Neighborhood]) extends AbstractLearningCombinato
         authorizedNeighborhood(lastIndexTried) = false
         nValid -= 1
       case MoveFound(_) =>
-        for (i <- l.indices) authorizedNeighborhood(i) = true
-        nValid = l.length;
+        authorizeAll()
     }
   }
 }

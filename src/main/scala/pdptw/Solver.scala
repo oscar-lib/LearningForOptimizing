@@ -100,21 +100,21 @@ case class Solver(oscarModel: Model, bandit: String) {
         stats => rewardFunction(stats, neighList.length)
       ) //saveBestAndRestoreOnExhaust(obj)
       case "epsilongreedy" => new EpsilonGreedyBandit(neighList
-      ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(), 0, obj,
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 1, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
       case "bestslopefirst" => bestSlopeFirst(
         neighList
-      ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(), 0, obj,
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
       case "random" =>
         new RandomCombinator(neighList
-        ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(), 0, obj,
+        ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15)
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(
           neighList
-        ) onExhaustRestartAfter(simpleNeighborhoods.emptyVehicle(), 0, obj,
+        ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15)
     }
 
@@ -129,7 +129,6 @@ case class Solver(oscarModel: Model, bandit: String) {
       println(pdptw.toString())
       println(obj)
     }
-    search.profilingOnConsole()
     println(oscarModel.toString)
   }
 

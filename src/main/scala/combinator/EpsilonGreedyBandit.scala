@@ -33,6 +33,16 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
   private var authorizedNeighborhood: Array[Boolean] = Array.fill(l.length)(true)
   private var nTabu = 0;
 
+  override def reset(): Unit = {
+    if (nTabu != 0) {
+      for (i <- authorizedNeighborhood.indices) {
+        authorizedNeighborhood(i) = true
+      }
+      nTabu = 0;
+    }
+    super.reset()
+  }
+
   /** The method that provides a neighborhood.
    *
    * @return Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
