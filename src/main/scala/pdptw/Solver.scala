@@ -41,14 +41,8 @@ case class Solver(oscarModel: Model, bandit: String) {
     val totalRewardSig = 1 / (1 + Math.exp(-5 * (totalReward - 0.5)))
     val totalGain = neighStats.map(_.totalGain).sum
     val res = Array.tabulate(nbNeigh)(i => {
-      if (objValue < bestKnown) {
-        println("Best")
-        neighStats(i).totalGain.toDouble * totalRewardSig / totalGain
-      }
-      else {
-        println("Not Best")
-        (totalGain - neighStats(i).totalGain).toDouble * totalRewardSig / totalGain
-      }
+      if (objValue < bestKnown) neighStats(i).totalGain.toDouble * totalRewardSig / totalGain
+      else (totalGain - neighStats(i).totalGain).toDouble * totalRewardSig / totalGain
     })
     val totalRes = res.sum
     if (objValue < bestKnown)
@@ -83,12 +77,12 @@ case class Solver(oscarModel: Model, bandit: String) {
       simpleNeighborhoods.couplePointInsertRoutedFirst(10,best = true),
       simpleNeighborhoods.couplePointMove(10),
       simpleNeighborhoods.couplePointMove(10, best = true),
-      simpleNeighborhoods.onePointMove(10),
-      simpleNeighborhoods.onePointMove(10, best = true),
-      /*simpleNeighborhoods.doubleCouplePointMove(2),
+      simpleNeighborhoods.onePointMove(10) name "1_PM_10 - first",
+      simpleNeighborhoods.onePointMove(10, best = true) name "1_PM_10 - best",
+      simpleNeighborhoods.doubleCouplePointMove(2),
       simpleNeighborhoods.doubleCouplePointMove(2,best = true),
       simpleNeighborhoods.oneCoupleMoveAndThenInsert(2),
-      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2,best = true),*/
+      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2,best = true),
       simpleNeighborhoods.segmentExchanges(pdptw.n),
       simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
     )

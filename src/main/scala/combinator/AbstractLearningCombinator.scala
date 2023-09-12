@@ -2,6 +2,8 @@ package combinator
 
 import oscar.cbls.core.search.{AcceptanceCriterion, Move, MoveFound, Neighborhood, NeighborhoodCombinator, NoMoveFound, SearchResult}
 import oscar.cbls.core.objective.Objective
+import oscar.cbls.core.search.profiling.{CombinatorProfiler, SelectionProfiler}
+
 import scala.annotation.tailrec
 
 /**
@@ -21,6 +23,9 @@ import scala.annotation.tailrec
   */
 
 abstract class AbstractLearningCombinator(name : String, neighborhoods: Neighborhood*) extends NeighborhoodCombinator(neighborhoods: _*) {
+
+  private val _profiler: SelectionProfiler = new SelectionProfiler(this, neighborhoods.toList)
+  override def profiler: SelectionProfiler = _profiler
 
   /** The method that provides a neighborhood.
     *
@@ -45,7 +50,7 @@ abstract class AbstractLearningCombinator(name : String, neighborhoods: Neighbor
       getNextNeighborhood match {
         case None => NoMoveFound
         case Some(n) =>
-          val candidateResult = n.getMove(obj,initialObj,acceptanceCriterion)
+          val candidateResult = n.getProfiledMove(obj,initialObj,acceptanceCriterion)
           learn(candidateResult,n)
           candidateResult match {
             case NoMoveFound => doSearch

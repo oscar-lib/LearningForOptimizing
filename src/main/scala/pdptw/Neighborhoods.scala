@@ -125,7 +125,6 @@ case class SimpleNeighborhoods(pdptw: VRP,
       nodesToMove = pointsToMove,
       relevantNewPredecessors = () => pdptw.kFirst(k, closestRelevantPredecessors(_), _ => node => pdptw.isRouted(node)),
       vrp = pdptw,
-      neighborhoodName = s"1_PM_$k - ${if(best)"best" else "first"}",
       hotRestart = hotRestart,
       selectPointToMoveBehavior = if (best) Best() else First(),
       selectDestinationBehavior = if (best) Best() else First(),
@@ -301,12 +300,11 @@ case class SimpleNeighborhoods(pdptw: VRP,
       relevantNeighbors = () => pdptw.kFirst(k,
         closestRelevantPredecessors, _ => (node: Int) => pdptw.isRouted(node)),
       () => pdptw.movingVehicles,
-      neighborhoodName = s"SegmentExchange - ${if (best) "best" else "first"}",
       selectFirstVehicleBehavior = if (best) Best() else First(),
       selectSecondVehicleBehavior = if (best) Best() else First(),
       selectFirstSegmentBehavior = if (best) Best() else First(),
       selectSecondSegmentBehavior = if (best) Best() else First()
-    ) name "coucou"
+    ) name s"SegmentExchange - ${if (best) "best" else "first"}"
 
   }
 
