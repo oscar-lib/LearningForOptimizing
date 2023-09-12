@@ -55,7 +55,6 @@ case class SimpleNeighborhoods(pdptw: VRP,
       vrp = pdptw,
       neighborhoodName = s"1_PI_RU_$k - ${if(best)"best" else "first"}",
       hotRestart = hotRestart,
-      selectNodeBehavior = if (best) Best() else First(),
       selectInsertionPointBehavior = if (best) Best() else First()
     )
   }
@@ -85,7 +84,6 @@ case class SimpleNeighborhoods(pdptw: VRP,
       vrp = pdptw,
       neighborhoodName = s"1_PI_RF_$k - ${if(best)"best" else "first"}",
       hotRestart = hotRestart,
-      selectInsertionPointBehavior = if (best) Best() else First(),
       selectInsertedNodeBehavior = if (best) Best() else First()
     )
   }
@@ -126,7 +124,6 @@ case class SimpleNeighborhoods(pdptw: VRP,
       relevantNewPredecessors = () => pdptw.kFirst(k, closestRelevantPredecessors(_), _ => node => pdptw.isRouted(node)),
       vrp = pdptw,
       hotRestart = hotRestart,
-      selectPointToMoveBehavior = if (best) Best() else First(),
       selectDestinationBehavior = if (best) Best() else First(),
       includeVehicleInformationInMove = true
     )
@@ -157,7 +154,6 @@ case class SimpleNeighborhoods(pdptw: VRP,
       vrp = pdptw,
       neighborhoodName = s"DPM_$k - ${if(best)"best" else "first"}",
       hotRestart = hotRestart,
-      selectPointToMoveBehavior = if (best) Best() else First(),
       selectDestinationBehavior = if (best) Best() else First()
     )
   }

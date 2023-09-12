@@ -1,6 +1,6 @@
 package pdptw
 
-import combinator.{BanditCombinator, BestSlopeFirstLearningWay, RandomCombinator, EpsilonGreedyBandit, NeighborhoodStatistics}
+import combinator.{BanditCombinator, BestSlopeFirstLearningWay, EpsilonGreedyBandit, NeighborhoodStatistics, RandomCombinator}
 import oscar.cbls._
 import oscar.cbls.business.routing.display
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
@@ -8,6 +8,7 @@ import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.business.routing.model.helpers.DistanceHelper
 import oscar.cbls.business.routing.visu.RoutingMapTypes
 
+import java.io.{File, PrintWriter}
 import scala.concurrent.duration.{Duration, DurationInt}
 
 case class Solver(oscarModel: Model, bandit: String) {
@@ -33,10 +34,10 @@ case class Solver(oscarModel: Model, bandit: String) {
   private val simpleNeighborhoods = SimpleNeighborhoods(pdptw, oscarModel, closestRelevantPredecessorsByDistance, closestRelevantSuccessorsByDistance)
 
   def rewardFunction(neighStats: Array[NeighborhoodStatistics], nbNeigh: Int): Array[Double] = {
-    println("Compute Reward")
-    println(neighStats.mkString(";"))
+    //println("Compute Reward")
+    //println(neighStats.mkString(";"))
     val objValue = obj.value
-    println(s"$objValue $bestKnown")
+    //println(s"$objValue $bestKnown")
     val totalReward = 0.5 + (bestKnown - objValue).toDouble / (2 * bestKnown)
     val totalRewardSig = 1 / (1 + Math.exp(-5 * (totalReward - 0.5)))
     val totalGain = neighStats.map(_.totalGain).sum
@@ -49,7 +50,7 @@ case class Solver(oscarModel: Model, bandit: String) {
       bestKnown = objValue
     for (i <- 0 until nbNeigh)
       res(i) = res(i) / totalRes
-    println(s"reward: ${res.mkString(";")} (totalReward : $totalReward - $totalRewardSig)")
+    //println(s"reward: ${res.mkString(";")} (totalReward : $totalReward - $totalRewardSig)")
 
     res
   }
@@ -140,7 +141,7 @@ case class Solver(oscarModel: Model, bandit: String) {
         if (withTimeout) Int.MaxValue else 15,
         obj,
         stats => rewardFunction(stats, neighList.length)
-      ) //saveBestAndRestoreOnExhaust(obj)
+      ) saveBestAndRestoreOnExhaust(obj)
       case "banditaftermove" => new BanditCombinator(neighList,
         simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
         if (withTimeout) Int.MaxValue else 15,
@@ -188,6 +189,7 @@ case class Solver(oscarModel: Model, bandit: String) {
       println(pdptw.toString())
       println(obj)
     }
+
     println(oscarModel.toString)
     println("bestObj=" + {if (isBSF) oscarModel.objectiveFunction.value else bestKnown})
   }

@@ -111,9 +111,9 @@ class BanditCombinator(l : List[Neighborhood],
   }
 
   def updateProbability(reward : Array[Double]) : Unit = {
-    println("Probabilities before applying rewards : " + neighProbability.mkString(";"))
+    //println("Probabilities before applying rewards : " + neighProbability.mkString(";"))
     for (i <- 0 until nbNeigh) neighProbability(i) = (neighProbability(i) * (nbConsideredRestart + 1) + reward(i))/(nbConsideredRestart + 2)
-    println("Probabilities after applying rewards : " + neighProbability.mkString(";"))
+    //println("Probabilities after applying rewards : " + neighProbability.mkString(";"))
     nbConsideredRestart += 1
   }
 
