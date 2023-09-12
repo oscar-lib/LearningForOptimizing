@@ -122,8 +122,8 @@ class BanditCombinator(l : List[Neighborhood],
     var cumulativeRound: Double = 0
     var t: Double = 0
     for (i <- 0 until nbNeigh) {
-      neighProbability(i) = neighProbability(i) * ((reward(i) + totalRewardRounds) / totalRewardRounds);
-      cumulativeRound = cumulativeRound + (reward(i)).abs;
+      neighProbability(i) = neighProbability(i) * ((reward(i) + totalRewardRounds) / totalRewardRounds)
+      cumulativeRound = cumulativeRound + reward(i).abs
       t = t + neighProbability(i)
     }
     for (i <- 0 until nbNeigh) {
@@ -131,7 +131,7 @@ class BanditCombinator(l : List[Neighborhood],
     }
     totalRewardRounds = totalRewardRounds + cumulativeRound
     if (totalRewardRounds > 2000) {
-      totalRewardRounds = totalRewardRounds - 1000;
+      totalRewardRounds = totalRewardRounds - 1000
       for (i <- 0 until nbNeigh) {
         neighProbability(i) = neighProbability(i) * 0.5 + 1 / nbNeigh
       }

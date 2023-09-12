@@ -174,7 +174,7 @@ case class Solver(oscarModel: Model, bandit: String) {
     }
 
     if (displaySolution) search = search.afterMove(demoDisplay.drawRoutes()).showObjectiveFunction(oscarModel.objectiveFunction)
-    if (withTimeout) search = (search.weakTimeout(Duration(timeout, "second"))) saveBestAndRestoreOnExhaust (obj)
+    if (withTimeout) search = search.weakTimeout(Duration(timeout, "second")) saveBestAndRestoreOnExhaust obj
     search.verbose = verbosity
     search.doAllMoves(obj = obj)
     if (displaySolution) demoDisplay.drawRoutes(force = true)
