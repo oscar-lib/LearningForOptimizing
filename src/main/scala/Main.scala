@@ -37,7 +37,11 @@ object main extends App {
           }),
         opt[String]("bandit")
           .abbr("b")
-          .text("Use this option to set the bandit used. By default, bestSlopeFirst is used")
+          .text("Use this option to set the bandit used:\n" +
+            "    - bandit         : the modified bandit algorithm\n" +
+            "    - epsilongreedy  : an implementation of the epsilon greedy\n" +
+            "    - random         : choose neighborhoods at random\n" +
+            "    - bestslopefirst : the default method")
           .action((x, c) => c match {
             case conf: SolveInstanceConfig => conf.copy(bandit = x)
             case _ => throw new Error("Unexpected Error")
@@ -81,7 +85,11 @@ object main extends App {
           }),
         opt[String]("bandit")
           .abbr("b")
-          .text("Use this option to set the bandit used. By default, bestSlopeFirst is used")
+          .text("Use this option to set the bandit used:\n" +
+            "    - bandit         : the modified bandit algorithm\n" +
+            "    - epsilongreedy  : an implementation of the epsilon greedy\n" +
+            "    - random         : choose neighborhoods at random\n" +
+            "    - bestslopefirst : the default method")
           .action((x, c) => c match {
             case conf: SolveSeriesConfig => conf.copy(bandit = x)
             case _ => throw new Error("Unexpected Error")
@@ -124,7 +132,11 @@ object main extends App {
           }),
         opt[String]("bandit")
           .abbr("b")
-          .text("Use this option to set the bandit used. By default, bestSlopeFirst is used")
+          .text("Use this option to set the bandit used:\n" +
+            "    - bandit         : the modified bandit algorithm\n" +
+            "    - epsilongreedy  : an implementation of the epsilon greedy\n" +
+            "    - random         : choose neighborhoods at random\n" +
+            "    - bestslopefirst : the default method")
           .action((x,c) => c match {
             case conf:SolveAllConfig => conf.copy(bandit = x)
             case _ => throw new Error("Unexpected Error")
