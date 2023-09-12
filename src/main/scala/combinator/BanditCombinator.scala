@@ -30,6 +30,7 @@ class BanditCombinator(l : List[Neighborhood],
   obj : Objective,
   computeReward : Array[NeighborhoodStatistics] => Array[Double],
   ignoreFst : Boolean = true,
+  rollingAverage: Boolean = false
 ) extends AbstractLearningCombinator("BanditCombinator", l: _*){
 
   private val nbNeigh : Int = l.length
@@ -37,6 +38,7 @@ class BanditCombinator(l : List[Neighborhood],
   // private var bestSolution = obj.model.solution(true)
   // private var bestKnown = obj.value
 
+  private val originalNeighProbability: Array[Double] = Array.fill(nbNeigh)(1D / nbNeigh)
   private val neighProbability : Array[Double] = Array.fill(nbNeigh)(1D/ nbNeigh)
   // private val shortTermNeighProbability : Array[Double] = Array.tabulate(nbNeigh)(i => longTermNeighProbability(i))
 
@@ -116,6 +118,25 @@ class BanditCombinator(l : List[Neighborhood],
     nbConsideredRestart += 1
   }
 
+  private val rewardHistory: Deque[Array[Double]] = Deque()
+  private val cumulativeReward: Array[Double] = new Array[Double](nbNeigh)
+  private val maxHistory = 5
+
+  def updateProbabilityRollingAverage(reward : Array[Double]) : Unit = {
+    rewardHistory.addOne(reward)
+    for (i <- reward.indices) cumulativeReward(i) += reward(i)
+    if (rewardHistory.length > maxHistory) {
+      val old = rewardHistory.removeHead()
+      for (i <- old.indices) cumulativeReward(i) -= old(i)
+    }
+    println("Probabilities before applying rewards : " + neighProbability.mkString(";"))
+    for (i <- neighProbability.indices) {
+      neighProbability(i) = (originalNeighProbability(i) + cumulativeReward(i)) / (maxHistory + 1)
+    }
+    println("Probabilities after applying rewards : " + neighProbability.mkString(";"))
+    nbConsideredRestart += 1
+  }
+
   // def rewardPerNeighborhood : Array[Int]
 
   override def learn(m: SearchResult, neighborhood: Neighborhood): Unit = {
@@ -149,9 +170,14 @@ class BanditCombinator(l : List[Neighborhood],
       //   bestKnown = obj.value
       //   bestSolution = obj.model.solution(true)
       // }
-      if (!ignoreFst || currentNbRestart > 1)
-        updateProbability(computeReward(neighStatistics).toArray)
-      reinitTabu
+      if (!ignoreFst || currentNbRestart > 1) {
+        if (rollingAverage) {
+          updateProbabilityRollingAverage(computeReward(neighStatistics))
+        } else {
+          updateProbability(computeReward(neighStatistics))
+        }
+      }
+      reinitTabu()
     }
   }
 
