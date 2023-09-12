@@ -1,8 +1,8 @@
 package pdptw
 
 import oscar.cbls.business.routing.model.VRP
-import oscar.cbls.business.routing.neighborhood.{InsertPointRoutedFirst, InsertPointUnroutedFirst, OnePointMove, RemovePoint}
-import oscar.cbls.core.search.{Best, First, Neighborhood}
+import oscar.cbls.business.routing.neighborhood.{InsertPointRoutedFirst, InsertPointUnroutedFirst, OnePointMove, RemovePoint, SegmentExchange, SegmentExchangeOnSegments}
+import oscar.cbls.core.search.{Best, CompositeMove, First, Neighborhood, NoMoveNeighborhood}
 import oscar.cbls._
 import oscar.cbls.business.routing._
 import oscar.cbls.lib.search.combinators.Atomic
@@ -53,7 +53,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
       unroutedNodesToInsert = listOfPointsToInsert,
       relevantPredecessor = () => node => pdptw.kFirst(k, closestRelevantPredecessors(_), _ => node => pdptw.isRouted(node))(node).toList ::: pdptw.vehicles.toList,
       vrp = pdptw,
-      neighborhoodName = "Pickup insert - iterate first over point to insert",
+      neighborhoodName = s"1_PI_RU_$k - ${if(best)"best" else "first"}",
       hotRestart = hotRestart,
       selectNodeBehavior = if (best) Best() else First(),
       selectInsertionPointBehavior = if (best) Best() else First()
@@ -83,7 +83,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
       insertionPositions = insertAfter,
       relevantSuccessorsToInsert = () => node => pdptw.kFirst(k, closestRelevantSuccessors(_), _ => node => pdptw.isUnrouted(node) && oscarModel.isPickupPoint(node))(node).toList,
       vrp = pdptw,
-      neighborhoodName = "Pickup insert - iterate first over position",
+      neighborhoodName = s"1_PI_RF_$k - ${if(best)"best" else "first"}",
       hotRestart = hotRestart,
       selectInsertionPointBehavior = if (best) Best() else First(),
       selectInsertedNodeBehavior = if (best) Best() else First()
@@ -99,7 +99,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
           oscarModel.chains,
           Some(HashSet() ++ closestRelevantPredecessors(deliveryToInsert))), _ => node => true),
       vrp = pdptw,
-      neighborhoodName = "Delivery insert",
+      neighborhoodName = s"DI_$k - ${if(best)"best" else "first"}",
       hotRestart = hotRestart,
       selectNodeBehavior = if (best) Best() else First(),
       selectInsertionPointBehavior = if (best) Best() else First()
@@ -125,10 +125,10 @@ case class SimpleNeighborhoods(pdptw: VRP,
       nodesToMove = pointsToMove,
       relevantNewPredecessors = () => pdptw.kFirst(k, closestRelevantPredecessors(_), _ => node => pdptw.isRouted(node)),
       vrp = pdptw,
-      neighborhoodName = "MoveSinglePoint",
       hotRestart = hotRestart,
       selectPointToMoveBehavior = if (best) Best() else First(),
-      selectDestinationBehavior = if (best) Best() else First()
+      selectDestinationBehavior = if (best) Best() else First(),
+      includeVehicleInformationInMove = true
     )
   }
 
@@ -155,7 +155,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
           oscarModel.chains,Some(HashSet() ++ closestRelevantPredecessors(delivery))),
         _ => node => pdptw.isRouted(node)),
       vrp = pdptw,
-      neighborhoodName = "MoveSinglePoint",
+      neighborhoodName = s"DPM_$k - ${if(best)"best" else "first"}",
       hotRestart = hotRestart,
       selectPointToMoveBehavior = if (best) Best() else First(),
       selectDestinationBehavior = if (best) Best() else First()
@@ -195,7 +195,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
     dynAndThen(pickupInsertUnroutedFirst(k, pickUpPointsToInsert, hotRestart, best), (move: InsertPointMove) => {
       val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.insertedPoint)
       deliveryInsert(k, deliveryPoint, hotRestart, best)
-    }) name "One couple insert unrouted first"
+    }) name s"1_CI_UF_$k - ${if(best)"best" else "first"}"
   }
 
   // Insert a couple of node using the onePointInsertRoutedFirst for the pickup insertion and
@@ -207,7 +207,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
     dynAndThen(pickupInsertRoutedFirst(k, insertAfterPoints, hotRestart, best), (move: InsertPointMove) => {
       val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.insertedPoint)
       pickupInsertUnroutedFirst(k, () => List(deliveryPoint), hotRestart, best)
-    }) name "One couple insert routed first"
+    }) name s"1_CI_RF_$k - ${if(best)"best" else "first"}"
   }
 
   // Move a couple of node at another place in the route.
@@ -218,7 +218,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
     dynAndThen(onePointMove(k, pickUpPointsToMove, hotRestart, best), (move: OnePointMoveMove) => {
       val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.movedPoint)
       deliveryPointMove(k, deliveryPoint, hotRestart, best)
-    }) name "One couple move"
+    }) name s"1_CM_$k - ${if(best)"best" else "first"}"
   }
 
   // Remove a couple of node.
@@ -230,7 +230,7 @@ case class SimpleNeighborhoods(pdptw: VRP,
     dynAndThen(onePointRemove(() => pickUpPointsToRemove()), (move: RemovePointMove) => {
       val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.pointToRemove)
       onePointRemove(() => List(deliveryPoint))
-    }) name "One couple remove"
+    }) name "1_CR"
   }
 
   // In a single movement remove nbOfCoupleToRemove couples
@@ -249,16 +249,68 @@ case class SimpleNeighborhoods(pdptw: VRP,
     }).acceptAll(), _ > nbOfPickupToRemove) onQuery {
       pickUpsToRemove = pdptw.getRouteOfVehicle(vehicle()).intersect(oscarModel.chains.heads)
       nbOfPickupToRemove = pickUpsToRemove.length
-    } name "Empty route of vehicle"
+    } name "Empty vehicle"
   }
 
   // Removes all couples of several vehicles (random vehicle selection)
   def emptyMultiplesVehicle(nbOfVehicleToEmpty: Int): Neighborhood = {
     Atomic(emptyVehicle(),nbIt => {
-      // println(oscarModel.pdpProblem)
-      // println(nbIt)
-      nbIt >= nbOfVehicleToEmpty
+      nbIt >= Math.min(nbOfVehicleToEmpty,pdptw.movingVehicles.size)
     })
   }
+
+
+  def doubleCouplePointMove(k: Int, pickUpPointsToMove: () => Iterable[Int] = routedPickups,
+                            hotRestart: Boolean = false, best: Boolean = false): Neighborhood = {
+    dynAndThen(dynAndThen(onePointMove(k, pickUpPointsToMove, hotRestart, best), (move: OnePointMoveMove) => {
+      val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.movedPoint)
+      deliveryPointMove(k, deliveryPoint, hotRestart, best)
+    }), (move: CompositeMove) => {
+      val vehicleTo = move.ml.head.asInstanceOf[OnePointMoveMove].vehicleTo
+      if(!pdptw.movingVehicles.exists(v => v == vehicleTo))
+        NoMoveNeighborhood
+      else
+      dynAndThen(onePointMove(k, () => pdptw.getRouteOfVehicle(vehicleTo).filter(oscarModel.isPickupPoint), hotRestart, best), (move: OnePointMoveMove) => {
+        val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.movedPoint)
+        deliveryPointMove(k, deliveryPoint, hotRestart, best)
+      })
+    }) name s"2_CM_$k - ${if(best)"best" else "first"}"
+  }
+
+  def oneCoupleMoveAndThenInsert(k: Int, best: Boolean = false): Neighborhood = {
+    dynAndThen(dynAndThen(onePointMove(k, routedPickups, false, best), (move: OnePointMoveMove) => {
+      val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.movedPoint)
+      deliveryPointMove(k, deliveryPoint, false, best)
+    }), (move: CompositeMove) => {
+      val vehicleTo = move.ml.head.asInstanceOf[OnePointMoveMove].vehicleTo
+      if (!pdptw.movingVehicles.exists(v => v == vehicleTo))
+        NoMoveNeighborhood
+      else
+        dynAndThen(pickupInsertRoutedFirst(k, () => pdptw.getRouteOfVehicle(vehicleTo)), (move: InsertPointMove) => {
+          val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.insertedPoint)
+          deliveryInsert(k, deliveryPoint)
+        })
+    }) name s"1_CM_CI_$k - ${if(best)"best" else "first"}"
+
+  }
+
+  def segmentExchanges(k: Int, best: Boolean = false): Neighborhood = {
+    SegmentExchangeOnSegments(pdptw,
+      () => List.tabulate(pdptw.v)(vehicle => vehicle -> ChainsHelper.computeCompleteSegments(pdptw, vehicle, oscarModel.chains)).toMap,
+      relevantNeighbors = () => pdptw.kFirst(k,
+        closestRelevantPredecessors, _ => (node: Int) => pdptw.isRouted(node)),
+      () => pdptw.movingVehicles,
+      selectFirstVehicleBehavior = if (best) Best() else First(),
+      selectSecondVehicleBehavior = if (best) Best() else First(),
+      selectFirstSegmentBehavior = if (best) Best() else First(),
+      selectSecondSegmentBehavior = if (best) Best() else First()
+    ) name s"SegmentExchange - ${if (best) "best" else "first"}"
+
+  }
+
+  // couplePointMoveAndThenOneCoupleMove  (like v1 => v2 and then v2 => v1||v3)
+  // couplePointMoveAndThenInsertCouple		(Like v1 => v2 and then x => v1)
+  // removeCoupleAndThenInsert	(insert on same vehicle) (no exhaust, otherwise once it's used it will take all the time)
+
 
 }

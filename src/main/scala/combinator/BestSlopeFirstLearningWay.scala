@@ -9,7 +9,7 @@ import oscar.cbls.core.search.NoMoveFound
 import oscar.cbls.core.search.MoveFound
 import scala.annotation.tailrec
 
-class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearningCombinator("NewBSF") {
+class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearningCombinator("NewBSF", l: _*) {
 
  // The neighborhood in an Array form
   private val neighborhoodArray = l.toArray

@@ -13,7 +13,7 @@ import scala.util.Random
  *
  * @param l list of neighborhood to choose from
  */
-class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBandit") {
+class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBandit", l: _*) {
 
   private val epsilon: Double = 0.7; // choose the best neighborhood with probability epsilon
   // (well, almost with epsilon proba, it changes a bit over time)
@@ -32,6 +32,16 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
 
   private var authorizedNeighborhood: Array[Boolean] = Array.fill(l.length)(true)
   private var nTabu = 0;
+
+  override def reset(): Unit = {
+    if (nTabu != 0) {
+      for (i <- authorizedNeighborhood.indices) {
+        authorizedNeighborhood(i) = true
+      }
+      nTabu = 0;
+    }
+    super.reset()
+  }
 
   /** The method that provides a neighborhood.
    *

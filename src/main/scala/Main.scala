@@ -11,15 +11,15 @@ object main extends App {
   abstract class Config()
   case class SolveInstanceConfig(instance: File = null,
                                  verbosity: Int = 0,
-                                 bandit : Boolean = false,
+                                 bandit: String = "bestSlopeFirst",
                                  display: Boolean = false,
                                  timeout: Int = Int.MaxValue) extends Config()
   case class SolveSeriesConfig(seriesSize: Int = 0,
                                verbosity: Int = 0,
-                               bandit : Boolean = false,
+                               bandit: String = "bestSlopeFirst",
                                timeout: Int = Int.MaxValue) extends Config()
   case class SolveAllConfig(verbosity: Int = 0,
-                            bandit : Boolean = false,
+                            bandit : String = "bestSlopeFirst",
                             timeout: Int = Int.MaxValue) extends Config()
   case class NoConfig() extends Config()
 
@@ -35,11 +35,15 @@ object main extends App {
             case conf: SolveInstanceConfig => conf.copy(instance = x)
             case _ => throw new Error("Unexpected Error")
           }),
-        opt[Unit]("bandit")
+        opt[String]("bandit")
           .abbr("b")
-          .text("Use this flag to use the bandit algorithm. By default, bestSlopeFirst is used")
-          .action((x,c) => c match {
-            case conf:SolveInstanceConfig => conf.copy(bandit = true)
+          .text("Use this option to set the bandit used:\n" +
+            "    - bandit         : the modified bandit algorithm\n" +
+            "    - epsilongreedy  : an implementation of the epsilon greedy\n" +
+            "    - random         : choose neighborhoods at random\n" +
+            "    - bestslopefirst : the default method")
+          .action((x, c) => c match {
+            case conf: SolveInstanceConfig => conf.copy(bandit = x)
             case _ => throw new Error("Unexpected Error")
           }),
         opt[Int]("verbosity")
@@ -79,11 +83,15 @@ object main extends App {
             case conf: SolveSeriesConfig => conf.copy(seriesSize = x)
             case _ => throw new Error("Unexpected Error")
           }),
-        opt[Unit]("bandit")
+        opt[String]("bandit")
           .abbr("b")
-          .text("Use this flag to use the bandit algorithm. By default, bestSlopeFirst is used")
-          .action((x,c) => c match {
-            case conf:SolveSeriesConfig => conf.copy(bandit = true)
+          .text("Use this option to set the bandit used:\n" +
+            "    - bandit         : the modified bandit algorithm\n" +
+            "    - epsilongreedy  : an implementation of the epsilon greedy\n" +
+            "    - random         : choose neighborhoods at random\n" +
+            "    - bestslopefirst : the default method")
+          .action((x, c) => c match {
+            case conf: SolveSeriesConfig => conf.copy(bandit = x)
             case _ => throw new Error("Unexpected Error")
           }),
         opt[Int]("verbosity")
@@ -122,11 +130,15 @@ object main extends App {
             case conf: SolveAllConfig => conf.copy(verbosity = x)
             case _ => throw new Error("Unexpected Error")
           }),
-        opt[Unit]("bandit")
+        opt[String]("bandit")
           .abbr("b")
-          .text("Use this flag to use the bandit algorithm. By default, bestSlopeFirst is used")
+          .text("Use this option to set the bandit used:\n" +
+            "    - bandit         : the modified bandit algorithm\n" +
+            "    - epsilongreedy  : an implementation of the epsilon greedy\n" +
+            "    - random         : choose neighborhoods at random\n" +
+            "    - bestslopefirst : the default method")
           .action((x,c) => c match {
-            case conf:SolveAllConfig => conf.copy(bandit = true)
+            case conf:SolveAllConfig => conf.copy(bandit = x)
             case _ => throw new Error("Unexpected Error")
           }),
         opt[Int]("timeout")
@@ -138,7 +150,7 @@ object main extends App {
       )
   }
 
-  private def solveProblem(file: File, verbosity: Int, bandit : Boolean, display: Boolean, timeout: Int): Unit = {
+  private def solveProblem(file: File, verbosity: Int, bandit : String, display: Boolean, timeout: Int): Unit = {
     val instanceProblem: LiLimProblem = Parser(file)
     val oscarModel: Model = Model(instanceProblem)
     val solver: Solver = Solver(oscarModel,bandit)

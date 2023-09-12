@@ -1,21 +1,20 @@
 package pdptw
 
-import combinator.{BanditCombinator, BestSlopeFirstLearningWay}
+import combinator.{BanditCombinator, BestSlopeFirstLearningWay, RandomCombinator, EpsilonGreedyBandit, NeighborhoodStatistics}
 import oscar.cbls._
 import oscar.cbls.business.routing.display
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.business.routing.model.helpers.DistanceHelper
 import oscar.cbls.business.routing.visu.RoutingMapTypes
-import combinator.NeighborhoodStatistics
 
 import scala.concurrent.duration.{Duration, DurationInt}
 
-case class Solver(oscarModel: Model,bandit : Boolean) {
+case class Solver(oscarModel: Model, bandit: String) {
   private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix
   private val pdptw: VRP = oscarModel.pdpProblem
   private val obj: Objective = oscarModel.objectiveFunction
-  private var bestKnown : Long = obj.value
+  private var bestKnown: Long = obj.value
 
   // Relevant predecessors definition for each node (here any node can be the predecessor of another node)
   val relevantPredecessorsOfNodes =
@@ -78,34 +77,53 @@ case class Solver(oscarModel: Model,bandit : Boolean) {
 
     val neighList = List(
       simpleNeighborhoods.couplePointInsertUnroutedFirst(10),
+      simpleNeighborhoods.couplePointInsertUnroutedFirst(10,best = true),
       simpleNeighborhoods.couplePointInsertRoutedFirst(10),
+      simpleNeighborhoods.couplePointInsertRoutedFirst(10,best = true),
       simpleNeighborhoods.couplePointMove(10),
-      simpleNeighborhoods.onePointMove(10))
-    var search = if (bandit) {
-      new BanditCombinator(neighList,
-        simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),
-        if(withTimeout) Int.MaxValue else 15,
+      simpleNeighborhoods.couplePointMove(10, best = true),
+      simpleNeighborhoods.onePointMove(10) name "1_PM_10 - first",
+      simpleNeighborhoods.onePointMove(10, best = true) name "1_PM_10 - best",
+      simpleNeighborhoods.doubleCouplePointMove(2),
+      simpleNeighborhoods.doubleCouplePointMove(2,best = true),
+      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2),
+      simpleNeighborhoods.oneCoupleMoveAndThenInsert(2,best = true),
+      simpleNeighborhoods.segmentExchanges(pdptw.n),
+      simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
+    )
+    var search = bandit.toLowerCase() match {
+      case "bandit" => new BanditCombinator(neighList,
+        simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+        if (withTimeout) Int.MaxValue else 15,
         obj,
-        stats => rewardFunction(stats,neighList.length)
-      )// saveBestAndRestoreOnExhaust(obj)
-    }
-    else {
-      bestSlopeFirst(
+        stats => rewardFunction(stats, neighList.length)
+      ) //saveBestAndRestoreOnExhaust(obj)
+      case "epsilongreedy" => new EpsilonGreedyBandit(neighList
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 1, obj,
+        minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case "bestslopefirst" => bestSlopeFirst(
         neighList
-      ) onExhaustRestartAfter (simpleNeighborhoods.emptyVehicle(),0,obj,
-        minRestarts = if(withTimeout)Int.MaxValue else 15)
-      // new BestSlopeFirstLearningWay(neighList
-      // ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v/10),10,obj)
-
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
+        minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case "random" =>
+        new RandomCombinator(neighList
+        ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case _ =>
+        println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
+        bestSlopeFirst(
+          neighList
+        ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15)
     }
 
-    if(displaySolution) search = search.afterMove(demoDisplay.drawRoutes()).showObjectiveFunction(oscarModel.objectiveFunction)
-    if(withTimeout) search = (search.weakTimeout(Duration(timeout,"second"))) saveBestAndRestoreOnExhaust(obj)
+    if (displaySolution) search = search.afterMove(demoDisplay.drawRoutes()).showObjectiveFunction(oscarModel.objectiveFunction)
+    if (withTimeout) search = (search.weakTimeout(Duration(timeout, "second"))) saveBestAndRestoreOnExhaust (obj)
     search.verbose = verbosity
     search.doAllMoves(obj = obj)
-    if(displaySolution) demoDisplay.drawRoutes(force = true)
+    if (displaySolution) demoDisplay.drawRoutes(force = true)
 
-    if(verbosity > 1) {
+    if (verbosity > 1) {
       search.profilingOnConsole()
       println(pdptw.toString())
       println(obj)

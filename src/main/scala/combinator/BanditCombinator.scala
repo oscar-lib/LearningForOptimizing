@@ -4,6 +4,7 @@ import oscar.cbls.core.search.Neighborhood
 import oscar.cbls.core.search.SearchResult
 import oscar.cbls.core.search.NoMoveFound
 import oscar.cbls.core.search.MoveFound
+
 import scala.util.Random
 import scala.annotation.tailrec
 import oscar.cbls.core.computation.IntValue
@@ -29,7 +30,7 @@ class BanditCombinator(l : List[Neighborhood],
   obj : Objective,
   computeReward : Array[NeighborhoodStatistics] => Array[Double],
   ignoreFst : Boolean = true,
-) extends AbstractLearningCombinator("BanditCombinator"){
+) extends AbstractLearningCombinator("BanditCombinator", l: _*){
 
   private val nbNeigh : Int = l.length
 
@@ -155,7 +156,7 @@ class BanditCombinator(l : List[Neighborhood],
               1, //stats.nbFound + 1,
               0, //stats.nbNotFound,
               stats.totalTimeNano + profilingData._lastCallDurationNano,
-              stats.totalTimeNotFoundNano + profilingData._lastCallDurationNano,
+              stats.totalTimeNotFoundNano,
               stats.totalGain + profilingData._lastCallGain
           )
           reinitTabu
