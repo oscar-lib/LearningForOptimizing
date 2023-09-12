@@ -1,14 +1,11 @@
 package combinator
 
-import oscar.cbls.core.search.Neighborhood
-import oscar.cbls.core.search.SearchResult
-import oscar.cbls.core.search.NoMoveFound
-import oscar.cbls.core.search.MoveFound
-
-import scala.util.Random
-import scala.annotation.tailrec
-import oscar.cbls.core.computation.IntValue
 import oscar.cbls.core.objective.Objective
+import oscar.cbls.core.search.{MoveFound, Neighborhood, NoMoveFound, SearchResult}
+
+import collection.mutable.{ArrayDeque => Deque}
+import scala.annotation.tailrec
+import scala.util.Random
 
 
 case class NeighborhoodStatistics(
