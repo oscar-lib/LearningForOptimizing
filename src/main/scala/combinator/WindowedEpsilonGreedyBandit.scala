@@ -26,13 +26,26 @@ class WindowedEpsilonGreedyBandit(l: List[Neighborhood], window: Int = 500) exte
   private var nTabu = 0;
 
 
+  override def reset(): Unit = {
+    updateWeights()
+    resetEpisode()
+    if (nTabu != 0) {
+      for (i <- authorizedNeighborhood.indices) {
+        authorizedNeighborhood(i) = true
+      }
+      nTabu = 0;
+    }
+    super.reset()
+  }
+
   /** The method that provides a neighborhood.
    *
    * @return Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
    */
   override def getNextNeighborhood: Option[Neighborhood] = {
-    if (nTabu == l.length)
+    if (nTabu == l.length) {
       return None // all neighborhoods did not progress
+    }
     t += 1;
     val epsilon_t: Double = epsilon * Math.sqrt(l.length.toDouble / t)
     val proba_t: Double = Random.nextDouble();

@@ -164,9 +164,10 @@ case class Solver(oscarModel: Model, bandit: String) {
         println("Using epsilonGreedy")
         new EpsilonGreedyBandit(neighList) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
-      case "windowedepsilongreedy" => new WindowedEpsilonGreedyBandit(neighList
-      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
-        minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case "windowedepsilongreedy" =>
+        println("Using windowedEpsilonGreedy")
+        new WindowedEpsilonGreedyBandit(neighList) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15)
       case "bestslopefirst" =>
         println("Using bestSlopeFirst")
         bestSlopeFirst(
