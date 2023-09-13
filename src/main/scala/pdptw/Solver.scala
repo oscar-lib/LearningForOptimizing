@@ -136,6 +136,7 @@ case class Solver(oscarModel: Model, bandit: String) {
     )
     var search = bandit.toLowerCase() match {
       case "bandit" =>
+        println("Using bandit")
         new BanditCombinator(neighList,
         simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
         if (withTimeout) Int.MaxValue else 15,
@@ -143,6 +144,7 @@ case class Solver(oscarModel: Model, bandit: String) {
         stats => rewardFunction(stats, neighList.length)
       ) saveBestAndRestoreOnExhaust obj
       case "banditaftermove" =>
+        println("Using banditAfterMove")
         new BanditCombinator(neighList,
         simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
         if (withTimeout) Int.MaxValue else 15,
@@ -151,6 +153,7 @@ case class Solver(oscarModel: Model, bandit: String) {
         afterMove = true
       ) saveBestAndRestoreOnExhaust obj
       case "banditrollingaverage" =>
+        println("Using banditRollingAverage")
         new BanditCombinator(neighList,
         simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
         if (withTimeout) Int.MaxValue else 15,
@@ -159,14 +162,17 @@ case class Solver(oscarModel: Model, bandit: String) {
         rollingAverage = true
       ) saveBestAndRestoreOnExhaust obj
       case "epsilongreedy" =>
+        println("Using epsilonGreedy")
         new EpsilonGreedyBandit(neighList) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
       case "bestslopefirst" =>
+        println("Using bestSlopeFirst")
         bestSlopeFirst(
           neighList
         ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15)
       case "random" =>
+        println("Using random")
         new RandomCombinator(neighList
         ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15)
