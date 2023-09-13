@@ -1,8 +1,8 @@
 # run the experiments in parallel, using as many CPU cores as available
 # supposed to be called at the root of the project
-declare -a BanditType=("epsilonGreedy" "bestSlopeFirst" "bandit" "random")
+declare -a BanditType=("epsilonGreedy" "bestSlopeFirst" "bandit" "random" "banditrollingaverage" "banditaftermove")
 timeout=300  # timeout in seconds
-nRuns=10   # number of time an instance is run (to take randomness into account)
+nRuns=2   # number of time an instance is run (to take randomness into account)
 myDate=`printf '%(%Y-%m-%d_%H_%M_%S)T\n' -1`
 filename="xp/${myDate}_results.csv"
 
@@ -19,6 +19,6 @@ do
   for i in $(seq 1 $nRuns)
   do
     # extract the instances from the data folder and run the solver
-    find bench/ -type f | parallel $run_script {} $bandit $timeout >> $filename
+    find bench/ -type f | parallel -j 4 $run_script {} $bandit $timeout >> $filename
   done
 done
