@@ -1,8 +1,8 @@
 package combinator
 
-import oscar.cbls.core.search.{AcceptanceCriterion, Move, MoveFound, Neighborhood, NeighborhoodCombinator, NoMoveFound, SearchResult}
 import oscar.cbls.core.objective.Objective
-import oscar.cbls.core.search.profiling.{CombinatorProfiler, SelectionProfiler}
+import oscar.cbls.core.search._
+import oscar.cbls.core.search.profiling.SelectionProfiler
 
 import scala.annotation.tailrec
 

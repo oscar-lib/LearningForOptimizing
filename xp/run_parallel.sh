@@ -2,7 +2,7 @@
 # supposed to be called at the root of the project
 declare -a BanditType=("epsilonGreedy" "bestSlopeFirst" "bandit" "random" "banditrollingaverage" "banditaftermove")
 timeout=300  # timeout in seconds
-nRuns=2   # number of time an instance is run (to take randomness into account)
+nRuns=1   # number of time an instance is run (to take randomness into account)
 myDate=`printf '%(%Y-%m-%d_%H_%M_%S)T\n' -1`
 filename="xp/${myDate}_results.csv"
 

@@ -118,7 +118,7 @@ class BanditCombinator(l : List[Neighborhood],
   }
 
   def updateProbabilityAfterMove(reward: Array[Double]): Unit = {
-    println(neighProbability.mkString(";"))
+//    println(neighProbability.mkString(";"))
     var cumulativeRound: Double = 0
     var t: Double = 0
     for (i <- 0 until nbNeigh) {
@@ -136,7 +136,7 @@ class BanditCombinator(l : List[Neighborhood],
         neighProbability(i) = neighProbability(i) * 0.5 + 1 / nbNeigh
       }
     }
-    println(neighProbability.mkString(";"))
+//    println(neighProbability.mkString(";"))
     nbConsideredRestart += 1
   }
 
@@ -151,11 +151,11 @@ class BanditCombinator(l : List[Neighborhood],
       val old = rewardHistory.removeHead()
       for (i <- old.indices) cumulativeReward(i) -= old(i)
     }
-    println("Probabilities before applying rewards : " + neighProbability.mkString(";"))
+//    println("Probabilities before applying rewards : " + neighProbability.mkString(";"))
     for (i <- neighProbability.indices) {
       neighProbability(i) = (originalNeighProbability(i) + cumulativeReward(i)) / (maxHistory + 1)
     }
-    println("Probabilities after applying rewards : " + neighProbability.mkString(";"))
+//    println("Probabilities after applying rewards : " + neighProbability.mkString(";"))
     nbConsideredRestart += 1
   }
 

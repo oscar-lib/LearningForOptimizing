@@ -7,12 +7,10 @@ import oscar.cbls.business.routing.invariants.timeWindow.{TimeWindowConstraint, 
 import oscar.cbls.business.routing.invariants.vehicleCapacity.GlobalVehicleCapacityConstraint
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.business.routing.model.extensions.Chains
-import oscar.cbls.business.routing.{ChainsHelper, vehicleOfNodes}
+import oscar.cbls.business.routing.vehicleOfNodes
 import oscar.cbls.core.objective.CascadingObjective
 import oscar.cbls.lib.constraint.EQ
 import oscar.cbls.lib.invariant.seq.Precedence
-
-import scala.collection.immutable.HashMap
 
 object Model {
 
