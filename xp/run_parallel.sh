@@ -10,7 +10,7 @@ filename="xp/${myDate}_results.csv"
 sbt clean
 sbt assembly
 # creates the file so that the header is present
-echo "instance,bandit,timeout,unroutedNodes,nVehicles,objective" > $filename
+echo "instance,bandit,timeout,unroutedNodes,nVehicles,travelLength,objective" > $filename
 run_script="./xp/run_one_instance.sh"
 
 # loop through the configurations
