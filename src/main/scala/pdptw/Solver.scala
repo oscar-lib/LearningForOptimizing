@@ -1,6 +1,6 @@
 package pdptw
 
-import combinator.{BanditCombinator, BestSlopeFirstLearningWay, EpsilonGreedyBandit, NeighborhoodStatistics, RandomCombinator}
+import combinator.{BanditCombinator, EpsilonGreedyBandit, NeighborhoodStatistics, RandomCombinator}
 import oscar.cbls._
 import oscar.cbls.business.routing.display
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
@@ -8,8 +8,7 @@ import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.business.routing.model.helpers.DistanceHelper
 import oscar.cbls.business.routing.visu.RoutingMapTypes
 
-import java.io.{File, PrintWriter}
-import scala.concurrent.duration.{Duration, DurationInt}
+import scala.concurrent.duration.Duration
 
 case class Solver(oscarModel: Model, bandit: String) {
   private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix

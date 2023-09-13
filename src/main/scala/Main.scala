@@ -1,10 +1,7 @@
-//import org.graalvm.compiler.core.common.CompilationIdentifier.Verbosity
 import pdptw.{LiLimProblem, Model, Parser, Solver}
 import scopt.OptionParser
 
 import java.io.File
-import java.nio.file.{FileSystems, Files}
-import scala.jdk.CollectionConverters.IteratorHasAsScala
 
 object main extends App {
 

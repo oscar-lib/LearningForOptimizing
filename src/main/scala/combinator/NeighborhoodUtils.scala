@@ -1,8 +1,8 @@
 package combinator
 
 import oscar.cbls.core.search.{Neighborhood, NeighborhoodCombinator}
+import oscar.cbls.core.search.profiling.CommonProfilingData
 import oscar.cbls.lib.search.combinators.DynAndThen
-import oscar.cbls.core.search.profiling.{CommonProfilingData, ProfilingData}
 
 object NeighborhoodUtils {
 

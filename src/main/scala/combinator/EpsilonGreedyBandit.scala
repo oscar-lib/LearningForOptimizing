@@ -1,7 +1,6 @@
 package combinator
 
-import oscar.cbls.core.search.{MoveFound, Neighborhood, NeighborhoodCombinator, NoMoveFound, SearchResult}
-import oscar.cbls.lib.search.combinators.DynAndThen
+import oscar.cbls.core.search.{MoveFound, Neighborhood, NoMoveFound, SearchResult}
 
 import scala.util.Random
 
