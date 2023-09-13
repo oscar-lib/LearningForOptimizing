@@ -1,6 +1,6 @@
 package pdptw
 
-import combinator.{BanditCombinator, BestSlopeFirstLearningWay, EpsilonGreedyBandit, NeighborhoodStatistics, RandomCombinator}
+import combinator.{BanditCombinator, BestSlopeFirstLearningWay, EpsilonGreedyBandit, NeighborhoodStatistics, RandomCombinator, WindowedEpsilonGreedyBandit}
 import oscar.cbls._
 import oscar.cbls.business.routing.display
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
@@ -157,6 +157,9 @@ case class Solver(oscarModel: Model, bandit: String) {
         rollingAverage = true
       )
       case "epsilongreedy" => new EpsilonGreedyBandit(neighList
+      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
+        minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case "windowedepsilongreedy" => new WindowedEpsilonGreedyBandit(neighList
       ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
       case "bestslopefirst" =>
