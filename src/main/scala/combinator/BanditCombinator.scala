@@ -1,14 +1,11 @@
 package combinator
 
-import oscar.cbls.core.search.Neighborhood
-import oscar.cbls.core.search.SearchResult
-import oscar.cbls.core.search.NoMoveFound
-import oscar.cbls.core.search.MoveFound
 import oscar.cbls.core.objective.Objective
+import oscar.cbls.core.search.{MoveFound, Neighborhood, NoMoveFound, SearchResult}
 
+import scala.annotation.tailrec
 import scala.collection.mutable.{ArrayDeque => Deque}
 import scala.util.Random
-import scala.annotation.tailrec
 
 
 case class NeighborhoodStatistics(
@@ -122,7 +119,7 @@ class BanditCombinator(
   }
 
   def updateProbabilityAfterMove(reward: Array[Double]): Unit = {
-    println(neighProbability.mkString(";"))
+//    println(neighProbability.mkString(";"))
     var cumulativeRound: Double = 0
     var t: Double = 0
     for (i <- 0 until nbNeigh) {
@@ -140,7 +137,7 @@ class BanditCombinator(
         neighProbability(i) = neighProbability(i) * 0.5 + 1 / nbNeigh
       }
     }
-    println(neighProbability.mkString(";"))
+//    println(neighProbability.mkString(";"))
     nbConsideredRestart += 1
   }
 
@@ -155,11 +152,11 @@ class BanditCombinator(
       val old = rewardHistory.removeHead()
       for (i <- old.indices) cumulativeReward(i) -= old(i)
     }
-    //println("Probabilities before applying rewards : " + neighProbability.mkString(";"))
+//    println("Probabilities before applying rewards : " + neighProbability.mkString(";"))
     for (i <- neighProbability.indices) {
       neighProbability(i) = (originalNeighProbability(i) + cumulativeReward(i)) / (maxHistory + 1)
     }
-    //println("Probabilities after applying rewards : " + neighProbability.mkString(";"))
+//    println("Probabilities after applying rewards : " + neighProbability.mkString(";"))
     nbConsideredRestart += 1
   }
 

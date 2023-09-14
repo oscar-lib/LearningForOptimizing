@@ -8,8 +8,7 @@ import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.business.routing.model.helpers.DistanceHelper
 import oscar.cbls.business.routing.visu.RoutingMapTypes
 
-import java.io.{File, PrintWriter}
-import scala.concurrent.duration.{Duration, DurationInt}
+import scala.concurrent.duration.Duration
 
 case class Solver(oscarModel: Model, bandit: String) {
   private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix
@@ -55,18 +54,50 @@ case class Solver(oscarModel: Model, bandit: String) {
   }
 
   def rewardFunctionAfterMove(neighStats: Array[NeighborhoodStatistics], nbNeigh: Int): Array[Double] = {
+//    println("Compute Reward")
+//    println(neighStats.mkString(";"))
     val objValue = obj.value
+//    println(s"$objValue $bestKnown")
     var totalReward = 1
+//    if (objValue < bestKnown) {
+//      totalReward = 1
+//    } else {
+//      totalReward = -1
+//    }
+
     if (objValue < bestKnown)
       bestKnown = objValue
     var res = Array.fill(nbNeigh)(0.0)
     for (i <- 0 until nbNeigh) {
+//      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
       if (neighStats(i).nbFound > 0) {
         res(i) = res(i) + totalReward
       } else if (neighStats(i).nbNotFound > 0) {
         res(i) = res(i) - 0.4*totalReward
       }
     }
+
+//    var foundBetter = 0
+//    var foundWorse = 0
+//    for (i <- 0 until nbNeigh) {
+//      if (neighStats(i).nbFound > 0) {
+//        foundBetter = 1
+//      }
+//      if (neighStats(i).nbNotFound > 0) {
+//        foundWorse = 1
+//      }
+//    }
+//    var tr : Double = 0.0
+//    if (foundBetter == 1) tr = totalReward
+//    else if (foundWorse == 1) tr = -0.3 * totalReward
+//    for (i <- 0 until nbNeigh) {
+//      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
+//      if (neighStats(i).nbFound > 0 || neighStats(i).nbNotFound > 0) {
+//        res(i) = res(i) + tr
+//      }
+//    }
+//    println(s"reward: ${res.mkString(";")} (totalReward : $totalReward)")
+
     res
   }
 
@@ -107,24 +138,28 @@ case class Solver(oscarModel: Model, bandit: String) {
         if (withTimeout) Int.MaxValue else 15,
         obj,
         stats => rewardFunction(stats, neighList.length)
-      ) saveBestAndRestoreOnExhaust(obj)
+      ) saveBestAndRestoreOnExhaust obj
       case "banditaftermove" => new BanditCombinator(neighList,
         simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
         if (withTimeout) Int.MaxValue else 15,
         obj,
         stats => rewardFunctionAfterMove(stats, neighList.length),
         afterMove = true
-      )
+      ) saveBestAndRestoreOnExhaust obj
       case "banditrollingaverage" => new BanditCombinator(neighList,
         simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
         if (withTimeout) Int.MaxValue else 15,
         obj,
         stats => rewardFunction(stats, neighList.length),
         rollingAverage = true
-      )
-      case "epsilongreedy" => new EpsilonGreedyBandit(neighList
-      ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
+      ) saveBestAndRestoreOnExhaust obj
+      case "epsilongreedy" =>
+        new EpsilonGreedyBandit(neighList) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case "ucb1" =>
+        println("Using UCB1")
+        new UCB1(neighList) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15)
       case "bestslopefirst" =>
         isBSF = true
         bestSlopeFirst(

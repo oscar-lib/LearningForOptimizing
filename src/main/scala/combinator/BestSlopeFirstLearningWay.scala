@@ -1,10 +1,8 @@
 package combinator
 
-import oscar.cbls.core.search.Neighborhood
-import oscar.cbls.core.search.SearchResult
 import oscar.cbls.algo.heap.BinomialHeapWithMove
-import oscar.cbls.core.search.NoMoveFound
-import oscar.cbls.core.search.MoveFound
+import oscar.cbls.core.search.{MoveFound, Neighborhood, NoMoveFound, SearchResult}
+
 import scala.annotation.tailrec
 
 class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearningCombinator("NewBSF", l: _*) {

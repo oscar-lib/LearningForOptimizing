@@ -1,7 +1,7 @@
 package combinator
 
-import oscar.cbls.core.search._
 import oscar.cbls.core.objective.Objective
+import oscar.cbls.core.search._
 import oscar.cbls.core.search.profiling.SelectionProfiler
 
 import scala.annotation.tailrec

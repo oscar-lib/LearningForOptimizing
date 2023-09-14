@@ -1,8 +1,8 @@
 package combinator
 
 import oscar.cbls.core.search.{Neighborhood, NeighborhoodCombinator}
-import oscar.cbls.lib.search.combinators.DynAndThen
 import oscar.cbls.core.search.profiling.CommonProfilingData
+import oscar.cbls.lib.search.combinators.DynAndThen
 
 object NeighborhoodUtils {
 
@@ -65,6 +65,5 @@ object NeighborhoodUtils {
   def lastCallDuration(neighborhood: Neighborhood) : Long = {
     getProfiler(neighborhood)._lastCallDurationNano
   }
-
 
 }
