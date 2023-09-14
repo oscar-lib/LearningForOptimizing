@@ -2,9 +2,7 @@ package combinator
 
 import oscar.cbls.core.search.Neighborhood
 import oscar.cbls.core.search.SearchResult
-import oscar.cbls.algo.magicArray.MagicBoolArray
 import oscar.cbls.algo.heap.BinomialHeapWithMove
-import oscar.cbls.core.search.NoMoveNeighborhood
 import oscar.cbls.core.search.NoMoveFound
 import oscar.cbls.core.search.MoveFound
 import scala.annotation.tailrec
@@ -37,7 +35,6 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
   }
 
   insertNeighborhoodList(indicesList)
-
 
   override def getNextNeighborhood: Option[Neighborhood] = {
     // If the heap is empty: we do not have any neighborhood

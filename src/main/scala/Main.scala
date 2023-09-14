@@ -6,7 +6,7 @@ import java.io.File
 import java.nio.file.{FileSystems, Files}
 import scala.jdk.CollectionConverters.IteratorHasAsScala
 
-object main extends App {
+object Main extends App {
 
   abstract class Config()
   case class SolveInstanceConfig(instance: File = null,
@@ -164,7 +164,7 @@ object main extends App {
         case _: NoConfig =>
           println("Error: No Command Given")
           println("Try --help for more information")
-        case i: SolveInstanceConfig => solveProblem(i.instance, i.verbosity,i.bandit, i.display, i.timeout)
+        case i: SolveInstanceConfig => solveProblem(i.instance, i.verbosity, i.bandit, i.display, i.timeout)
 
         case s: SolveSeriesConfig =>
           val dir = new File(s"examples/pdptw_${s.seriesSize}")

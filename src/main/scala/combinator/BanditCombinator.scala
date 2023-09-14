@@ -1,11 +1,14 @@
 package combinator
 
+import oscar.cbls.core.search.Neighborhood
+import oscar.cbls.core.search.SearchResult
+import oscar.cbls.core.search.NoMoveFound
+import oscar.cbls.core.search.MoveFound
 import oscar.cbls.core.objective.Objective
-import oscar.cbls.core.search.{MoveFound, Neighborhood, NoMoveFound, SearchResult}
 
-import collection.mutable.{ArrayDeque => Deque}
-import scala.annotation.tailrec
+import scala.collection.mutable.{ArrayDeque => Deque}
 import scala.util.Random
+import scala.annotation.tailrec
 
 
 case class NeighborhoodStatistics(
@@ -21,14 +24,15 @@ case class NeighborhoodStatistics(
  * aggrégation historique
  * Choix des voisinages
  */
-class BanditCombinator(l : List[Neighborhood],
+class BanditCombinator(
+  l : List[Neighborhood],
   restartNeigh : Neighborhood,
   maxRestart : Int,
   obj : Objective,
   computeReward : Array[NeighborhoodStatistics] => Array[Double],
   ignoreFst : Boolean = true,
   afterMove: Boolean = false,
-  rollingAverage: Boolean = false
+  rollingAverage : Boolean = false
 ) extends AbstractLearningCombinator("BanditCombinator", l: _*){
 
   private val nbNeigh : Int = l.length
@@ -42,7 +46,7 @@ class BanditCombinator(l : List[Neighborhood],
 
 
   private val rand = new Random(3000)
-  private var authorizedNeighborhood : Array[Boolean] = Array.fill(nbNeigh)(true)
+  private val authorizedNeighborhood : Array[Boolean] = Array.fill(nbNeigh)(true)
   private var nbAvailableNeigh = nbNeigh
   private var totalCurrentNeighWeight : Double = 1
   private var currentNbRestart = 0
@@ -151,11 +155,11 @@ class BanditCombinator(l : List[Neighborhood],
       val old = rewardHistory.removeHead()
       for (i <- old.indices) cumulativeReward(i) -= old(i)
     }
-    println("Probabilities before applying rewards : " + neighProbability.mkString(";"))
+    //println("Probabilities before applying rewards : " + neighProbability.mkString(";"))
     for (i <- neighProbability.indices) {
       neighProbability(i) = (originalNeighProbability(i) + cumulativeReward(i)) / (maxHistory + 1)
     }
-    println("Probabilities after applying rewards : " + neighProbability.mkString(";"))
+    //println("Probabilities after applying rewards : " + neighProbability.mkString(";"))
     nbConsideredRestart += 1
   }
 
@@ -167,27 +171,29 @@ class BanditCombinator(l : List[Neighborhood],
       val stats = neighStatistics(currentIndex)
       m match {
         case NoMoveFound =>
-          neighStatistics(currentIndex) =
-            NeighborhoodStatistics(stats.nbCall + 1,
-              if (afterMove) 0 else stats.nbFound,
-              if (afterMove) 1 else stats.nbNotFound + 1,
-              stats.totalTimeNano + profilingData._lastCallDurationNano,
-              stats.totalTimeNotFoundNano + profilingData._lastCallDurationNano,
-              stats.totalGain + profilingData._lastCallGain)
+          neighStatistics(currentIndex) = NeighborhoodStatistics(
+            stats.nbCall + 1,
+            if (afterMove) 0 else stats.nbFound,
+            if (afterMove) 1 else stats.nbNotFound + 1,
+            stats.totalTimeNano + profilingData._lastCallDurationNano,
+            stats.totalTimeNotFoundNano + profilingData._lastCallDurationNano,
+            stats.totalGain + profilingData._lastCallGain
+          )
           addToTabu(currentIndex)
-        case MoveFound(m) =>
-          neighStatistics(currentIndex) =
-            NeighborhoodStatistics(
-              stats.nbCall + 1,
-              if (afterMove) 1 else stats.nbFound + 1,
-              if (afterMove) 0 else stats.nbNotFound,
-              stats.totalTimeNano + profilingData._lastCallDurationNano,
-              stats.totalTimeNotFoundNano,
-              stats.totalGain + profilingData._lastCallGain
+        case MoveFound(_) =>
+          neighStatistics(currentIndex) = NeighborhoodStatistics(
+            stats.nbCall + 1,
+            if (afterMove) 1 else stats.nbFound + 1,
+            if (afterMove) 0 else stats.nbNotFound,
+            stats.totalTimeNano + profilingData._lastCallDurationNano,
+            stats.totalTimeNotFoundNano,
+            stats.totalGain + profilingData._lastCallGain
           )
           reinitTabu()
       }
-      if (afterMove) updateProbabilityAfterMove(computeReward(neighStatistics))
+      if (afterMove) {
+        updateProbabilityAfterMove(computeReward(neighStatistics))
+      }
     } else {
       // if (obj.value < bestKnown) {
       //   bestKnown = obj.value

@@ -1,6 +1,6 @@
 package pdptw
 
-import combinator.{BanditCombinator, BestSlopeFirstLearningWay, EpsilonGreedyBandit, NeighborhoodStatistics, RandomCombinator}
+import combinator._
 import oscar.cbls._
 import oscar.cbls.business.routing.display
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
@@ -30,7 +30,6 @@ case class Solver(oscarModel: Model, bandit: String) {
   val closestRelevantSuccessorsByDistance =
     Array.tabulate(pdptw.n)(DistanceHelper.lazyClosestPredecessorsOfNode(distancesAndTimeMatrix, relevantSuccessorsOfNodes)(_))
 
-
   private val simpleNeighborhoods = SimpleNeighborhoods(pdptw, oscarModel, closestRelevantPredecessorsByDistance, closestRelevantSuccessorsByDistance)
 
   def rewardFunction(neighStats: Array[NeighborhoodStatistics], nbNeigh: Int): Array[Double] = {
@@ -56,50 +55,18 @@ case class Solver(oscarModel: Model, bandit: String) {
   }
 
   def rewardFunctionAfterMove(neighStats: Array[NeighborhoodStatistics], nbNeigh: Int): Array[Double] = {
-//    println("Compute Reward")
-//    println(neighStats.mkString(";"))
     val objValue = obj.value
-//    println(s"$objValue $bestKnown")
     var totalReward = 1
-//    if (objValue < bestKnown) {
-//      totalReward = 1
-//    } else {
-//      totalReward = -1
-//    }
-
     if (objValue < bestKnown)
       bestKnown = objValue
     var res = Array.fill(nbNeigh)(0.0)
     for (i <- 0 until nbNeigh) {
-//      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
       if (neighStats(i).nbFound > 0) {
         res(i) = res(i) + totalReward
       } else if (neighStats(i).nbNotFound > 0) {
         res(i) = res(i) - 0.4*totalReward
       }
     }
-
-//    var foundBetter = 0
-//    var foundWorse = 0
-//    for (i <- 0 until nbNeigh) {
-//      if (neighStats(i).nbFound > 0) {
-//        foundBetter = 1
-//      }
-//      if (neighStats(i).nbNotFound > 0) {
-//        foundWorse = 1
-//      }
-//    }
-//    var tr : Double = 0.0
-//    if (foundBetter == 1) tr = totalReward
-//    else if (foundWorse == 1) tr = -0.3 * totalReward
-//    for (i <- 0 until nbNeigh) {
-//      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
-//      if (neighStats(i).nbFound > 0 || neighStats(i).nbNotFound > 0) {
-//        res(i) = res(i) + tr
-//      }
-//    }
-//    println(s"reward: ${res.mkString(";")} (totalReward : $totalReward)")
-
     res
   }
 
@@ -116,7 +83,6 @@ case class Solver(oscarModel: Model, bandit: String) {
           RoutingMapTypes.BasicRoutingMap,
           title = fileName)
       else null
-
 
     val neighList = List(
       simpleNeighborhoods.couplePointInsertUnroutedFirst(10),
@@ -166,7 +132,8 @@ case class Solver(oscarModel: Model, bandit: String) {
         ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15)
       case "random" =>
-        new RandomCombinator(neighList
+        new RandomCombinator(
+          neighList
         ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15)
       case _ =>
@@ -189,7 +156,7 @@ case class Solver(oscarModel: Model, bandit: String) {
       println(pdptw.toString())
       println(obj)
     }
-
+    search.profilingOnConsole()
     println(oscarModel.toString)
     println("bestObj=" + {if (isBSF) oscarModel.objectiveFunction.value else bestKnown})
   }

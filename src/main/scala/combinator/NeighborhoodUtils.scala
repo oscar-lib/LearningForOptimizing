@@ -2,7 +2,7 @@ package combinator
 
 import oscar.cbls.core.search.{Neighborhood, NeighborhoodCombinator}
 import oscar.cbls.lib.search.combinators.DynAndThen
-import oscar.cbls.core.search.profiling.{CommonProfilingData, ProfilingData}
+import oscar.cbls.core.search.profiling.CommonProfilingData
 
 object NeighborhoodUtils {
 
@@ -33,7 +33,7 @@ object NeighborhoodUtils {
    */
   def slope(neighborhood : Neighborhood) : Double = {
     val profiler = getProfiler(neighborhood)
-    - (profiler.gain * 1000) / Math.max(profiler.timeSpentMillis, 1)
+    -(profiler.gain * 1000D) / Math.max(profiler.timeSpentMillis, 1)
   }
 
   /**
