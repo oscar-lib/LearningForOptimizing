@@ -37,7 +37,7 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
       for (i <- authorizedNeighborhood.indices) {
         authorizedNeighborhood(i) = true
       }
-      nTabu = 0;
+      nTabu = 0
     }
     super.reset()
   }
@@ -49,7 +49,7 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
   override def getNextNeighborhood: Option[Neighborhood] = {
     if (nTabu == l.length)
       return None // all neighborhoods did not progress
-    t += 1;
+    t += 1
     val epsilon_t: Double = epsilon * Math.sqrt(l.length.toDouble / t)
     val proba_t: Double = Random.nextDouble()
     var neighborhood_idx = 0
@@ -67,7 +67,7 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
         neighborhood_idx = weights.length - 1
     }
     lastSelectedIdx = neighborhood_idx;
-    nSelected(neighborhood_idx) += 1;
+    nSelected(neighborhood_idx) += 1
     //println("[" + weights.map(d => f"$d%.2f").mkString(" ") + "] choosing " + lastSelectedIdx + " (" + l(neighborhood_idx) + ")")
     Some(l(neighborhood_idx))
   }
@@ -115,14 +115,14 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
   private def updateTabu(m: SearchResult, neighborhood: Neighborhood): Unit = {
     m match {
       case NoMoveFound =>
-        nTabu += 1;
+        nTabu += 1
         authorizedNeighborhood(lastSelectedIdx) = false
       case MoveFound(_) =>
         if (nTabu != 0) {
           for (i <- authorizedNeighborhood.indices) {
             authorizedNeighborhood(i) = true
           }
-          nTabu = 0;
+          nTabu = 0
         }
     }
   }

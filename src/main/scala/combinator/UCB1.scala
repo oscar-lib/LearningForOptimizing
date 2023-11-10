@@ -14,30 +14,28 @@ import scala.util.Random
  */
 class UCB1(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBandit", l: _*) {
 
-  private val epsilon: Double = 0.7; // choose the best neighborhood with probability epsilon
-  // (well, almost with epsilon proba, it changes a bit over time)
-  private var t: Int = 0; // number of times the bandit was called to provide the next neighborhood
+  private var t: Int = 0 // number of times the bandit was called to provide the next neighborhood
   private val weights: Array[Double] = Array.fill(l.length)(1.0 / l.length); // weight associated to each neighborhood
-  private val wSol = 0.4; // weight for rewardSol
-  private val wEff = 0.2; // weight for rewardEff
-  private val wSlope = 0.4; // weight for rewardSlope
+  private val wSol = 0.4 // weight for rewardSol
+  private val wEff = 0.2 // weight for rewardEff
+  private val wSlope = 0.4 // weight for rewardSlope
 
-  private val nSelected: Array[Int] = Array.fill(l.length)(0); // number of time each neighborhood was selected
-  private var lastSelectedIdx: Int = -1; // index of the last selected neighborhood
+  private val nSelected: Array[Int] = Array.fill(l.length)(0) // number of time each neighborhood was selected
+  private var lastSelectedIdx: Int = -1 // index of the last selected neighborhood
 
-  private var maxSlope = 1.0; // stores (and updates) the maximum slope ever observed
-  private var maxRunTimeObserved: Long = 1; // max run time experienced by a neighborhood
-  private var minWeight = (1.0 / l.length) / 25; // min value for the weight, no one will ever go below that
+  private var maxSlope = 1.0 // stores (and updates) the maximum slope ever observed
+  private var maxRunTimeObserved: Long = 1 // max run time experienced by a neighborhood
+  private val minWeight = (1.0 / l.length) / 25 // min value for the weight, no one will ever go below that
 
-  private var authorizedNeighborhood: Array[Boolean] = Array.fill(l.length)(true)
-  private var nTabu = 0;
+  private val authorizedNeighborhood: Array[Boolean] = Array.fill(l.length)(true)
+  private var nTabu = 0
 
   override def reset(): Unit = {
     if (nTabu != 0) {
       for (i <- authorizedNeighborhood.indices) {
         authorizedNeighborhood(i) = true
       }
-      nTabu = 0;
+      nTabu = 0
     }
     super.reset()
   }
@@ -48,29 +46,32 @@ class UCB1(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBan
    * @return Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
    */
   override def getNextNeighborhood: Option[Neighborhood] = {
-    if (nTabu == l.length)
-      return None // all neighborhoods did not progress
-    t += 1;
-    val epsilon_t: Double = epsilon * Math.sqrt(l.length.toDouble / t)
-    val proba_t: Double = Random.nextDouble();
-    //println(s"epsilon_t: $epsilon_t - proba_t: $proba_t")
-    //val neighborhood_idx
-        //if (proba_t > epsilon_t) {
+    if (nTabu == l.length) {
+      None // all neighborhoods did not progress
+    } else {
+      t += 1
+      var neigh_idx_max: Vector[Int] = Vector.empty
+      var maxUcb: Double = Double.MinValue
+      weights.indices.foreach { idx =>
+        if (authorizedNeighborhood(idx)) {
+          val weightIdx = weights(idx) / nSelected(idx)
+          val ucbIdx = if (nSelected(idx) == 0) Double.MinValue else
+            weightIdx + math.sqrt(2 * math.log(t) / nSelected(idx))
+          if (ucbIdx == maxUcb) {
+            neigh_idx_max +:= idx
+          } else if (ucbIdx > maxUcb) {
+            maxUcb = ucbIdx
+            neigh_idx_max = Vector(idx)
+          }
+        }
+      }
+      val neigh_idx = neigh_idx_max(Random.nextInt(neigh_idx_max.size))
 
-    val neighborhood_idx = weights
-      .zipWithIndex
-      .filter(idx => authorizedNeighborhood(idx._2))
-      .map(idx => {
-        val weightedNselect = idx._1 / nSelected(idx._2)
-        (weightedNselect + math.sqrt(2 * math.log(t) / nSelected(idx._2)), idx._2)
-      })
-      .maxBy(idx => idx._2)
-      ._2
-
-    lastSelectedIdx = neighborhood_idx;
-    nSelected(neighborhood_idx) += 1;
-    //println("[" + weights.map(d => f"$d%.2f").mkString(" ") + "] choosing " + lastSelectedIdx + " (" + l(neighborhood_idx) + ")")
-    Some(l(neighborhood_idx))
+      lastSelectedIdx = neigh_idx
+      nSelected(neigh_idx) += 1
+      //println("[" + weights.map(d => f"$d%.2f").mkString(" ") + "] choosing " + lastSelectedIdx + " (" + l(neighborhood_idx) + ")")
+      Some(l(neigh_idx))
+    }
   }
 
   /** The methods that "learns" from the results of the neighborhoods.
@@ -82,7 +83,7 @@ class UCB1(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBan
     updateTabu(m, neighborhood)
     // updates the max run time observed
     val lastDuration = NeighborhoodUtils.lastCallDuration(neighborhood);
-    maxRunTimeObserved = Math.max(maxRunTimeObserved, lastDuration)
+    maxRunTimeObserved = maxRunTimeObserved max lastDuration
     val r = reward(m, neighborhood)
     if (nSelected(lastSelectedIdx) == 1) {
       // initialize the average weight
@@ -164,7 +165,7 @@ class UCB1(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBan
       case NoMoveFound =>
         // nothing was found, which is a bad news. Gives a 0 reward
         0
-      case MoveFound(mf) =>
+      case MoveFound(_) =>
         // returns 1 if the objective has been improved
         if (neighborhood.profiler.commonProfilingData._lastCallGain > 0) {
           1
@@ -198,6 +199,5 @@ class UCB1(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBan
     maxSlope = Math.max(maxSlope, Math.abs(currentSlope))
     Math.abs(currentSlope / maxSlope)
   }
-
 
 }
