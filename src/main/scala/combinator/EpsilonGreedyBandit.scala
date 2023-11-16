@@ -60,7 +60,7 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
       val cumulativeWeights = weights.indices.scanLeft(0.0)(
         (sum, idx) => if (authorizedNeighborhood(idx)) sum + weights(idx) else sum).tail
       // Draw a random number between 0 and sum of weights
-      val randomDraw = Random.nextDouble() * weights.sum
+      val randomDraw = Random.nextDouble() * cumulativeWeights.sum
       // Find the interval into which the drawn number falls
       neighborhood_idx = cumulativeWeights.indexWhere(randomDraw <= _);
       if (neighborhood_idx == -1)
