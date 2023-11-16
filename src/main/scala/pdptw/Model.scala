@@ -13,7 +13,6 @@ import oscar.cbls.lib.constraint.EQ
 import oscar.cbls.lib.invariant.seq.Precedence
 
 object Model {
-
   def apply(liLimProblem: LiLimProblem): Model = {
 		new Model(liLimProblem)
   }
@@ -30,7 +29,7 @@ class Model(liLimProblem: LiLimProblem) {
 
   // Quote : "The value of travel time is equal to the value of distance."
   val nodePositions: Array[(Int,Int)] = Array.tabulate(n)(node => {
-    if(node < v) liLimProblem.vehicles(node).depot.positionXY
+    if (node < v) liLimProblem.vehicles(node).depot.positionXY
     else liLimProblem.nodes(oscarIdToLiLimId(node)).positionXY
   })
 	lazy val distanceAndTimeMatrix: Array[Array[Long]] =
@@ -42,7 +41,7 @@ class Model(liLimProblem: LiLimProblem) {
       })
     })
 
-  // Invariant keeping the lenght of each vehicle's route
+  // Invariant keeping the length of each vehicle's route
   val routeLengthsInvariant: Array[CBLSIntVar] = RouteLength(pdpProblem.routes, n, v, (from, to) => distanceAndTimeMatrix(from)(to))
   // Invariant keeping the moving vehicle in a Set
   val movingVehiclesInvariant: MovingVehicles = MovingVehicles(pdpProblem.routes, v)
@@ -152,6 +151,5 @@ class Model(liLimProblem: LiLimProblem) {
     }).mkString("\n")
 //      movingVehiclesInvariant.value.toList.map(vehicle => pdpProblem.getRouteOfVehicle(vehicle).drop(1).map(x => x - v + 1).mkString(" ")).mkString("\n")
   }
-
 
 }

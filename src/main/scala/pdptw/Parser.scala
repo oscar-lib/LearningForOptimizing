@@ -18,7 +18,6 @@ object Parser {
     val depot = LiLimDepot((multFactor*depotX,multFactor*depotY))
     val vehicles = List.fill(v)(LiLimVehicle(depot,capacity))
 
-
     @tailrec
     def extractNodesAndDemands(lines: Iterator[String], liLimNodes: List[LiLimNode] = List.empty, liLimDemands: List[LiLimCouple] = List.empty): (List[LiLimNode],List[LiLimCouple]) = {
       if(lines.hasNext) {
@@ -49,16 +48,3 @@ object Parser {
     LiLimProblem(vehicles, nodes, demands,multFactor)
   }
 }
-
-
-case class LiLimProblem(
-                       vehicles: List[LiLimVehicle],
-                       nodes: List[LiLimNode],
-                       demands: List[LiLimCouple],
-                       multFactor: Int
-                    )
-
-case class LiLimDepot(positionXY: (Int,Int))
-case class LiLimVehicle(depot: LiLimDepot, capacity: Long)
-case class LiLimNode(nodeId: Int, positionXY: (Int,Int), earliestArrival: Int, latestArrival: Int, duration: Int, quantity: Long)
-case class LiLimCouple(fromNodeId: Int, toNodeId: Int)

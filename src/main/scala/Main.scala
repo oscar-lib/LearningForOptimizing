@@ -3,7 +3,7 @@ import scopt.OptionParser
 
 import java.io.File
 
-object main extends App {
+object Main extends App {
 
   abstract class Config()
   case class SolveInstanceConfig(instance: File = null,
@@ -161,7 +161,7 @@ object main extends App {
         case _: NoConfig =>
           println("Error: No Command Given")
           println("Try --help for more information")
-        case i: SolveInstanceConfig => solveProblem(i.instance, i.verbosity,i.bandit, i.display, i.timeout)
+        case i: SolveInstanceConfig => solveProblem(i.instance, i.verbosity, i.bandit, i.display, i.timeout)
 
         case s: SolveSeriesConfig =>
           val dir = new File(s"examples/pdptw_${s.seriesSize}")

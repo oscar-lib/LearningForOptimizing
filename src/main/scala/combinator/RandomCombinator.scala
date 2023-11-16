@@ -1,4 +1,5 @@
 package combinator
+
 import oscar.cbls.core.search.{MoveFound, Neighborhood, NoMoveFound, SearchResult}
 
 import scala.util.Random
@@ -6,18 +7,18 @@ import scala.util.Random
 /**
  * A combinator returning a random valid neighborhood to try
  * Invalid neighborhood are placed in a tabu list and not tried immediately afterwards
- * @param l
+ * @param l the list of neighborhoods to be tried randomly
  */
 class RandomCombinator(l : List[Neighborhood]) extends AbstractLearningCombinator("Random"){
 
   private val random = new Random()
   private val authorizedNeighborhood: Array[Boolean] = Array.fill(l.length)(true)
-  private var nValid = l.length;
-  private var lastIndexTried = 0;
+  private var nValid = l.length
+  private var lastIndexTried = 0
 
   private def authorizeAll(): Unit = {
     for (i <- l.indices) authorizedNeighborhood(i) = true
-    nValid = l.length;
+    nValid = l.length
   }
 
   override def reset(): Unit = {

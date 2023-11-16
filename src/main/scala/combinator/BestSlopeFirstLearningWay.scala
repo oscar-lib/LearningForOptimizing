@@ -34,7 +34,6 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
 
   insertNeighborhoodList(indicesList)
 
-
   override def getNextNeighborhood: Option[Neighborhood] = {
     // If the heap is empty: we do not have any neighborhood
     if (neighborhoodHeap.isEmpty) {

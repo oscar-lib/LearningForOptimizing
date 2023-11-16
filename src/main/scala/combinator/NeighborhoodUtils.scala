@@ -33,7 +33,7 @@ object NeighborhoodUtils {
    */
   def slope(neighborhood : Neighborhood) : Double = {
     val profiler = getProfiler(neighborhood)
-    - (profiler.gain * 1000) / Math.max(profiler.timeSpentMillis, 1)
+    -(profiler.gain * 1000D) / Math.max(profiler.timeSpentMillis, 1)
   }
 
   /**
@@ -65,6 +65,5 @@ object NeighborhoodUtils {
   def lastCallDuration(neighborhood: Neighborhood) : Long = {
     getProfiler(neighborhood)._lastCallDurationNano
   }
-
 
 }

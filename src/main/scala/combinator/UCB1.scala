@@ -12,12 +12,10 @@ import scala.util.Random
  *
  * @param l list of neighborhood to choose from
  */
-class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBandit", l: _*) {
+class UCB1(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBandit", l: _*) {
 
-  private val epsilon: Double = 0.7 // choose the best neighborhood with probability epsilon
-  // (well, almost with epsilon probability, since it changes a bit over time)
   private var t: Int = 0 // number of times the bandit was called to provide the next neighborhood
-  private val weights: Array[Double] = Array.fill(l.length)(1.0 / l.length) // weight associated to each neighborhood
+  private val weights: Array[Double] = Array.fill(l.length)(1.0 / l.length); // weight associated to each neighborhood
   private val wSol = 0.4 // weight for rewardSol
   private val wEff = 0.2 // weight for rewardEff
   private val wSlope = 0.4 // weight for rewardSlope
@@ -42,34 +40,38 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
     super.reset()
   }
 
+
   /** The method that provides a neighborhood.
    *
    * @return Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
    */
   override def getNextNeighborhood: Option[Neighborhood] = {
-    if (nTabu == l.length)
-      return None // all neighborhoods did not progress
-    t += 1
-    val epsilon_t: Double = epsilon * Math.sqrt(l.length.toDouble / t)
-    val proba_t: Double = Random.nextDouble()
-    var neighborhood_idx = 0
-    if (proba_t > epsilon_t) {
-      neighborhood_idx = weights.zipWithIndex.filter(idx => authorizedNeighborhood(idx._2)).maxBy(_._1)._2
+    if (nTabu == l.length) {
+      None // all neighborhoods did not progress
     } else {
-      // sum of valid weights
-      val cumulativeWeights = weights.indices.scanLeft(0.0)(
-        (sum, idx) => if (authorizedNeighborhood(idx)) sum + weights(idx) else sum).tail
-      // Draw a random number between 0 and sum of weights
-      val randomDraw = Random.nextDouble() * cumulativeWeights.sum
-      // Find the interval into which the drawn number falls
-      neighborhood_idx = cumulativeWeights.indexWhere(randomDraw <= _)
-      if (neighborhood_idx == -1)
-        neighborhood_idx = weights.length - 1
+      t += 1
+      var neigh_idx_max: Vector[Int] = Vector.empty
+      var maxUcb: Double = Double.MinValue
+      weights.indices.foreach { idx =>
+        if (authorizedNeighborhood(idx)) {
+          val weightIdx = weights(idx) / nSelected(idx)
+          val ucbIdx = if (nSelected(idx) == 0) Double.MinValue else
+            weightIdx + math.sqrt(2 * math.log(t) / nSelected(idx))
+          if (ucbIdx == maxUcb) {
+            neigh_idx_max +:= idx
+          } else if (ucbIdx > maxUcb) {
+            maxUcb = ucbIdx
+            neigh_idx_max = Vector(idx)
+          }
+        }
+      }
+      val neigh_idx = neigh_idx_max(Random.nextInt(neigh_idx_max.size))
+
+      lastSelectedIdx = neigh_idx
+      nSelected(neigh_idx) += 1
+      //println("[" + weights.map(d => f"$d%.2f").mkString(" ") + "] choosing " + lastSelectedIdx + " (" + l(neighborhood_idx) + ")")
+      Some(l(neigh_idx))
     }
-    lastSelectedIdx = neighborhood_idx;
-    nSelected(neighborhood_idx) += 1
-    //println("[" + weights.map(d => f"$d%.2f").mkString(" ") + "] choosing " + lastSelectedIdx + " (" + l(neighborhood_idx) + ")")
-    Some(l(neighborhood_idx))
   }
 
   /** The methods that "learns" from the results of the neighborhoods.
@@ -80,15 +82,15 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
   override def learn(m: SearchResult, neighborhood: Neighborhood): Unit = {
     updateTabu(m, neighborhood)
     // updates the max run time observed
-    val lastDuration = NeighborhoodUtils.lastCallDuration(neighborhood)
-    maxRunTimeObserved = Math.max(maxRunTimeObserved, lastDuration)
+    val lastDuration = NeighborhoodUtils.lastCallDuration(neighborhood);
+    maxRunTimeObserved = maxRunTimeObserved max lastDuration
     val r = reward(m, neighborhood)
     if (nSelected(lastSelectedIdx) == 1) {
       // initialize the average weight
       updateWeight(lastSelectedIdx, r)
     } else {
       // update average weight
-      val newWeight = weights(lastSelectedIdx) + (r - weights(lastSelectedIdx)) / nSelected(lastSelectedIdx)
+      val newWeight = weights(lastSelectedIdx) + (r - weights(lastSelectedIdx)) / nSelected(lastSelectedIdx);
       updateWeight(lastSelectedIdx, newWeight)
     }
   }
@@ -115,14 +117,14 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
   private def updateTabu(m: SearchResult, neighborhood: Neighborhood): Unit = {
     m match {
       case NoMoveFound =>
-        nTabu += 1
+        nTabu += 1;
         authorizedNeighborhood(lastSelectedIdx) = false
       case MoveFound(_) =>
         if (nTabu != 0) {
           for (i <- authorizedNeighborhood.indices) {
             authorizedNeighborhood(i) = true
           }
-          nTabu = 0
+          nTabu = 0;
         }
     }
   }
@@ -181,7 +183,7 @@ class EpsilonGreedyBandit(l: List[Neighborhood]) extends AbstractLearningCombina
    */
   private def rewardEff(m: SearchResult, neighborhood: Neighborhood): Double = {
     val duration = NeighborhoodUtils.lastCallDuration(neighborhood)
-    1.0 - duration.toDouble / maxRunTimeObserved
+    1.0 - duration.toDouble / maxRunTimeObserved.toDouble
   }
 
   /**
