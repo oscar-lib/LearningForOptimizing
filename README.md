@@ -20,7 +20,13 @@ This executable is needed for running the experiments.
 ## Run experiments
 
 The scripts for running the experiments can be found in the `xp` folder.
-They can be run in the following way:
+They can be run by following the instructions specified in this section, provided that you have the following requirements installed on your machine:
+
+- `sbt`
+- java >= 11
+- `nohup` if you want to run the experiments overnight
+
+In case of doubt about your configuration, you can always execute the commands from the next subsection to see if the solver runs as expected.
 
 ### Running one instance
 
@@ -56,4 +62,15 @@ This command creates a file `YYYY-MM-DD_HH_MM_SS_HASH_results.csv`,
 with `YYYY-MM-DD_HH_MM_SS` corresponding to the date at which the experiment started, and `HASH` to the id of the latest commit.
 The content of the file is the run performed.
 
-To modify the settings used in the runs (such as timeout, number of runs, ...), go directly within the `run_parallel` and modify the parameters used (starting at line 5).
+To modify the settings used in the runs (such as timeout, number of cores, number of runs, ...), go directly within the `run_parallel` and modify the parameters used (starting at line 5).
+
+### Running experiments overnight
+
+You can run the commands specified before for a long time by letting them run in the background. To do so, use the command
+
+```
+nohup ./xp/run_parallel &
+```
+
+then press `CTRL+C` and the process will continue to run in the background. 
+You can achieve the same results by playing with the command `screen` if `nohup` isn't installed on your machine.
