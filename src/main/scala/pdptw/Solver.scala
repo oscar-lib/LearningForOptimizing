@@ -199,7 +199,6 @@ case class Solver(oscarModel: Model, bandit: String) {
       println(pdptw.toString())
       println(obj)
     }
-    search.profilingOnConsole()
     println(oscarModel.toString)
     println("bestObj=" + oscarModel.objectiveFunction.value)
   }
