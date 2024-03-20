@@ -6,15 +6,13 @@ import oscar.cbls.business.routing.invariants.global.RouteLength
 import oscar.cbls.business.routing.invariants.timeWindow.{TimeWindowConstraint, TransferFunction}
 import oscar.cbls.business.routing.invariants.vehicleCapacity.GlobalVehicleCapacityConstraint
 import oscar.cbls.business.routing.model.VRP
+import oscar.cbls.business.routing.model.extensions.Chains
 import oscar.cbls.business.routing.vehicleOfNodes
 import oscar.cbls.core.objective.CascadingObjective
 import oscar.cbls.lib.constraint.EQ
 import oscar.cbls.lib.invariant.seq.Precedence
 
-import scala.collection.immutable.HashMap
-
 object Model {
-
   def apply(liLimProblem: LiLimProblem): Model = {
 		new Model(liLimProblem)
   }
@@ -31,7 +29,7 @@ class Model(liLimProblem: LiLimProblem) {
 
   // Quote : "The value of travel time is equal to the value of distance."
   val nodePositions: Array[(Int,Int)] = Array.tabulate(n)(node => {
-    if(node < v) liLimProblem.vehicles(node).depot.positionXY
+    if (node < v) liLimProblem.vehicles(node).depot.positionXY
     else liLimProblem.nodes(oscarIdToLiLimId(node)).positionXY
   })
 	lazy val distanceAndTimeMatrix: Array[Array[Long]] =
@@ -43,7 +41,7 @@ class Model(liLimProblem: LiLimProblem) {
       })
     })
 
-  // Invariant keeping the lenght of each vehicle's route
+  // Invariant keeping the length of each vehicle's route
   val routeLengthsInvariant: Array[CBLSIntVar] = RouteLength(pdpProblem.routes, n, v, (from, to) => distanceAndTimeMatrix(from)(to))
   // Invariant keeping the moving vehicle in a Set
   val movingVehiclesInvariant: MovingVehicles = MovingVehicles(pdpProblem.routes, v)
@@ -91,10 +89,11 @@ class Model(liLimProblem: LiLimProblem) {
 
   // Precedences data
   val precedences: List[(Int,Int)] = liLimProblem.demands.map(d => (d.fromNodeId+v-1,d.toNodeId+v-1))
-  val pickupPointToDeliveryPoint: HashMap[Int,Int] = HashMap.from(precedences)
-  val deliveryPointToPickupPoint: HashMap[Int,Int] = HashMap.from(precedences.map(couple => (couple._2,couple._1)))
-  val isPickupPoint: Array[Boolean] = Array.tabulate(n)(node => if (node < v) false else pickupPointToDeliveryPoint.keys.exists(_ == node))
-  val isDeliveryPoint: Array[Boolean] = Array.tabulate(n)(node => if (node < v) false else deliveryPointToPickupPoint.keys.exists(_ == node))
+  val chains: Chains = new Chains(pdpProblem,precedences.map(p => List(p._1,p._2)))
+  def pickupPointToDeliveryPoint(pickup: Int): Int = chains.lastNodeInChainOfNode(pickup)
+  def deliveryPointToPickupPoint(delivery: Int): Int = chains.firstNodeInChainOfNode(delivery)
+  def isPickupPoint(node: Int): Boolean = chains.isHead(node)
+  def isDeliveryPoint(node: Int): Boolean = chains.isLast(node)
 	// Constraint
   val precedenceInvariant: Precedence = precedence(pdpProblem.routes, precedences)
   // Ensuring that pickup and dropoff node are on same vehicle.
@@ -103,7 +102,6 @@ class Model(liLimProblem: LiLimProblem) {
     precedencesConstraints.add(EQ(vehicleOfNodesNow(start), vehicleOfNodesNow(precedenceInvariant.nodesEndingAPrecedenceStartedAt(start).head)))
   // Ensuring that dropOff node follows pickUp node
   precedencesConstraints.add(EQ(0, precedenceInvariant))
-
 
   private def generateObjectiveFunction(vrp: VRP): Objective = {
     // To avoid empty route
@@ -153,6 +151,5 @@ class Model(liLimProblem: LiLimProblem) {
     }).mkString("\n")
 //      movingVehiclesInvariant.value.toList.map(vehicle => pdpProblem.getRouteOfVehicle(vehicle).drop(1).map(x => x - v + 1).mkString(" ")).mkString("\n")
   }
-
 
 }

@@ -1,15 +1,11 @@
 package combinator
 
-import oscar.cbls.core.search.Neighborhood
-import oscar.cbls.core.search.SearchResult
-import oscar.cbls.algo.magicArray.MagicBoolArray
 import oscar.cbls.algo.heap.BinomialHeapWithMove
-import oscar.cbls.core.search.NoMoveNeighborhood
-import oscar.cbls.core.search.NoMoveFound
-import oscar.cbls.core.search.MoveFound
+import oscar.cbls.core.search.{MoveFound, Neighborhood, NoMoveFound, SearchResult}
+
 import scala.annotation.tailrec
 
-class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearningCombinator("NewBSF") {
+class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearningCombinator("NewBSF", l: _*) {
 
  // The neighborhood in an Array form
   private val neighborhoodArray = l.toArray
@@ -38,7 +34,6 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
 
   insertNeighborhoodList(indicesList)
 
-
   override def getNextNeighborhood: Option[Neighborhood] = {
     // If the heap is empty: we do not have any neighborhood
     if (neighborhoodHeap.isEmpty) {
@@ -62,8 +57,10 @@ class BestSlopeFirstLearningWay(l : List[Neighborhood]) extends AbstractLearning
         // and putting it in the tabu neighborhood list
         tabuNeighborhoodIndex = neighborhoodHeap.removeFirst():: tabuNeighborhoodIndex
       case MoveFound(_) =>
+        val profilingData = NeighborhoodUtils.getProfiler(neighborhood)
         // Updating the slope of the neighborhood
-        neighborhoodSlope(currentNeighborhoodIndex) = - (neighborhood.profiler.commonProfilingData.gain * 1000)/Math.max(neighborhood.profiler.commonProfilingData.timeSpentMillis,1)
+        println(profilingData.gain)
+        neighborhoodSlope(currentNeighborhoodIndex) = - (profilingData.gain * 1000)/Math.max(profilingData.timeSpentMillis,1)
         // Notifying the heap so that it updates the positions
         neighborhoodHeap.notifyChange(currentNeighborhoodIndex)
         // Resetting the tabu list (maybe the last move deblocked some of them)
