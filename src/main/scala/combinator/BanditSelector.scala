@@ -10,14 +10,25 @@ import scala.collection.mutable.ListBuffer
 import scala.util.Random
 
 /**
- * This class stores the history of previous moved performed and aggregate multiple information
+ *
+ * Base abstract class for bandit selectors.
+ * This handles a tabu list and a weight update based on a learning rate and a learning scheme.
+ * Two abstract methods must be implemented: getNextNeighborhood, giving a neighborhood to perform,
+ * and reward, computing the reward of a neighborhood.
+ * Different methods can also be overridden to enforce particular weighting scheme.
+ *
+ * @param neighborhoods  neighborhoods available for selection
+ * @param learningScheme when the bandit should learn
+ * @param seed           seed used for random number generation
+ * @param learningRate   learning rate used to update the weights based on the reward
  */
-abstract class History(neighborhoods: List[Neighborhood],
-                       learningScheme: LearningScheme = AfterEveryMove,
-                       seed: Int = 42,
-                       learningRate: Double = 0.1) extends NeighborhoodCombinator(neighborhoods: _*) {
+abstract class BanditSelector(neighborhoods: List[Neighborhood],
+                              learningScheme: LearningScheme = AfterEveryMove,
+                              seed: Int = 42,
+                              learningRate: Double = 0.1) extends NeighborhoodCombinator(neighborhoods: _*) {
 
-  private val _profiler: SelectionProfiler = new SelectionProfiler(this, neighborhoods.toList)
+  private val _profiler: SelectionProfiler = new SelectionProfiler(this, neighborhoods)
+
   override def profiler: SelectionProfiler = _profiler
 
   private var nTabu = 0; // number of neighborhoods marked as tabu
@@ -46,31 +57,63 @@ abstract class History(neighborhoods: List[Neighborhood],
   //  1. use sparse-set to maintain the neighborhoods that are not marked as tabu
   //  2. use sparse-set to maintain the neighborhoods that have been selected at least once since the last weight update (only them must have their weight updated)
 
+  /** The method that provides a neighborhood.
+   *
+   * @return Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
+   */
+  def getNextNeighborhood: Option[Neighborhood]
+
+  /** The method that computes a reward associated to a neighborhood.
+   *
+   * @return Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
+   */
+  def reward(runStat: NeighorhoodStats, neighborhood: Neighborhood): Double
+
   /**
-   * Reset the selector
+   * Resets the selector.
    * This resets the tabu list and update the weights if the learning scheme is set to
-   * - after every descent
-   * - after n moves and the current
+   * - after every descent.
+   * - after n moves and the current.
    */
   override def reset(): Unit = {
     resetTabu()
     learningScheme match {
-      case AfterEveryDescent => updateWeights()
+      case AfterEveryDescent =>
+        updateWeights()
+        clearStats()
       case afterNMoves@AfterNMoves(_) =>
         if (afterNMoves.nMoves > 0) {
           updateWeights()
-          afterNMoves.resetCounter();
+          afterNMoves.resetCounter()
+          clearStats()
         }
     }
+  }
+
+  /**
+   * Clears the stats associated to all neighborhoods.
+   */
+  private def clearStats(): Unit = {
     for (idx <- stats.indices) {
       stats(idx).clear()
     }
   }
 
   /**
-   * Tells that a move has been performed, and update the tabu list and weights if necessary
-   * @param searchResult results of performing the move
-   * @param neighborhood move performed
+   * Clears the stats associated to one specific neighborhood.
+   *
+   * @param neighborhood neighborhood on which the stats must be cleared.
+   */
+  private def clearStats(neighborhood: Neighborhood): Unit = {
+    val idx = neighborhoodIdx(neighborhood)
+    stats(idx).clear()
+  }
+
+  /**
+   * Tells that a move has been performed, and update the tabu list and weights if necessary.
+   *
+   * @param searchResult results of performing the move.
+   * @param neighborhood move performed.
    */
   def notifyMove(searchResult: SearchResult, neighborhood: Neighborhood): Unit = {
     val stats = NeighorhoodStats(searchResult, neighborhood);
@@ -80,12 +123,15 @@ abstract class History(neighborhoods: List[Neighborhood],
       case MoveFound(_) =>
     }
     learningScheme match {
-      case AfterEveryMove => updateWeight(neighborhood)
+      case AfterEveryMove =>
+        updateWeight(neighborhood)
+        clearStats(neighborhood)
       case afterNMoves@AfterNMoves(_) =>
         afterNMoves.incrementCounter()
         if (afterNMoves.isCriterionMet()) {
           updateWeights()
-          afterNMoves.resetCounter();
+          afterNMoves.resetCounter()
+          clearStats(neighborhood)
         }
       case AfterEveryDescent =>
     }
@@ -93,8 +139,9 @@ abstract class History(neighborhoods: List[Neighborhood],
 
   /**
    * Add a newly collected statistic
+   *
    * @param neighborhoodStats statistics about a move
-   * @param neighborhood neighborhood having performed the move
+   * @param neighborhood      neighborhood having performed the move
    */
   protected def appendStats(neighborhoodStats: NeighorhoodStats, neighborhood: Neighborhood): Unit = {
     maxSlope = Math.max(maxSlope, neighborhoodStats.slope)
@@ -106,7 +153,8 @@ abstract class History(neighborhoods: List[Neighborhood],
   /**
    * Mark a neighborhood as tabu
    * This has the side-effect of decreasing the sum of valid weights
-   * @param neighborhood
+   *
+   * @param neighborhood neighborhood to mark as tabu
    */
   def setTabu(neighborhood: Neighborhood): Unit = {
     val idx = neighborhoodIdx(neighborhood)
@@ -130,7 +178,7 @@ abstract class History(neighborhoods: List[Neighborhood],
 
   /**
    * Tells the probability of choosing a neighborhood, proportional to its weight
-   * A neighborhood set as tabu has a 0-probability of being chosen
+   * A neighborhood set as tabu has a 0-probability
    *
    * @param neighborhood
    * @return
@@ -146,10 +194,9 @@ abstract class History(neighborhoods: List[Neighborhood],
 
   /**
    * Tells the weight associated to a neighborhood
-   * There are no bounds set on the weight
+   * There are no bounds set on the weight: it can be larger than 1
    *
    * @param neighborhood
-   * @return
    */
   def weight(neighborhood: Neighborhood): Double = {
     val idx = neighborhoodIdx(neighborhood)
@@ -194,6 +241,11 @@ abstract class History(neighborhoods: List[Neighborhood],
     }
   }
 
+  /**
+   * Gives a random neighborhood in within the available ones
+   *
+   * @return random neighborhood being not tabu
+   */
   def getRandomNeighborhood(): Option[Neighborhood] = {
     if (nTabu == neighborhoods.length) {
       None
@@ -211,6 +263,13 @@ abstract class History(neighborhoods: List[Neighborhood],
     }
   }
 
+  /**
+   * Gives a reward in [0, 1] based on finding a move
+   * 1 means that a move was found, 0 otherwise
+   *
+   * @param runStat statistics from a performed move
+   * @return reward in [0, 1]
+   */
   def rewardFoundMove(runStat: NeighorhoodStats): Double = {
     if (runStat.foundMove) {
       1.0
@@ -219,16 +278,33 @@ abstract class History(neighborhoods: List[Neighborhood],
     }
   }
 
+  /**
+   * Gives a reward in [0, 1] based on the slope
+   * 0 is the worst slope being found, 1 is the best one
+   *
+   * @param runStat statistics from a performed move
+   * @return reward in [0, 1]
+   */
   def rewardSlope(runStat: NeighorhoodStats): Double = {
     val slope = runStat.slope;
     Math.abs(slope / maxSlope)
   }
 
+  /**
+   * Gives a reward in [0, 1] based on the execution time
+   * 1 means that the execution was the slowest observed, and near 0 values the fastest observed
+   *
+   * @param runStat statistics from a performed move
+   * @return reward in [0, 1]
+   */
   def rewardExecutionTime(runStat: NeighorhoodStats): Double = {
     val duration = runStat.timeNano;
     1.0 - duration.toDouble / maxRunTimeNano
   }
 
+  /**
+   * Update the weights of all neighborhoods registered
+   */
   def updateWeights(): Unit = {
     for (neigh <- neighborhoods) {
       updateWeight(neigh)
@@ -238,6 +314,7 @@ abstract class History(neighborhoods: List[Neighborhood],
   /**
    * Update the weight associated to a neighborhood
    * The weight update is computed based on the stats collected
+   *
    * @param neighborhood
    */
   def updateWeight(neighborhood: Neighborhood): Unit = {
@@ -249,8 +326,9 @@ abstract class History(neighborhoods: List[Neighborhood],
         val rewardsOnEpisode = stats(idx).map(stat => reward(stat, neighborhood))
         aggregate(rewardsOnEpisode, neighborhood)
       }
-      val newWeight = weights(idx) + learningRate * aggregatedReward
-      val weightChange = newWeight - weights(idx)
+      val oldWeight = weights(idx)
+      val newWeight = newWeightFromReward(neighborhood, oldWeight, aggregatedReward)
+      val weightChange = newWeight - oldWeight
       if (authorizedNeighborhood(idx)) {
         sumWeightsValidNeighborhoods += weightChange
       }
@@ -258,22 +336,23 @@ abstract class History(neighborhoods: List[Neighborhood],
     }
   }
 
-  /** The method that provides a neighborhood.
+  /**
+   * Gives the new values to set for the weight of a neighborhood
    *
-   * @return Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
+   * @param neighborhood neighborhood on which the reward has been computed
+   * @param oldWeight    old weight of the neighborhood
+   * @param reward       reward associated to the neighborhood
+   * @return new weight to set for the neigborhood
    */
-  def getNextNeighborhood: Option[Neighborhood]
-
-  /** The method that computes a reward associated to a neighborhood.
-   *
-   * @return Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
-   */
-  def reward(runStat: NeighorhoodStats, neighborhood: Neighborhood): Double
+  def newWeightFromReward(neighborhood: Neighborhood, oldWeight: Double, reward: Double): Double = {
+    oldWeight + learningRate * reward
+  }
 
   /**
    * Combine multiple rewards into a single one by taking the average of rewards
    * This is useful if the learning mode is not set to be learning after every move
-   * @param rewards list of rewards that must be combined
+   *
+   * @param rewards      list of rewards that must be combined
    * @param neighborhood neighborhood on which the rewards are associated
    * @return
    */

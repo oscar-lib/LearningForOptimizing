@@ -162,6 +162,13 @@ case class Solver(oscarModel: Model, bandit: String) {
           obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15
         )
+      case "epsilongreedyNew" =>
+        new EpsilonGreedyBanditNew(neighList) onExhaustRestartAfter(
+          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+          0,
+          obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15
+        )
       case "ucb1" =>
         new UCB1(neighList) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
@@ -172,6 +179,11 @@ case class Solver(oscarModel: Model, bandit: String) {
       case "bestslopefirst" =>
         println("Using bestSlopeFirst")
         bestSlopeFirst(
+          neighList
+        ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case "bestslopefirstnew" =>
+        new BestSlopeFirstNew(
           neighList
         ) onExhaustRestartAfter(simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15)
