@@ -87,6 +87,7 @@ abstract class BanditSelector(neighborhoods: List[Neighborhood],
           afterNMoves.resetCounter()
           clearStats()
         }
+      case AfterEveryMove =>
     }
   }
 
@@ -210,11 +211,11 @@ abstract class BanditSelector(neighborhoods: List[Neighborhood],
    */
   def getBestNeighborhood(): Option[Neighborhood] = {
     // (weight, idx) of the neighborhood with maximum weight
-    val best = weights.zipWithIndex.filter(i => authorizedNeighborhood(i._2)).maxBy(i => i._1)
-    if (best != null) {
-      Some(neighborhoods(best._2))
-    } else {
+    if (nTabu == neighborhoods.length)
       None
+    else {
+      val best = weights.zipWithIndex.filter(i => authorizedNeighborhood(i._2)).maxBy(i => i._1)
+      Some(neighborhoods(best._2))
     }
   }
 
