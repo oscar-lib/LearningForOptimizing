@@ -31,27 +31,27 @@ abstract class BanditSelector(neighborhoods: List[Neighborhood],
 
   override def profiler: SelectionProfiler = _profiler
 
-  private var nTabu = 0; // number of neighborhoods marked as tabu
-  private val authorizedNeighborhood: Array[Boolean] = Array.fill(neighborhoods.length)(true) // false if a neighborhood is marked as tabu
+  protected var nTabu = 0; // number of neighborhoods marked as tabu
+  protected val authorizedNeighborhood: Array[Boolean] = Array.fill(neighborhoods.length)(true) // false if a neighborhood is marked as tabu
 
-  private val weights: Array[Double] = Array.fill(neighborhoods.length)(1.0) // weight associated to each neighborhood
-  private var sumWeightsValidNeighborhoods: Double = neighborhoods.length // sum of weights of neighborhoods that are not marked as tabu
-  private var neighborhoodIdx: mutable.HashMap[Neighborhood, Int] = mutable.HashMap.empty // for each neighborhood, its index in the list
+  protected val weights: Array[Double] = Array.fill(neighborhoods.length)(1.0) // weight associated to each neighborhood
+  protected var sumWeightsValidNeighborhoods: Double = neighborhoods.length // sum of weights of neighborhoods that are not marked as tabu
+  protected var neighborhoodIdx: mutable.HashMap[Neighborhood, Int] = mutable.HashMap.empty // for each neighborhood, its index in the list
 
   // list of stats for each neighborhood. One stat is collected per move
-  private var stats: Array[ListBuffer[NeighorhoodStats]] = Array.fill(neighborhoods.length)(ListBuffer())
-  private val rand = new Random(seed)
+  protected var stats: Array[ListBuffer[NeighorhoodStats]] = Array.fill(neighborhoods.length)(ListBuffer())
+  protected val rand = new Random(seed)
 
-  private val nSelected: Array[Int] = Array.fill(neighborhoods.length)(0) // number of time each neighborhood was selected
-  private var lastSelectedIdx: Int = -1 // index of the last selected neighborhood
+  protected val nSelected: Array[Int] = Array.fill(neighborhoods.length)(0) // number of time each neighborhood was selected
+  protected var lastSelectedIdx: Int = -1 // index of the last selected neighborhood
 
   // Populate the map
   for (i <- neighborhoods.indices) {
     neighborhoodIdx += (neighborhoods(i) -> i)
   }
 
-  private var maxSlope = 1.0 // stores (and updates) the maximum slope ever observed
-  private var maxRunTimeNano: Long = 1 // max run time experienced by a neighborhood
+  protected var maxSlope = 1.0 // stores (and updates) the maximum slope ever observed
+  protected var maxRunTimeNano: Long = 1 // max run time experienced by a neighborhood
 
   // TODO next steps to slightly speeds the selection:
   //  1. use sparse-set to maintain the neighborhoods that are not marked as tabu
@@ -151,6 +151,12 @@ abstract class BanditSelector(neighborhoods: List[Neighborhood],
     stats(idx).append(neighborhoodStats)
   }
 
+  object authorizedNeighorhoodIterator {
+    def apply(): Iterator[Int] = {
+      authorizedNeighborhood.indices.iterator.filter(authorizedNeighborhood(_))
+    }
+  }
+
   /**
    * Mark a neighborhood as tabu
    * This has the side-effect of decreasing the sum of valid weights
@@ -162,6 +168,15 @@ abstract class BanditSelector(neighborhoods: List[Neighborhood],
     authorizedNeighborhood(idx) = false
     sumWeightsValidNeighborhoods -= weights(idx)
     nTabu += 1;
+  }
+
+  def isTabu(neighborhood: Neighborhood): Boolean = {
+    val idx = neighborhoodIdx(neighborhood)
+    authorizedNeighborhood(idx)
+  }
+
+  def isTabu(idx: Int): Boolean = {
+    authorizedNeighborhood(idx)
   }
 
   /**
