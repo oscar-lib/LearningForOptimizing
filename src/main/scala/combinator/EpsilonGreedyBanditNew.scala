@@ -13,7 +13,7 @@
 
 package combinator
 
-import oscar.cbls.core.search.{Neighborhood, SearchResult}
+import oscar.cbls.core.search.Neighborhood
 
 import scala.util.Random
 

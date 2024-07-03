@@ -183,7 +183,7 @@ class Model(liLimProblem: LiLimProblem) {
       else {
         val coupleAndIndex = liLimProblem.demands.zipWithIndex.filter(p =>
           (p._1.fromNodeId + v - 1) == nId || (p._1.toNodeId + v - 1) == nId
-        )(0)
+        ).head
         Some(
           PointData(
             coupleAndIndex._2,

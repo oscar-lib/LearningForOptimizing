@@ -394,10 +394,10 @@ case class SimpleNeighborhoods(
   def oneCoupleMoveAndThenInsert(k: Int, best: Boolean = false): Neighborhood = {
     dynAndThen(
       dynAndThen(
-        onePointMove(k, routedPickups, false, best),
+        onePointMove(k, routedPickups, best = best),
         (move: OnePointMoveMove) => {
           val deliveryPoint = oscarModel.pickupPointToDeliveryPoint(move.movedPoint)
-          deliveryPointMove(k, deliveryPoint, false, best)
+          deliveryPointMove(k, deliveryPoint, best = best)
         }
       ),
       (move: CompositeMove) => {

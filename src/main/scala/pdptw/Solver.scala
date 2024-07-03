@@ -30,7 +30,7 @@ case class Solver(oscarModel: Model, bandit: String) {
   private var bestKnown: Long                            = obj.value
 
   // Relevant predecessors definition for each node (here any node can be the predecessor of another node)
-  val relevantPredecessorsOfNodes =
+  val relevantPredecessorsOfNodes: Map[Int, Iterable[Int]] =
     TransferFunction.relevantPredecessorsOfNodes(
       pdptw.n,
       pdptw.v,
@@ -38,13 +38,13 @@ case class Solver(oscarModel: Model, bandit: String) {
       distancesAndTimeMatrix
     )
   // Lazily sort the relevant predecessors by distance
-  val closestRelevantPredecessorsByDistance =
+  val closestRelevantPredecessorsByDistance: Array[Iterable[Int]] =
     Array.tabulate(pdptw.n)(
       DistanceHelper
         .lazyClosestPredecessorsOfNode(distancesAndTimeMatrix, relevantPredecessorsOfNodes)(_)
     )
   // Relevant predecessors definition for each node (here any node can be the predecessor of another node)
-  val relevantSuccessorsOfNodes =
+  val relevantSuccessorsOfNodes: Map[Int, Iterable[Int]] =
     TransferFunction.relevantSuccessorsOfNodes(
       pdptw.n,
       pdptw.v,
@@ -52,7 +52,7 @@ case class Solver(oscarModel: Model, bandit: String) {
       distancesAndTimeMatrix
     )
   // Lazily sort the relevant successors by distance
-  val closestRelevantSuccessorsByDistance =
+  val closestRelevantSuccessorsByDistance: Array[Iterable[Int]] =
     Array.tabulate(pdptw.n)(
       DistanceHelper
         .lazyClosestPredecessorsOfNode(distancesAndTimeMatrix, relevantSuccessorsOfNodes)(_)
@@ -95,7 +95,7 @@ case class Solver(oscarModel: Model, bandit: String) {
 //    println(neighStats.mkString(";"))
     val objValue = obj.value
 //    println(s"$objValue $bestKnown")
-    var totalReward = 1
+    val totalReward = 1
 //    if (objValue < bestKnown) {
 //      totalReward = 1
 //    } else {
@@ -104,7 +104,7 @@ case class Solver(oscarModel: Model, bandit: String) {
 
     if (objValue < bestKnown)
       bestKnown = objValue
-    var res = Array.fill(nbNeigh)(0.0)
+    val res = Array.fill(nbNeigh)(0.0)
     for (i <- 0 until nbNeigh) {
 //      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
       if (neighStats(i).nbFound > 0) {
@@ -138,7 +138,7 @@ case class Solver(oscarModel: Model, bandit: String) {
     res
   }
 
-  //noinspection SpellCheckingInspection
+  // noinspection SpellCheckingInspection
   def solve(verbosity: Int, displaySolution: Boolean, fileName: String, timeout: Int): Unit = {
     val withTimeout  = timeout < Int.MaxValue
     val displayDelay = 100 // ms
