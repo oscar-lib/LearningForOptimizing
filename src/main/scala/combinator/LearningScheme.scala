@@ -32,26 +32,20 @@ case class AfterNMoves(n: Int) extends LearningScheme {
   /** Gives the current consecutive number of moves performed since the reset of the learning
     * scheme.
     */
-  def nMoves = _nMoves
+  def nMoves: Int = _nMoves
 
   /** Tells that a new move was performed.
     */
-  def incrementCounter(): Unit = {
-    _nMoves += 1
-  }
+  def incrementCounter(): Unit = _nMoves += 1
 
   /** Reset the counter. This should be called right after having learned.
     */
-  def resetCounter(): Unit = {
-    _nMoves = 0
-  }
+  def resetCounter(): Unit = _nMoves = 0
 
   /** Tells if the number of consecutive moves has been reached. The counter should be reset after
     * having learnt
     */
-  def isCriterionMet(): Boolean = {
-    _nMoves >= n
-  }
+  def isCriterionMet: Boolean = _nMoves >= n
 }
 
 /** Learning scheme performed after every descent
