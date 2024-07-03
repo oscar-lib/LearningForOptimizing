@@ -55,7 +55,7 @@ abstract class BanditSelector(
   override def profiler: SelectionProfiler = _profiler
 
   // number of neighborhoods marked as tabu
-  protected var nTabu = 0;
+  protected var nTabu = 0
 
   // false if a neighborhood is marked as tabu
   protected val authorizedNeighborhood: Array[Boolean] = Array.fill(neighborhoods.length)(true)
@@ -153,7 +153,7 @@ abstract class BanditSelector(
     *   move performed.
     */
   def notifyMove(searchResult: SearchResult, neighborhood: Neighborhood): Unit = {
-    val stats = NeighorhoodStats(searchResult, neighborhood);
+    val stats = NeighorhoodStats(searchResult, neighborhood)
     appendStats(stats, neighborhood)
     searchResult match {
       case NoMoveFound  => setTabu(neighborhood)
@@ -206,7 +206,7 @@ abstract class BanditSelector(
     val idx = neighborhoodIdx(neighborhood)
     authorizedNeighborhood(idx) = false
     sumWeightsValidNeighborhoods -= weights(idx)
-    nTabu += 1;
+    nTabu += 1
   }
 
   def isTabu(neighborhood: Neighborhood): Boolean = {
@@ -259,7 +259,7 @@ abstract class BanditSelector(
 
   /** Returns the neighborhood with the best weight, if applicable.
     */
-  def getBestNeighborhood(): Option[Neighborhood] = {
+  def getBestNeighborhood: Option[Neighborhood] = {
     // (weight, idx) of the neighborhood with maximum weight
     if (nTabu == neighborhoods.length)
       None
@@ -274,11 +274,11 @@ abstract class BanditSelector(
     *
     * @return
     */
-  def getNeighborhoodWithProba(): Option[Neighborhood] = {
+  def getNeighborhoodWithProba: Option[Neighborhood] = {
     if (nTabu == neighborhoods.length)
       None // no neighborhood still valid
     else {
-      var proba = rand.nextDouble() * sumWeightsValidNeighborhoods;
+      var proba = rand.nextDouble() * sumWeightsValidNeighborhoods
       for ((weight, idx) <- weights.zipWithIndex) {
         if (authorizedNeighborhood(idx)) {
           if (proba < weight) {
@@ -296,7 +296,7 @@ abstract class BanditSelector(
     * @return
     *   random neighborhood being not tabu
     */
-  def getRandomNeighborhood(): Option[Neighborhood] = {
+  def getRandomNeighborhood: Option[Neighborhood] = {
     if (nTabu == neighborhoods.length) {
       None
     } else {
@@ -337,7 +337,7 @@ abstract class BanditSelector(
     *   reward in [0, 1]
     */
   def rewardSlope(runStat: NeighorhoodStats): Double = {
-    val slope = runStat.slope;
+    val slope = runStat.slope
     Math.abs(slope / maxSlope)
   }
 
@@ -350,7 +350,7 @@ abstract class BanditSelector(
     *   reward in [0, 1]
     */
   def rewardExecutionTime(runStat: NeighorhoodStats): Double = {
-    val duration = runStat.timeNano;
+    val duration = runStat.timeNano
     1.0 - duration.toDouble / maxRunTimeNano
   }
 

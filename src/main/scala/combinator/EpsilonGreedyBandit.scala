@@ -87,7 +87,7 @@ class EpsilonGreedyBandit(l: List[Neighborhood])
       if (neighborhood_idx == -1)
         neighborhood_idx = weights.length - 1
     }
-    lastSelectedIdx = neighborhood_idx;
+    lastSelectedIdx = neighborhood_idx
     nSelected(neighborhood_idx) += 1
     // println("[" + weights.map(d => f"$d%.2f").mkString(" ") + "] choosing " + lastSelectedIdx + " (" + l(neighborhood_idx) + ")")
     Some(l(neighborhood_idx))

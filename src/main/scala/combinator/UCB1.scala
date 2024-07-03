@@ -103,7 +103,7 @@ class UCB1(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBan
   override def learn(m: SearchResult, neighborhood: Neighborhood): Unit = {
     updateTabu(m, neighborhood)
     // updates the max run time observed
-    val lastDuration = NeighborhoodUtils.lastCallDuration(neighborhood);
+    val lastDuration = NeighborhoodUtils.lastCallDuration(neighborhood)
     maxRunTimeObserved = maxRunTimeObserved max lastDuration
     val r = reward(m, neighborhood)
     if (nSelected(lastSelectedIdx) == 1) {
@@ -112,7 +112,7 @@ class UCB1(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBan
     } else {
       // update average weight
       val newWeight =
-        weights(lastSelectedIdx) + (r - weights(lastSelectedIdx)) / nSelected(lastSelectedIdx);
+        weights(lastSelectedIdx) + (r - weights(lastSelectedIdx)) / nSelected(lastSelectedIdx)
       updateWeight(lastSelectedIdx, newWeight)
     }
   }
@@ -139,14 +139,14 @@ class UCB1(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBan
   private def updateTabu(m: SearchResult, neighborhood: Neighborhood): Unit = {
     m match {
       case NoMoveFound =>
-        nTabu += 1;
+        nTabu += 1
         authorizedNeighborhood(lastSelectedIdx) = false
       case MoveFound(_) =>
         if (nTabu != 0) {
           for (i <- authorizedNeighborhood.indices) {
             authorizedNeighborhood(i) = true
           }
-          nTabu = 0;
+          nTabu = 0
         }
     }
   }
