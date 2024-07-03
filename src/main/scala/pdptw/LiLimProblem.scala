@@ -17,7 +17,7 @@ case class LiLimProblem(
   vehicles: List[LiLimVehicle],
   nodes: List[LiLimNode],
   demands: List[LiLimCouple],
-  multFactor: Int
+  multiplierFactor: Int
 )
 
 case class LiLimDepot(positionXY: (Int, Int))

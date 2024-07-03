@@ -31,8 +31,8 @@ case class NeighborhoodStatistics(
 
 /*
  * Score
- * aggrégation historique
- * Choix des voisinages
+ * history aggregation
+ * Choice of neighborhoods
  */
 class BanditCombinator(
   l: List[Neighborhood],
@@ -77,20 +77,20 @@ class BanditCombinator(
   }
 
   @tailrec
-  private def getIndex(proba: Double, res: Int, accu: Double): Int = {
-    // println(s"$proba $accu $res ${authorizedNeighborhood(res)} ${neighProbability.mkString(";")}")
+  private def getIndex(prob: Double, res: Int, acc: Double): Int = {
+    // println(s"$prob $acc $res ${authorizedNeighborhood(res)} ${neighProbability.mkString(";")}")
     val nextIndex = if (res >= nbNeigh - 1) 0 else res + 1
     if (authorizedNeighborhood(res)) {
-      if (neighProbability(res) + accu > proba)
+      if (neighProbability(res) + acc > prob)
         res
       else {
         if (neighProbability(res) == 0)
-          getIndex(proba, nextIndex, accu + 0.1)
+          getIndex(prob, nextIndex, acc + 0.1)
         else
-          getIndex(proba, nextIndex, accu + neighProbability(res))
+          getIndex(prob, nextIndex, acc + neighProbability(res))
       }
     } else {
-      getIndex(proba, nextIndex, accu)
+      getIndex(prob, nextIndex, acc)
     }
   }
 

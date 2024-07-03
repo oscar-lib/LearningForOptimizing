@@ -70,7 +70,7 @@ abstract class BanditSelector(
   protected var neighborhoodIdx: mutable.HashMap[Neighborhood, Int] = mutable.HashMap.empty
 
   // list of stats for each neighborhood. One stat is collected per move
-  protected var stats: Array[ListBuffer[NeighorhoodStats]] =
+  protected var stats: Array[ListBuffer[NeighborhoodStats]] =
     Array.fill(neighborhoods.length)(ListBuffer())
   protected val rand = new Random(seed)
 
@@ -104,7 +104,7 @@ abstract class BanditSelector(
     * @return
     *   Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
     */
-  def reward(runStat: NeighorhoodStats, neighborhood: Neighborhood): Double
+  def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
 
   /** Resets the selector. This resets the tabu list and update the weights if the learning scheme
     * is set to
@@ -153,7 +153,7 @@ abstract class BanditSelector(
     *   move performed.
     */
   def notifyMove(searchResult: SearchResult, neighborhood: Neighborhood): Unit = {
-    val stats = NeighorhoodStats(searchResult, neighborhood)
+    val stats = NeighborhoodStats(searchResult, neighborhood)
     appendStats(stats, neighborhood)
     searchResult match {
       case NoMoveFound  => setTabu(neighborhood)
@@ -165,7 +165,7 @@ abstract class BanditSelector(
         clearStats(neighborhood)
       case afterNMoves @ AfterNMoves(_) =>
         afterNMoves.incrementCounter()
-        if (afterNMoves.isCriterionMet()) {
+        if (afterNMoves.isCriterionMet) {
           updateWeights()
           afterNMoves.resetCounter()
           clearStats(neighborhood)
@@ -182,8 +182,8 @@ abstract class BanditSelector(
     *   neighborhood having performed the move
     */
   protected def appendStats(
-    neighborhoodStats: NeighorhoodStats,
-    neighborhood: Neighborhood
+                             neighborhoodStats: NeighborhoodStats,
+                             neighborhood: Neighborhood
   ): Unit = {
     maxSlope = Math.max(maxSlope, neighborhoodStats.slope)
     maxRunTimeNano = Math.max(maxRunTimeNano, neighborhoodStats.timeNano)
@@ -191,7 +191,7 @@ abstract class BanditSelector(
     stats(idx).append(neighborhoodStats)
   }
 
-  object authorizedNeighorhoodIterator {
+  object authorizedNeighborhoodIterator {
     def apply(): Iterator[Int] = {
       authorizedNeighborhood.indices.iterator.filter(authorizedNeighborhood(_))
     }
@@ -274,17 +274,17 @@ abstract class BanditSelector(
     *
     * @return
     */
-  def getNeighborhoodWithProba: Option[Neighborhood] = {
+  def getNeighborhoodWithProbability: Option[Neighborhood] = {
     if (nTabu == neighborhoods.length)
       None // no neighborhood still valid
     else {
-      var proba = rand.nextDouble() * sumWeightsValidNeighborhoods
+      var prob = rand.nextDouble() * sumWeightsValidNeighborhoods
       for ((weight, idx) <- weights.zipWithIndex) {
         if (authorizedNeighborhood(idx)) {
-          if (proba < weight) {
+          if (prob < weight) {
             return Some(neighborhoods(idx))
           }
-          proba -= weight // invalid neighborhood, try the next one
+          prob -= weight // invalid neighborhood, try the next one
         }
       }
       Some(neighborhoods.last)
@@ -300,13 +300,13 @@ abstract class BanditSelector(
     if (nTabu == neighborhoods.length) {
       None
     } else {
-      var proba = rand.nextInt(neighborhoods.length - nTabu)
+      var prob = rand.nextInt(neighborhoods.length - nTabu)
       for (idx <- neighborhoods.indices) {
         if (authorizedNeighborhood(idx)) {
-          if (proba == 0) {
+          if (prob == 0) {
             return Some(neighborhoods(idx))
           }
-          proba -= 1 // invalid neighborhood, try the next one
+          prob -= 1 // invalid neighborhood, try the next one
         }
       }
       Some(neighborhoods.last)
@@ -320,7 +320,7 @@ abstract class BanditSelector(
     * @return
     *   reward in [0, 1]
     */
-  def rewardFoundMove(runStat: NeighorhoodStats): Double = {
+  def rewardFoundMove(runStat: NeighborhoodStats): Double = {
     if (runStat.foundMove) {
       1.0
     } else {
@@ -336,7 +336,7 @@ abstract class BanditSelector(
     * @return
     *   reward in [0, 1]
     */
-  def rewardSlope(runStat: NeighorhoodStats): Double = {
+  def rewardSlope(runStat: NeighborhoodStats): Double = {
     val slope = runStat.slope
     Math.abs(slope / maxSlope)
   }
@@ -349,7 +349,7 @@ abstract class BanditSelector(
     * @return
     *   reward in [0, 1]
     */
-  def rewardExecutionTime(runStat: NeighorhoodStats): Double = {
+  def rewardExecutionTime(runStat: NeighborhoodStats): Double = {
     val duration = runStat.timeNano
     1.0 - duration.toDouble / maxRunTimeNano
   }
@@ -397,7 +397,7 @@ abstract class BanditSelector(
     * @param reward
     *   reward associated to the neighborhood
     * @return
-    *   new weight to set for the neigborhood
+    *   new weight to set for the neighborhood
     */
   def newWeightFromReward(neighborhood: Neighborhood, oldWeight: Double, reward: Double): Double = {
     oldWeight + learningRate * reward

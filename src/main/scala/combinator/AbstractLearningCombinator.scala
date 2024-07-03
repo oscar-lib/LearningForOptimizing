@@ -32,7 +32,7 @@ import scala.annotation.tailrec
   *       any more)
   *
   * After each result that has been got from the neighborhood, the abstract method [[learn]] is
-  * called. This method is used to update informations on the previous use of the neighborhood.
+  * called. This method is used to update information on the previous use of the neighborhood.
   *
   * @param name
   *   The name of the Combinator

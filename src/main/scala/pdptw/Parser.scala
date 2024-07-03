@@ -20,7 +20,7 @@ import scala.io.Source
 object Parser {
   // The result of the benchmark is usually expressed in double.
   // We cannot deal with double within oscar therefore we multiply it by a factor and then divide it again.
-  private val multFactor = 1000
+  private val multiplierFactor = 1000
   def apply(file: File): LiLimProblem = {
 
     val s     = Source.fromFile(file)
@@ -28,7 +28,7 @@ object Parser {
 
     val Array(v, capacity, _)    = lines.next().split("\\t\\s*").map(_.toInt)
     val Array(_, depotX, depotY) = lines.next().split("\\t\\s*").map(_.toInt).take(3)
-    val depot                    = LiLimDepot((multFactor * depotX, multFactor * depotY))
+    val depot                    = LiLimDepot((multiplierFactor * depotX, multiplierFactor * depotY))
     val vehicles                 = List.fill(v)(LiLimVehicle(depot, capacity))
 
     @tailrec
@@ -40,12 +40,12 @@ object Parser {
       if (lines.hasNext) {
         val next                = lines.next().split("\\t\\s*").map(_.toInt)
         val nodeId              = next(0)
-        val x                   = multFactor * next(1)
-        val y                   = multFactor * next(2)
+        val x                   = multiplierFactor * next(1)
+        val y                   = multiplierFactor * next(2)
         val quantity            = next(3)
-        val earliestArrivalTime = multFactor * next(4)
-        val latestArrivalTime   = multFactor * next(5)
-        val duration            = multFactor * next(6)
+        val earliestArrivalTime = multiplierFactor * next(4)
+        val latestArrivalTime   = multiplierFactor * next(5)
+        val duration            = multiplierFactor * next(6)
         val pickUp              = next(7)
         val dropOff             = next(8)
         val node =
@@ -63,6 +63,6 @@ object Parser {
 
     s.close()
 
-    LiLimProblem(vehicles, nodes, demands, multFactor)
+    LiLimProblem(vehicles, nodes, demands, multiplierFactor)
   }
 }

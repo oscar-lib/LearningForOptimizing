@@ -34,7 +34,7 @@ class UCBNew(neighborhoods: List[Neighborhood])
     var maxUcb: Double = Double.MinValue
     neigh_idx_max = Vector.empty
 
-    authorizedNeighorhoodIterator().foreach(idx => {
+    authorizedNeighborhoodIterator().foreach(idx => {
       val ucbIdx =
         if (nSelected(idx) == 0) Double.MinValue
         else
@@ -56,7 +56,7 @@ class UCBNew(neighborhoods: List[Neighborhood])
     * @return
     *   Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
     */
-  override def reward(runStat: NeighorhoodStats, neighborhood: Neighborhood): Double = {
+  override def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     wSol * rewardFoundMove(runStat) +
       wEff * rewardExecutionTime(runStat) +
       wSlope * rewardSlope(runStat)

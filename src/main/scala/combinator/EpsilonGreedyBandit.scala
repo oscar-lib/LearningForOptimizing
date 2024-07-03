@@ -70,9 +70,9 @@ class EpsilonGreedyBandit(l: List[Neighborhood])
       return None // all neighborhoods did not progress
     t += 1
     val epsilon_t: Double = epsilon * Math.sqrt(l.length.toDouble / t)
-    val proba_t: Double   = Random.nextDouble()
+    val prob_t: Double   = Random.nextDouble()
     var neighborhood_idx  = 0
-    if (proba_t > epsilon_t) {
+    if (prob_t > epsilon_t) {
       neighborhood_idx =
         weights.zipWithIndex.filter(idx => authorizedNeighborhood(idx._2)).maxBy(_._1)._2
     } else {

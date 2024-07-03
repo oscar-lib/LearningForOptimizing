@@ -22,9 +22,9 @@ import oscar.cbls.core.search.{MoveFound, Neighborhood, NoMoveFound, SearchResul
   * @param slope the slope, i.e., the ratio between the quality of improvement and its performance cost
   * @param timeNano the elapsed time
   */
-case class NeighorhoodStats(hasImproved: Boolean, foundMove: Boolean, slope: Double, timeNano: Long)
+case class NeighborhoodStats(hasImproved: Boolean, foundMove: Boolean, slope: Double, timeNano: Long)
 
-object NeighorhoodStats {
+object NeighborhoodStats {
 
   /** Create a neighborhood statistics based on a move performed
     * @param searchResult
@@ -34,8 +34,8 @@ object NeighorhoodStats {
     * @return
     *   statistics based on the move performed
     */
-  def apply(searchResult: SearchResult, neighborhood: Neighborhood): NeighorhoodStats = {
-    NeighorhoodStats(
+  def apply(searchResult: SearchResult, neighborhood: Neighborhood): NeighborhoodStats = {
+    NeighborhoodStats(
       searchResult match {
         case NoMoveFound  => false
         case MoveFound(_) => true

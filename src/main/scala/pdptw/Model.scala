@@ -142,7 +142,7 @@ class Model(liLimProblem: LiLimProblem) {
   def isDeliveryPoint(node: Int): Boolean            = chains.isLast(node)
   // Constraint
   val precedenceInvariant: Precedence = precedence(pdpProblem.routes, precedences)
-  // Ensuring that pickup and dropoff node are on same vehicle.
+  // Ensuring that pickup and drop-off node are on same vehicle.
   val precedencesConstraints = new ConstraintSystem(pdpProblem.m)
   for (start <- precedenceInvariant.nodesStartingAPrecedence)
     precedencesConstraints.add(
@@ -151,7 +151,7 @@ class Model(liLimProblem: LiLimProblem) {
         vehicleOfNodesNow(precedenceInvariant.nodesEndingAPrecedenceStartedAt(start).head)
       )
     )
-  // Ensuring that dropOff node follows pickUp node
+  // Ensuring that drop-off node follows pickUp node
   precedencesConstraints.add(EQ(0, precedenceInvariant))
 
   private def generateObjectiveFunction(vrp: VRP): Objective = {
@@ -199,7 +199,7 @@ class Model(liLimProblem: LiLimProblem) {
       s"=======\n" +
       s"Unrouted nodes : ${pdpProblem.unrouted.value.size}\n" +
       s"Number of used vehicles : ${movingVehiclesInvariant.value.size}\n" +
-      s"Total route length : ${routeLengthsInvariant.map(_.value).sum.toDouble / liLimProblem.multFactor}\n\n" +
+      s"Total route length : ${routeLengthsInvariant.map(_.value).sum.toDouble / liLimProblem.multiplierFactor}\n\n" +
       movingVehiclesInvariant.value.toList
         .map(vehicle => {
           pdpProblem

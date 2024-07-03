@@ -16,9 +16,10 @@ import scopt.OptionParser
 
 import java.io.File
 
+//noinspection SpellCheckingInspection
 object Main extends App {
 
-  abstract class Config()
+  abstract class Config
 
   case class SolveInstanceConfig(
     instance: File = null,
@@ -44,6 +45,7 @@ object Main extends App {
   case class NoConfig() extends Config()
 
   private val parser = new OptionParser[Config]("LearningForOptimizing") {
+    //noinspection SpellCheckingInspection
     cmd("solveInstance")
       .action((x, c) => SolveInstanceConfig())
       .text("use <solveInstance> to solve an instance of a PDPTW")

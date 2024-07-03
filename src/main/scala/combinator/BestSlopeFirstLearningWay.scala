@@ -50,7 +50,7 @@ class BestSlopeFirstLearningWay(l: List[Neighborhood])
   override def getNextNeighborhood: Option[Neighborhood] = {
     // If the heap is empty: we do not have any neighborhood
     if (neighborhoodHeap.isEmpty) {
-      // Reseting the state of the neighborhood
+      // Resetting the state of the neighborhood
       insertNeighborhoodList(indicesList)
       tabuNeighborhoodIndex = Nil
       None
@@ -75,7 +75,7 @@ class BestSlopeFirstLearningWay(l: List[Neighborhood])
           -(profilingData.gain * 1000) / Math.max(profilingData.timeSpentMillis, 1)
         // Notifying the heap so that it updates the positions
         neighborhoodHeap.notifyChange(currentNeighborhoodIndex)
-        // Resetting the tabu list (maybe the last move deblocked some of them)
+        // Resetting the tabu list (maybe the last move unblocked some of them)
         insertNeighborhoodList(tabuNeighborhoodIndex)
         tabuNeighborhoodIndex = Nil
     }

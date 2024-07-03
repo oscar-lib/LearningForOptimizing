@@ -138,6 +138,7 @@ case class Solver(oscarModel: Model, bandit: String) {
     res
   }
 
+  //noinspection SpellCheckingInspection
   def solve(verbosity: Int, displaySolution: Boolean, fileName: String, timeout: Int): Unit = {
     val withTimeout  = timeout < Int.MaxValue
     val displayDelay = 100 // ms

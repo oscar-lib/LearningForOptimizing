@@ -23,16 +23,14 @@ class BestSlopeFirstNew(neighborhoods: List[Neighborhood])
     * @return
     *   Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
     */
-  override def getNextNeighborhood: Option[Neighborhood] = {
-    getBestNeighborhood()
-  }
+  override def getNextNeighborhood: Option[Neighborhood] = getBestNeighborhood
 
   /** The method that computes a reward associated to a neighborhood.
     *
     * @return
     *   Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
     */
-  override def reward(runStat: NeighorhoodStats, neighborhood: Neighborhood): Double = {
+  override def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     rewardSlope(runStat)
   }
 
@@ -44,7 +42,7 @@ class BestSlopeFirstNew(neighborhoods: List[Neighborhood])
     * @param reward
     *   reward associated to the neighborhood
     * @return
-    *   new weight to set for the neigborhood
+    *   new weight to set for the neighborhood
     */
   override def newWeightFromReward(
     neighborhood: Neighborhood,
