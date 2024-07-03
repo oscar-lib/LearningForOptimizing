@@ -175,7 +175,7 @@ case class Solver(oscarModel: Model, bandit: String) {
           obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15
         )
-      case "epsilongreedyNew" =>
+      case "epsilongreedynew" =>
         new EpsilonGreedyBanditNew(neighList) onExhaustRestartAfter(
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           0,
@@ -184,6 +184,13 @@ case class Solver(oscarModel: Model, bandit: String) {
         )
       case "ucb1" =>
         new UCB1(neighList) onExhaustRestartAfter (
+          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+          0,
+          obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15
+        )
+      case "ucbnew" =>
+        new UCBNew(neighList) onExhaustRestartAfter(
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           0,
           obj,
