@@ -21,43 +21,48 @@ object Parser {
   // The result of the benchmark is usually expressed in double.
   // We cannot deal with double within oscar therefore we multiply it by a factor and then divide it again.
   private val multFactor = 1000
-	def apply(file: File): LiLimProblem = {
+  def apply(file: File): LiLimProblem = {
 
-    val s = Source.fromFile(file)
+    val s     = Source.fromFile(file)
     val lines = s.getLines()
 
-    val Array(v, capacity, _) = lines.next().split("\\t\\s*").map(_.toInt)
-    val Array(_,depotX,depotY) =  lines.next().split("\\t\\s*").map(_.toInt).take(3)
-    val depot = LiLimDepot((multFactor*depotX,multFactor*depotY))
-    val vehicles = List.fill(v)(LiLimVehicle(depot,capacity))
+    val Array(v, capacity, _)    = lines.next().split("\\t\\s*").map(_.toInt)
+    val Array(_, depotX, depotY) = lines.next().split("\\t\\s*").map(_.toInt).take(3)
+    val depot                    = LiLimDepot((multFactor * depotX, multFactor * depotY))
+    val vehicles                 = List.fill(v)(LiLimVehicle(depot, capacity))
 
     @tailrec
-    def extractNodesAndDemands(lines: Iterator[String], liLimNodes: List[LiLimNode] = List.empty, liLimDemands: List[LiLimCouple] = List.empty): (List[LiLimNode],List[LiLimCouple]) = {
-      if(lines.hasNext) {
-        val next = lines.next().split("\\t\\s*").map(_.toInt)
-        val nodeId = next(0)
-        val x = multFactor * next(1)
-        val y = multFactor * next(2)
-        val quantity = next(3)
+    def extractNodesAndDemands(
+      lines: Iterator[String],
+      liLimNodes: List[LiLimNode] = List.empty,
+      liLimDemands: List[LiLimCouple] = List.empty
+    ): (List[LiLimNode], List[LiLimCouple]) = {
+      if (lines.hasNext) {
+        val next                = lines.next().split("\\t\\s*").map(_.toInt)
+        val nodeId              = next(0)
+        val x                   = multFactor * next(1)
+        val y                   = multFactor * next(2)
+        val quantity            = next(3)
         val earliestArrivalTime = multFactor * next(4)
-        val latestArrivalTime = multFactor * next(5)
-        val duration = multFactor * next(6)
-        val pickUp = next(7)
-        val dropOff = next(8)
-        val node = LiLimNode(nodeId,(x,y),earliestArrivalTime,latestArrivalTime,duration, quantity)
+        val latestArrivalTime   = multFactor * next(5)
+        val duration            = multFactor * next(6)
+        val pickUp              = next(7)
+        val dropOff             = next(8)
+        val node =
+          LiLimNode(nodeId, (x, y), earliestArrivalTime, latestArrivalTime, duration, quantity)
         val demand =
-          if(pickUp == 0) List(LiLimCouple(nodeId,dropOff))
+          if (pickUp == 0) List(LiLimCouple(nodeId, dropOff))
           else List.empty
         extractNodesAndDemands(lines, liLimNodes :+ node, liLimDemands ::: demand)
       } else {
-        (liLimNodes,liLimDemands)
+        (liLimNodes, liLimDemands)
       }
     }
 
-    val (nodes,demands) = extractNodesAndDemands(lines)
+    val (nodes, demands) = extractNodesAndDemands(lines)
 
     s.close()
 
-    LiLimProblem(vehicles, nodes, demands,multFactor)
+    LiLimProblem(vehicles, nodes, demands, multFactor)
   }
 }
