@@ -17,10 +17,10 @@ import oscar.cbls.core.search.{MoveFound, Neighborhood, NoMoveFound, SearchResul
 
 /** Lightweight store of information regarding the execution of a move
   *
-  * @param hasImproved
-  * @param foundMove
-  * @param slope
-  * @param timeNano
+  * @param hasImproved whether the move has improved the solution quality or not
+  * @param foundMove whether a move has been found or not
+  * @param slope the slope, i.e., the ratio between the quality of improvement and its performance cost
+  * @param timeNano the elapsed time
   */
 case class NeighorhoodStats(hasImproved: Boolean, foundMove: Boolean, slope: Double, timeNano: Long)
 

@@ -230,11 +230,12 @@ abstract class BanditSelector(
     nTabu = 0
   }
 
-  /** Tells the probability of choosing a neighborhood, proportional to its weight A neighborhood
-    * set as tabu has a 0-probability
+  /** Tells the probability of choosing a neighborhood, proportional to its weight.
+    *
+    * A neighborhood set as tabu has a probability equal to 0.
     *
     * @param neighborhood
-    * @return
+    *   the considered neighborhood
     */
   def probability(neighborhood: Neighborhood): Double = {
     val idx = neighborhoodIdx(neighborhood)
@@ -245,19 +246,18 @@ abstract class BanditSelector(
     }
   }
 
-  /** Tells the weight associated to a neighborhood There are no bounds set on the weight: it can be
-    * larger than 1
+  /** Tells the weight associated to a neighborhood. There are no bounds set on the weight: it can
+    * be larger than 1.
     *
     * @param neighborhood
+    *   the considered neighborhood
     */
   def weight(neighborhood: Neighborhood): Double = {
     val idx = neighborhoodIdx(neighborhood)
     this.weights(idx)
   }
 
-  /** Gives the neighborhood having the best weight
-    *
-    * @return
+  /** Returns the neighborhood with the best weight, if applicable.
     */
   def getBestNeighborhood(): Option[Neighborhood] = {
     // (weight, idx) of the neighborhood with maximum weight
@@ -362,10 +362,12 @@ abstract class BanditSelector(
     }
   }
 
-  /** Update the weight associated to a neighborhood The weight update is computed based on the
-    * stats collected
+  /** Update the weight associated to a neighborhood.
+    *
+    * The weight update is computed based on the collected stats.
     *
     * @param neighborhood
+    *   the considered neighborhood
     */
   def updateWeight(neighborhood: Neighborhood): Unit = {
     val idx = neighborhoodIdx(neighborhood)

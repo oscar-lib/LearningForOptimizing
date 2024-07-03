@@ -117,20 +117,24 @@ class UCB1(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBan
     }
   }
 
-  /** Updates the weight associated to a neighborhood The weight cannot go beyond a given value
+  /** Updates the weight associated to a neighborhood. The weight can be limited by a given value.
     *
     * @param idx
+    *   the neighborhood's index
     * @param value
+    *   the limit to the weight value
     */
   private def updateWeight(idx: Int, value: Double): Unit = {
     weights(idx) = Math.max(value, minWeight)
   }
 
-  /** Updates the tabu list. Either adds the neighborhood to the tabu list if it found nothing
-    * Otherwise, resets the tabu list
+  /** Updates the tabu list, either adding the neighborhood to the tabu list if it found nothing, or
+    * resetting the tabu list otherwise.
     *
     * @param m
+    *   the move resulting from the neighborhood
     * @param neighborhood
+    *   the considered neighborhood
     */
   private def updateTabu(m: SearchResult, neighborhood: Neighborhood): Unit = {
     m match {
