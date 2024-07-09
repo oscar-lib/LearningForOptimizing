@@ -424,18 +424,22 @@ abstract class BanditSelector(
 
     @tailrec
     def doSearch(): SearchResult = {
-      getNextNeighborhood match {
-        case None => NoMoveFound
-        case Some(n) =>
-          val idx = neighborhoodIdx(n)
-          lastSelectedIdx = idx
-          nSelected(idx) += 1
-          val candidateResult = n.getProfiledMove(obj, initialObj, acceptanceCriterion)
-          notifyMove(candidateResult, n)
-          candidateResult match {
-            case NoMoveFound  => doSearch()
-            case MoveFound(_) => candidateResult
-          }
+      if (nTabu == neighborhoods.length) {
+        NoMoveFound
+      } else {
+        getNextNeighborhood match {
+          case None => NoMoveFound
+          case Some(n) =>
+            val idx = neighborhoodIdx(n)
+            lastSelectedIdx = idx
+            nSelected(idx) += 1
+            val candidateResult = n.getProfiledMove(obj, initialObj, acceptanceCriterion)
+            notifyMove(candidateResult, n)
+            candidateResult match {
+              case NoMoveFound => doSearch()
+              case MoveFound(_) => candidateResult
+            }
+        }
       }
     }
 
