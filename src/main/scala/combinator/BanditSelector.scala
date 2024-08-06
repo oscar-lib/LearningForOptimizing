@@ -352,11 +352,7 @@ abstract class BanditSelector(
 
   /** Update the weights of all neighborhoods registered
     */
-  def updateWeights(): Unit = {
-    for (neigh <- neighborhoods) {
-      updateWeight(neigh)
-    }
-  }
+  def updateWeights(): Unit = neighborhoods.foreach(updateWeight)
 
   /** Update the weight associated to a neighborhood.
     *
