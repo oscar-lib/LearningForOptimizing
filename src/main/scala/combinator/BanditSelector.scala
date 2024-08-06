@@ -130,7 +130,7 @@ abstract class BanditSelector(
   /** Clears the stats associated to all neighborhoods.
     */
   private def clearStats(): Unit = {
-   stats.foreach(_.clear())
+    stats.foreach(_.clear())
   }
 
   /** Clears the stats associated to one specific neighborhood.
@@ -180,8 +180,8 @@ abstract class BanditSelector(
     *   neighborhood having performed the move
     */
   protected def appendStats(
-                             neighborhoodStats: NeighborhoodStats,
-                             neighborhood: Neighborhood
+    neighborhoodStats: NeighborhoodStats,
+    neighborhood: Neighborhood
   ): Unit = {
     maxSlope = Math.max(maxSlope, neighborhoodStats.slope)
     maxRunTimeNano = Math.max(maxRunTimeNano, neighborhoodStats.timeNano)
@@ -432,7 +432,7 @@ abstract class BanditSelector(
             val candidateResult = n.getProfiledMove(obj, initialObj, acceptanceCriterion)
             notifyMove(candidateResult, n)
             candidateResult match {
-              case NoMoveFound => doSearch()
+              case NoMoveFound  => doSearch()
               case MoveFound(_) => candidateResult
             }
         }
