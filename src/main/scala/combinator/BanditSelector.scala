@@ -130,8 +130,7 @@ abstract class BanditSelector(
   /** Clears the stats associated to all neighborhoods.
     */
   private def clearStats(): Unit = {
-    for (idx <- stats.indices) {
-      stats(idx).clear()
+   stats.foreach(_.clear())
     }
   }
 
@@ -269,7 +268,7 @@ abstract class BanditSelector(
     }
   }
 
-  /** Returns a neighborhood with a probability proportional to its weight The higher the weight of
+  /** Returns a neighborhood with a probability proportional to its weight. The higher the weight of
     * a neighborhood, the larger the probability of it being returned
     *
     * @return
@@ -313,7 +312,7 @@ abstract class BanditSelector(
     }
   }
 
-  /** Gives a reward in [0, 1] based on finding a move 1 means that a move was found, 0 otherwise
+  /** Gives a reward in [0, 1] based on finding a move. 1 means that a move was found, 0 otherwise
     *
     * @param runStat
     *   statistics from a performed move
@@ -328,7 +327,7 @@ abstract class BanditSelector(
     }
   }
 
-  /** Gives a reward in [0, 1] based on the slope 0 is the worst slope being found, 1 is the best
+  /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
     * one
     *
     * @param runStat
@@ -341,7 +340,7 @@ abstract class BanditSelector(
     Math.abs(slope / maxSlope)
   }
 
-  /** Gives a reward in [0, 1] based on the execution time 1 means that the execution was the
+  /** Gives a reward in [0, 1] based on the execution time. 1 means that the execution was the
     * slowest observed, and near 0 values the fastest observed
     *
     * @param runStat
