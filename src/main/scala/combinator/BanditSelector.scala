@@ -267,10 +267,8 @@ abstract class BanditSelector(
     }
   }
 
-  /** Returns a neighborhood with a probability proportional to its weight. The higher the weight of
-    * a neighborhood, the larger the probability of it being returned
-    *
-    * @return
+  /** Optionally returns a neighborhood with a probability proportional to its weight. If no
+    * neighborhood is valid, `None` is returned.
     */
   def getNeighborhoodWithProbability: Option[Neighborhood] = {
     if (nTabu == neighborhoods.length)
