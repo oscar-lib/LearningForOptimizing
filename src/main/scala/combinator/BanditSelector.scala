@@ -395,8 +395,8 @@ abstract class BanditSelector(
     oldWeight + learningRate * reward
   }
 
-  /** Combine multiple rewards into a single one by taking the average of rewards This is useful if
-    * the learning mode is not set to be learning after every move
+  /** Combines multiple rewards into a single one by taking their average. This is useful if the
+    * learning mode is not set to be learning after every move.
     *
     * @param rewards
     *   list of rewards that must be combined
