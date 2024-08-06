@@ -255,7 +255,7 @@ abstract class BanditSelector(
     this.weights(idx)
   }
 
-  /** Returns the neighborhood with the best weight, if applicable.
+  /** Returns the neighborhood with the best weight, if no tabu neighborhood exists.
     */
   def getBestNeighborhood: Option[Neighborhood] = {
     // (weight, idx) of the neighborhood with maximum weight
