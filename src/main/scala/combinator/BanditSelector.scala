@@ -131,7 +131,6 @@ abstract class BanditSelector(
     */
   private def clearStats(): Unit = {
    stats.foreach(_.clear())
-    }
   }
 
   /** Clears the stats associated to one specific neighborhood.
