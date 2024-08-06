@@ -287,25 +287,15 @@ abstract class BanditSelector(
     }
   }
 
-  /** Gives a random neighborhood in within the available ones
-    *
-    * @return
-    *   random neighborhood being not tabu
+  /** Returns a random non-tabu neighborhood, unless none is available.
     */
   def getRandomNeighborhood: Option[Neighborhood] = {
     if (nTabu == neighborhoods.length) {
       None
     } else {
-      var prob = rand.nextInt(neighborhoods.length - nTabu)
-      for (idx <- neighborhoods.indices) {
-        if (authorizedNeighborhood(idx)) {
-          if (prob == 0) {
-            return Some(neighborhoods(idx))
-          }
-          prob -= 1 // invalid neighborhood, try the next one
-        }
-      }
-      Some(neighborhoods.last)
+      val validIndices = neighborhoods.indices.filter(authorizedNeighborhood)
+      val randIdx      = rand.shuffle(validIndices).head
+      Some(neighborhoods(randIdx))
     }
   }
 
