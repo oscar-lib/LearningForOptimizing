@@ -40,7 +40,7 @@ object NeighborhoodStats {
         case NoMoveFound  => false
         case MoveFound(_) => true
       },
-      neighborhood.profiler.commonProfilingData._gain > 0,
+      NeighborhoodUtils.lastCallGain(neighborhood) > 0,
       NeighborhoodUtils.slope(neighborhood),
       NeighborhoodUtils.lastCallDuration(neighborhood)
     )

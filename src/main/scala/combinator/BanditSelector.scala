@@ -99,11 +99,17 @@ abstract class BanditSelector(
     */
   def getNextNeighborhood: Option[Neighborhood]
 
-  /** The method that computes a reward associated to a neighborhood.
-    *
-    * @return
-    *   Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
-    */
+  /**
+   * Computes a reward associated to running a neighborhood.
+   * This method is called when the weights are updated, which is called at different time depending on the LearningScheme
+   * (i.e. after every move, descent, etc.)
+   *
+   * @param runStat
+   *   statistics over one call of a neighborhood
+   * @param neighborhood
+   *   neighborhood that has been called
+   * @return
+   */
   def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
 
   /** Resets the selector. This resets the tabu list and update the weights if the learning scheme
@@ -189,13 +195,15 @@ abstract class BanditSelector(
     stats(idx).append(neighborhoodStats)
   }
 
+  /** Iterator over the indices of valid neighborhood (i.e. the ones not marked as tabu)
+   */
   object authorizedNeighborhoodIterator {
     def apply(): Iterator[Int] = {
       authorizedNeighborhood.indices.iterator.filter(authorizedNeighborhood(_))
     }
   }
 
-  /** Mark a neighborhood as tabu This has the side-effect of decreasing the sum of valid weights
+  /** Mark a neighborhood as tabu. This has the side-effect of decreasing the sum of valid weights
     *
     * @param neighborhood
     *   neighborhood to mark as tabu
@@ -207,13 +215,23 @@ abstract class BanditSelector(
     nTabu += 1
   }
 
+  /** Tells if a neighborhood is marked as tabu
+   *
+   * @param neighborhood one neighborhood used by the selector
+   * @return true if the neighborhood is marked as tabu
+   */
   def isTabu(neighborhood: Neighborhood): Boolean = {
     val idx = neighborhoodIdx(neighborhood)
-    authorizedNeighborhood(idx)
+    isTabu(idx)
   }
 
+  /** Tells if a neighborhood is marked as tabu
+   *
+   * @param idx index of the neighborhood in the neighborhood list
+   * @return true if the neighborhood is marked as tabu
+   */
   def isTabu(idx: Int): Boolean = {
-    authorizedNeighborhood(idx)
+    !authorizedNeighborhood(idx)
   }
 
   /** Reset the list of tabu neighborhoods and update the sum of weights for valid neighborhoods
@@ -221,8 +239,10 @@ abstract class BanditSelector(
   private def resetTabu(): Unit = {
     if (nTabu != 0) {
       for (idx <- authorizedNeighborhood.indices) {
+        if (isTabu(idx)) {
+          sumWeightsValidNeighborhoods += weights(idx)
+        }
         authorizedNeighborhood(idx) = true
-        sumWeightsValidNeighborhoods += weights(idx)
       }
     }
     nTabu = 0
@@ -283,7 +303,7 @@ abstract class BanditSelector(
           prob -= weight // invalid neighborhood, try the next one
         }
       }
-      Some(neighborhoods.last)
+      None
     }
   }
 
@@ -327,8 +347,8 @@ abstract class BanditSelector(
     Math.abs(slope / maxSlope)
   }
 
-  /** Gives a reward in [0, 1] based on the execution time. 1 means that the execution was the
-    * slowest observed, and near 0 values the fastest observed
+  /** Gives a reward in [0, 1] based on the execution time. 0 means that the execution was the
+    * slowest observed, and near 1 values the fastest observed
     *
     * @param runStat
     *   statistics from a performed move
