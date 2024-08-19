@@ -112,10 +112,10 @@ abstract class BanditSelector(
    */
   def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
 
-  /** Resets the selector. This resets the tabu list and update the weights if the learning scheme
-    * is set to
+  /** Resets the selector. This resets the tabu list and updates the weights if the learning scheme
+    * is set to:
     *   - after every descent.
-    *   - after n moves and the current.
+    *   - after n moves and the current one.
     */
   override def reset(): Unit = {
     resetTabu()
