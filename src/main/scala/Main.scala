@@ -11,7 +11,8 @@
 // You should have received a copy of the GNU Lesser General Public License along with OscaR.
 // If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
 
-import pdptw.{LiLimProblem, Model, Parser, Solver}
+import pdptw.{LiLimProblem, Model => PDPTWModel, Parser => PDPTWParser, Solver => PDPTWSolver}
+import csp.{CarSeqProblem, Model => CSPModel, Parser => CSPParser, Solver => CSPSolver}
 import scopt.OptionParser
 
 import java.io.File
@@ -24,6 +25,7 @@ object Main extends App {
   case class SolveInstanceConfig(
     instance: File = null,
     verbosity: Int = 0,
+    problem: String = "",
     bandit: String = "bestSlopeFirst",
     display: Boolean = false,
     timeout: Int = Int.MaxValue
@@ -32,12 +34,14 @@ object Main extends App {
   case class SolveSeriesConfig(
     seriesSize: Int = 0,
     verbosity: Int = 0,
+    problem: String = "",
     bandit: String = "bestSlopeFirst",
     timeout: Int = Int.MaxValue
   ) extends Config()
 
   case class SolveAllConfig(
     verbosity: Int = 0,
+    problem: String = "",
     bandit: String = "bestSlopeFirst",
     timeout: Int = Int.MaxValue
   ) extends Config()
@@ -45,10 +49,10 @@ object Main extends App {
   case class NoConfig() extends Config()
 
   private val parser = new OptionParser[Config]("LearningForOptimizing") {
-    //noinspection SpellCheckingInspection
+    // noinspection SpellCheckingInspection
     cmd("solveInstance")
       .action((x, c) => SolveInstanceConfig())
-      .text("use <solveInstance> to solve an instance of a PDPTW")
+      .text("use <solveInstance> to solve an instance of a problem")
       .children(
         opt[File]("input")
           .required()
@@ -56,6 +60,20 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(instance = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[String]("problem")
+          .required()
+          .abbr("p")
+          .text(
+            "Use this option to set the type of problem to solve:\n" +
+              "    - pdptw : the pickup and delivery problem with time windows\n" +
+              "    - csp   : the car sequencing problem"
+          )
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(problem = x)
               case _                         => throw new Error("Unexpected Error")
             }
           ),
@@ -115,12 +133,28 @@ object Main extends App {
         opt[Int]("size")
           .required()
           .text(
-            "Required: The size (100,200,400,600,800,1000) of the instances to solve (fetching all of them)"
+            // todo change for csp
+            "Required: The size (100,200,400,600,800,1000) of the instances to solve" +
+              " (fetching all of them)"
           )
           .action((x, c) =>
             c match {
               case conf: SolveSeriesConfig => conf.copy(seriesSize = x)
               case _                       => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[String]("problem")
+          .required()
+          .abbr("p")
+          .text(
+            "Use this option to set the type of problem to solve:\n" +
+              "    - pdptw : the pickup and delivery problem with time windows\n" +
+              "    - csp   : the car sequencing problem"
+          )
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(problem = x)
+              case _                         => throw new Error("Unexpected Error")
             }
           ),
         opt[String]("bandit")
@@ -184,6 +218,20 @@ object Main extends App {
               case _                    => throw new Error("Unexpected Error")
             }
           ),
+        opt[String]("problem")
+          .required()
+          .abbr("p")
+          .text(
+            "Use this option to set the type of problem to solve:\n" +
+              "    - pdptw : the pickup and delivery problem with time windows\n" +
+              "    - csp   : the car sequencing problem"
+          )
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(problem = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
         opt[String]("bandit")
           .abbr("b")
           .text(
@@ -210,16 +258,29 @@ object Main extends App {
       )
   }
 
-  private def solveProblem(
+  private def solvePDPTW(
     file: File,
     verbosity: Int,
     bandit: String,
     display: Boolean,
     timeout: Int
   ): Unit = {
-    val instanceProblem: LiLimProblem = Parser(file)
-    val oscarModel: Model             = Model(instanceProblem)
-    val solver: Solver                = Solver(oscarModel, bandit)
+    val instanceProblem: LiLimProblem = PDPTWParser(file)
+    val oscarModel: PDPTWModel        = PDPTWModel(instanceProblem)
+    val solver: PDPTWSolver           = PDPTWSolver(oscarModel, bandit)
+    solver.solve(verbosity, display, file.getName, timeout)
+  }
+
+  private def solveCSP(
+    file: File,
+    verbosity: Int,
+    bandit: String,
+    display: Boolean,
+    timeout: Int
+  ): Unit = {
+    val instance: CarSeqProblem = CSPParser(file)
+    val oscarModel: CSPModel    = CSPModel(instance)
+    val solver: CSPSolver       = CSPSolver(oscarModel, bandit)
     solver.solve(verbosity, display, file.getName, timeout)
   }
 
@@ -231,18 +292,39 @@ object Main extends App {
           println("Error: No Command Given")
           println("Try --help for more information")
         case i: SolveInstanceConfig =>
-          solveProblem(i.instance, i.verbosity, i.bandit, i.display, i.timeout)
+          i.problem match {
+            case "csp"   => solveCSP(i.instance, i.verbosity, i.bandit, i.display, i.timeout)
+            case "pdptw" => solvePDPTW(i.instance, i.verbosity, i.bandit, i.display, i.timeout)
+            case x       => throw new Error(s"Invalid problem name: $x")
+          }
 
         case s: SolveSeriesConfig =>
-          val dir   = new File(s"examples/pdptw_${s.seriesSize}")
-          val files = dir.listFiles.filter(_.isFile)
-          files.foreach(x => solveProblem(x, s.verbosity, s.bandit, display = false, s.timeout))
+          s.problem match {
+            case "csp" =>
+              val dir   = new File(s"examples/csp/csp_${s.seriesSize}")
+              val files = dir.listFiles.filter(_.isFile)
+              files.foreach(x => solveCSP(x, s.verbosity, s.bandit, display = false, s.timeout))
+            case "pdptw" =>
+              val dir   = new File(s"examples/pdptw/pdptw_${s.seriesSize}")
+              val files = dir.listFiles.filter(_.isFile)
+              files.foreach(x => solvePDPTW(x, s.verbosity, s.bandit, display = false, s.timeout))
+            case x => throw new Error(s"Invalid problem name: $x")
+          }
 
         case a: SolveAllConfig =>
-          val dir   = new File(s"examples")
-          val dirs  = dir.listFiles
-          val files = dirs.flatMap(_.listFiles.filter(_.isFile))
-          files.foreach(x => solveProblem(x, a.verbosity, a.bandit, display = false, a.timeout))
+          a.problem match {
+            case "csp" =>
+              val dir   = new File(s"examples/csp")
+              val dirs  = dir.listFiles
+              val files = dirs.flatMap(_.listFiles.filter(_.isFile))
+              files.foreach(x => solveCSP(x, a.verbosity, a.bandit, display = false, a.timeout))
+            case "pdptw" =>
+              val dir   = new File(s"examples/pdptw")
+              val dirs  = dir.listFiles
+              val files = dirs.flatMap(_.listFiles.filter(_.isFile))
+              files.foreach(x => solvePDPTW(x, a.verbosity, a.bandit, display = false, a.timeout))
+            case x => throw new Error(s"Invalid problem name: $x")
+          }
       }
   }
 }
