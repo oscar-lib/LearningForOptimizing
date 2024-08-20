@@ -13,6 +13,21 @@
 
 package csp
 
-case class SimpleNeighborhoods(
-  oscarModel: Model,
-) {}
+import oscar.cbls.core.search.Neighborhood
+import oscar.cbls.lib.search.neighborhoods.{ShuffleNeighborhood, SwapsNeighborhood}
+import oscar.cbls.modeling.StandardNeighborhoods
+
+case class SimpleNeighborhoods(oscarModel: Model) extends StandardNeighborhoods {
+
+  private val carSeq = oscarModel.carSequence
+
+  def swapsNeighborhood(): SwapsNeighborhood = swapsNeighborhood(
+    carSeq,
+    "mostViolatedSwap",
+    searchZone2 = () => { val v = oscarModel.mostViolatedCars.value; (_, _) => v },
+    symmetryCanBeBrokenOnIndices = false
+  )
+
+  def shuffleNeighborhood(maxMovesNum: Int): Neighborhood =
+    shuffleNeighborhood(carSeq, name = "shuffleAllCars") maxMoves maxMovesNum
+}
