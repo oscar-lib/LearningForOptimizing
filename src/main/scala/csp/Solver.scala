@@ -23,10 +23,16 @@ case class Solver(oscarModel: Model, bandit: String) {
 
   private val obj: Objective = oscarModel.obj
 
-  def solve(verbosity: Int, display: Boolean, getName: String, timeout: Int): Unit = {
+  private val simpleNeighborhoods = SimpleNeighborhoods(oscarModel)
+
+  def solve(verbosity: Int, display: Boolean, fileName: String, timeout: Int): Unit = {
+
     val withTimeout = timeout < Int.MaxValue
 
-    val neighList: List[Neighborhood] = Nil
+    val neighList: List[Neighborhood] = List(
+      simpleNeighborhoods.swapsNeighborhood(),
+      simpleNeighborhoods.shuffleNeighborhood(4)
+    )
 
     val banditNeighborhood: Neighborhood = bandit.toLowerCase() match {
       case "bandit" => BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
@@ -82,5 +88,4 @@ case class Solver(oscarModel: Model, bandit: String) {
       else s"PROBLEM COULD NOT BE SOLVED: ${c.violation}"
     )
   }
-
 }
