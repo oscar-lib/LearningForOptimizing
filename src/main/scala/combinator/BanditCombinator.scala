@@ -34,7 +34,7 @@ case class NeighborhoodStatistics(
  * history aggregation
  * Choice of neighborhoods
  */
-class BanditCombinator(
+case class BanditCombinator(
   l: List[Neighborhood],
   restartNeigh: Neighborhood,
   maxRestart: Int,
