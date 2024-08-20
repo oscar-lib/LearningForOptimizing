@@ -34,6 +34,8 @@ case class Solver(oscarModel: Model, bandit: String) {
       simpleNeighborhoods.shuffleNeighborhood(4)
     )
 
+    val restartN: Neighborhood = ???
+
     val banditNeighborhood: Neighborhood = bandit.toLowerCase() match {
       case "bandit" => BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
 
@@ -64,7 +66,7 @@ case class Solver(oscarModel: Model, bandit: String) {
       banditNeighborhood match {
         case BanditCombinator(_, _, _, _, _, _, _, _) => banditNeighborhood
         case _ =>
-          banditNeighborhood onExhaustRestartAfter (???, 0, obj, minRestarts =
+          banditNeighborhood onExhaustRestartAfter (restartN, 0, obj, minRestarts =
             if (withTimeout) Int.MaxValue else 15)
       }
     }
