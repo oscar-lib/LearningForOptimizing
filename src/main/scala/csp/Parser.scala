@@ -29,6 +29,7 @@ object Parser {
       val b = List.newBuilder[CarSeqConf]
       while (lines.hasNext) {
         val arr                    = lines.next().split("\\s").map(_.toInt)
+        require(arr.length == 2 + nOptions, "Invalid file")
         val Array(id, nCarsInConf) = arr.take(2)
         val optInConf              = arr.drop(2)
         b += CarSeqConf(id, nCarsInConf, optInConf)
