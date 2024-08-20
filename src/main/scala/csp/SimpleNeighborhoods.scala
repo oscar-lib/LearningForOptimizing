@@ -14,7 +14,7 @@
 package csp
 
 import oscar.cbls.core.search.Neighborhood
-import oscar.cbls.lib.search.neighborhoods.{ShuffleNeighborhood, SwapsNeighborhood}
+import oscar.cbls.lib.search.neighborhoods.{SwapsNeighborhood, WideningFlipNeighborhood}
 import oscar.cbls.modeling.StandardNeighborhoods
 
 case class SimpleNeighborhoods(oscarModel: Model) extends StandardNeighborhoods {
@@ -30,4 +30,9 @@ case class SimpleNeighborhoods(oscarModel: Model) extends StandardNeighborhoods 
 
   def shuffle(maxMovesNum: Int): Neighborhood =
     shuffleNeighborhood(carSeq, name = "shuffleAllCars") maxMoves maxMovesNum
+
+  def wideningFlip(): WideningFlipNeighborhood = WideningFlipNeighborhood(carSeq)
+
+  // todo: add other standard neighs.?
+  // todo: implement subsequence swap?
 }
