@@ -30,8 +30,8 @@ case class Solver(oscarModel: Model, bandit: String) {
     val withTimeout = timeout < Int.MaxValue
 
     val neighList: List[Neighborhood] = List(
-      simpleNeighborhoods.swapsNeighborhood(),
-      simpleNeighborhoods.shuffleNeighborhood(4)
+      simpleNeighborhoods.swaps(),
+      simpleNeighborhoods.shuffle(4) // parameter to go to command line?
     )
 
     val restartN: Neighborhood = ???

@@ -21,13 +21,13 @@ case class SimpleNeighborhoods(oscarModel: Model) extends StandardNeighborhoods 
 
   private val carSeq = oscarModel.carSequence
 
-  def swapsNeighborhood(): SwapsNeighborhood = swapsNeighborhood(
+  def swaps(): SwapsNeighborhood = swapsNeighborhood(
     carSeq,
     "mostViolatedSwap",
     searchZone2 = () => { val v = oscarModel.mostViolatedCars.value; (_, _) => v },
     symmetryCanBeBrokenOnIndices = false
   )
 
-  def shuffleNeighborhood(maxMovesNum: Int): Neighborhood =
+  def shuffle(maxMovesNum: Int): Neighborhood =
     shuffleNeighborhood(carSeq, name = "shuffleAllCars") maxMoves maxMovesNum
 }
