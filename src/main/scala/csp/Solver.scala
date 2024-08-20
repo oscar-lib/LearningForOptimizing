@@ -73,6 +73,9 @@ case class Solver(oscarModel: Model, bandit: String) {
     if (withTimeout) {
       search = search.weakTimeout(Duration(timeout, "second")) saveBestAndRestoreOnExhaust obj
     }
+    if (display)
+      search = search showObjectiveFunction(obj)
+
     search.verbose = verbosity
     search.doAllMoves(_ => c.isTrue, obj = obj)
     if (verbosity > 1) {
