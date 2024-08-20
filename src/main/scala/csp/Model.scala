@@ -41,7 +41,7 @@ class Model(instance: CarSeqProblem) {
     CBLSIntVar(s, carArray(i), 0 until instance.nConf, s"car configuration at position $i")
   })
 
-  val c = ConstraintSystem(s)
+  val constraintSystem = ConstraintSystem(s)
 
   for (opt <- 0 until instance.nOptions) {
 
@@ -53,7 +53,7 @@ class Model(instance: CarSeqProblem) {
       arr
     }
 
-    c.post(
+    constraintSystem.post(
       sequence(
         carSequence,
         instance.optSeqLen(opt),
@@ -63,13 +63,13 @@ class Model(instance: CarSeqProblem) {
     )
   }
 
-  val varViolation     = c.violations(carSequence)
+  val varViolation     = constraintSystem.violations(carSequence)
   val violatedCars     = filter(varViolation)
   val mostViolatedCars = argMax(varViolation)
 
-  c.close()
+  constraintSystem.close()
 
-  val obj: Objective = c.violation
+  val obj: Objective = constraintSystem.violation
 
   s.close()
 }
