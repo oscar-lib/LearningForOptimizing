@@ -13,7 +13,9 @@
 
 package csp
 
-import scala.collection.immutable.SortedMap
+import oscar.cbls._
+
+import scala.util.Random
 
 object Model {
   def apply(instance: CarSeqProblem): Model = {
@@ -23,7 +25,51 @@ object Model {
 
 class Model(instance: CarSeqProblem) {
 
-  val orderedCarsByType: SortedMap[Int,Int] = ???
+  private val s = new Store()
 
+  private val carArray: Array[Int] = {
+    val b   = Array.newBuilder[Int]
+    val ids = instance.configs.map(x => (x.id, x.nCarsWithConf))
+    ids.foldLeft(b)({ case (b, (id, n)) =>
+      for (_ <- 0 until n) b += id
+      b
+    })
+    Random.shuffle(b.result()).toArray
+  }
 
+  val carSequence: Array[CBLSIntVar] = Array.tabulate(instance.nCars)(i => {
+    CBLSIntVar(s, carArray(i), 0 until instance.nConf, s"car configuration at position $i")
+  })
+
+  val c = ConstraintSystem(s)
+
+  for (opt <- 0 until instance.nOptions) {
+
+    val configurationsWithOption: Array[Boolean] = {
+      val arr = Array.fill[Boolean](instance.nConf)(false)
+      for (c <- instance.configs) {
+        if (c.optInConf(opt) == 1) arr(c.id) = true
+      }
+      arr
+    }
+
+    c.post(
+      sequence(
+        carSequence,
+        instance.optSeqLen(opt),
+        instance.maxCarsWithOptInSeq(opt),
+        configurationsWithOption
+      )
+    )
+  }
+
+  val varViolation     = c.violations(carSequence)
+  val violatedCars     = filter(varViolation)
+  val mostViolatedCars = argMax(varViolation)
+
+  c.close()
+
+  val obj: Objective = c.violation
+
+  s.close()
 }
