@@ -30,11 +30,11 @@ case class Solver(oscarModel: Model, bandit: String) {
     val withTimeout = timeout < Int.MaxValue
 
     val neighList: List[Neighborhood] = List(
-      simpleNeighborhoods.swaps(),
-      simpleNeighborhoods.shuffle(4) // parameter to go to command line?
+      simpleNeighborhoods.swaps() exhaust simpleNeighborhoods.wideningFlip(),
+//      simpleNeighborhoods.shuffle()
     )
 
-    val restartN: Neighborhood = ???
+    val restartN: Neighborhood = simpleNeighborhoods.shuffle(indices = Some(oscarModel.mostViolatedCars))
 
     val banditNeighborhood: Neighborhood = bandit.toLowerCase() match {
       case "bandit" => BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj

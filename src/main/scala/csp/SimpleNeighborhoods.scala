@@ -28,8 +28,21 @@ case class SimpleNeighborhoods(oscarModel: Model) extends StandardNeighborhoods 
     symmetryCanBeBrokenOnIndices = false
   )
 
-  def shuffle(maxMovesNum: Int): Neighborhood =
-    shuffleNeighborhood(carSeq, name = "shuffleAllCars") maxMoves maxMovesNum
+  def shuffle(
+    indices: Option[() => Iterable[Int]] = None,
+    numOfPositions: Option[Int] = None
+  ): Neighborhood = {
+    indices match {
+      case Some(i) =>
+        numOfPositions match {
+          case Some(num) =>
+            val f = () => num
+            shuffleNeighborhood(carSeq, i, f, name = s"shuffle on indices (n. to shuffle: $num)")
+          case None => shuffleNeighborhood(carSeq, i, name = "shuffle on indices")
+        }
+      case None    => shuffleNeighborhood(carSeq, name = "shuffleAllCars")
+    }
+  }
 
   def wideningFlip(): WideningFlipNeighborhood = WideningFlipNeighborhood(carSeq)
 
