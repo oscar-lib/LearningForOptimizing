@@ -21,7 +21,9 @@ case class SimpleNeighborhoods(oscarModel: Model) extends StandardNeighborhoods 
 
   private val carSeq = oscarModel.carSequence
 
-  def swaps(): SwapsNeighborhood = swapsNeighborhood(
+  def swap(): Neighborhood = swapsNeighborhood(carSeq, "swap everywhere")
+
+  def swapMostViolated(): Neighborhood = swapsNeighborhood(
     carSeq,
     "mostViolatedSwap",
     searchZone2 = () => { val v = oscarModel.mostViolatedCars.value; (_, _) => v },
@@ -44,7 +46,7 @@ case class SimpleNeighborhoods(oscarModel: Model) extends StandardNeighborhoods 
     }
   }
 
-  def wideningFlip(): WideningFlipNeighborhood = WideningFlipNeighborhood(carSeq)
+  def wideningFlip(): Neighborhood = WideningFlipNeighborhood(carSeq)
 
   // todo: add other standard neighs.?
   // todo: implement subsequence swap?

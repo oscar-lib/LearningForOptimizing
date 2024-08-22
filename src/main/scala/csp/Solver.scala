@@ -30,7 +30,9 @@ case class Solver(oscarModel: Model, bandit: String) {
     val withTimeout = timeout < Int.MaxValue
 
     val neighList: List[Neighborhood] = List(
-      simpleNeighborhoods.swaps() exhaust simpleNeighborhoods.wideningFlip(),
+      simpleNeighborhoods.swapMostViolated() exhaust simpleNeighborhoods.wideningFlip(),
+      simpleNeighborhoods.wideningFlip(),
+      simpleNeighborhoods.swap()
 //      simpleNeighborhoods.shuffle()
     )
 
@@ -76,7 +78,7 @@ case class Solver(oscarModel: Model, bandit: String) {
       search = search.weakTimeout(Duration(timeout, "second")) saveBestAndRestoreOnExhaust obj
     }
     if (display)
-      search = search showObjectiveFunction(obj)
+      search = search showObjectiveFunction obj
 
     search.verbose = verbosity
     search.doAllMoves(_ => c.isTrue, obj = obj)
