@@ -15,14 +15,8 @@ package combinator
 
 import oscar.cbls.core.objective.Objective
 import oscar.cbls.core.search.profiling.SelectionProfiler
-import oscar.cbls.core.search.{
-  AcceptanceCriterion,
-  MoveFound,
-  Neighborhood,
-  NeighborhoodCombinator,
-  NoMoveFound,
-  SearchResult
-}
+import oscar.cbls.core.search.{AcceptanceCriterion, MoveFound, Neighborhood, NeighborhoodCombinator, NoMoveFound, SearchResult}
+import logger.BanditSelectionHistory
 
 import scala.annotation.tailrec
 import scala.collection.mutable
@@ -61,10 +55,10 @@ abstract class BanditSelector(
   protected val authorizedNeighborhood: Array[Boolean] = Array.fill(neighborhoods.length)(true)
 
   // weight associated to each neighborhood
-  protected val weights: Array[Double] = Array.fill(neighborhoods.length)(1.0)
+  protected val weights: Array[Double] = Array.fill(neighborhoods.length)(0.5)
 
   // sum of weights of neighborhoods that are not marked as tabu
-  protected var sumWeightsValidNeighborhoods: Double = neighborhoods.length
+  protected var sumWeightsValidNeighborhoods: Double = weights.sum
 
   // for each neighborhood, its index in the list
   protected var neighborhoodIdx: mutable.HashMap[Neighborhood, Int] = mutable.HashMap.empty
@@ -73,6 +67,8 @@ abstract class BanditSelector(
   protected var stats: Array[ListBuffer[NeighborhoodStats]] =
     Array.fill(neighborhoods.length)(ListBuffer())
   protected val rand = new Random(seed)
+
+  val history = new BanditSelectionHistory(neighborhoods)
 
   // number of time each neighborhood was selected
   protected val nSelected: Array[Int] = Array.fill(neighborhoods.length)(0)
@@ -108,9 +104,17 @@ abstract class BanditSelector(
    *   statistics over one call of a neighborhood
    * @param neighborhood
    *   neighborhood that has been called
-   * @return
+   * @return reward, in [0, 1]
    */
   def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
+
+  /**
+   * Minimum value that can be set for the weight of a neighborhood. No neighborhood can have a weight below this value
+   * @return
+   */
+  def minWeight() : Double = {
+    (1.0 / neighborhoods.length) / 25
+  }
 
   /** Resets the selector. This resets the tabu list and updates the weights if the learning scheme
     * is set to:
@@ -131,6 +135,7 @@ abstract class BanditSelector(
         }
       case AfterEveryMove =>
     }
+    history.notifyReset()
   }
 
   /** Clears the stats associated to all neighborhoods.
@@ -161,7 +166,7 @@ abstract class BanditSelector(
     appendStats(stats, neighborhood)
     searchResult match {
       case NoMoveFound  => setTabu(neighborhood)
-      case MoveFound(_) =>
+      case MoveFound(_) => resetTabu()
     }
     learningScheme match {
       case AfterEveryMove =>
@@ -176,6 +181,7 @@ abstract class BanditSelector(
         }
       case AfterEveryDescent =>
     }
+    history.notifySearchResult(this, neighborhood, searchResult)
   }
 
   /** Add a newly collected statistic
@@ -189,7 +195,7 @@ abstract class BanditSelector(
     neighborhoodStats: NeighborhoodStats,
     neighborhood: Neighborhood
   ): Unit = {
-    maxSlope = Math.max(maxSlope, neighborhoodStats.slope)
+    maxSlope = Math.max(maxSlope, Math.abs(neighborhoodStats.slope))
     maxRunTimeNano = Math.max(maxRunTimeNano, neighborhoodStats.timeNano)
     val idx = neighborhoodIdx(neighborhood)
     stats(idx).append(neighborhoodStats)
@@ -380,14 +386,27 @@ abstract class BanditSelector(
         val rewardsOnEpisode = stats(idx).map(stat => reward(stat, neighborhood))
         aggregate(rewardsOnEpisode, neighborhood)
       }
-      val oldWeight    = weights(idx)
-      val newWeight    = newWeightFromReward(neighborhood, oldWeight, aggregatedReward)
-      val weightChange = newWeight - oldWeight
-      if (authorizedNeighborhood(idx)) {
-        sumWeightsValidNeighborhoods += weightChange
-      }
-      weights(idx) = newWeight
+      //val newWeight    = newWeightFromReward(neighborhood, weights(idx), aggregatedReward)
+      val newWeight    = weights(idx) + (aggregatedReward - weights(idx)) / nSelected(idx)
+      setWeight(idx, newWeight)
     }
+  }
+
+  /**
+   * Changes the weight of a neighborhood, ensuring that it is always above minWeight()
+   * Also updates the sumWeightsValidNeighborhoods if the neighbor is not set as tabu
+   *
+   * @param neighborhoodIdx index of the neighborhood for which the update is being done
+   * @param weight new weight tried to be set for the neighborhood
+   */
+  def setWeight(neighborhoodIdx: Int, weight: Double): Unit = {
+    val oldWeight    = weights(neighborhoodIdx)
+    val newWeight = Math.max(weight, minWeight())
+    val weightChange = newWeight - oldWeight
+    if (authorizedNeighborhood(neighborhoodIdx)) {
+      sumWeightsValidNeighborhoods += weightChange
+    }
+    weights(neighborhoodIdx) = newWeight
   }
 
   /** Gives the new values to set for the weight of a neighborhood
@@ -397,12 +416,12 @@ abstract class BanditSelector(
     * @param oldWeight
     *   old weight of the neighborhood
     * @param reward
-    *   reward associated to the neighborhood
+    *   reward associated to the neighborhood, in [0, 1]
     * @return
     *   new weight to set for the neighborhood
     */
   def newWeightFromReward(neighborhood: Neighborhood, oldWeight: Double, reward: Double): Double = {
-    oldWeight + learningRate * reward
+    oldWeight + learningRate * (reward * 2 - 1)
   }
 
   /** Combines multiple rewards into a single one by taking their average. This is useful if the
