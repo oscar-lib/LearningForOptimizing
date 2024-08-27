@@ -8,3 +8,11 @@ project/project/
 .bloop
 .bsp
 metals.sbt
+
+# Python specific
+.venv
+uv.lock
+*.pyc
+
+# Others
+.env

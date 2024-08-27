@@ -17,8 +17,16 @@ import scopt.OptionParser
 
 import java.io.File
 
+import java.net.Socket
+import bridge.PythonBridge
+
 //noinspection SpellCheckingInspection
 object Main extends App {
+
+  val bridge = new PythonBridge()
+  bridge.send("Hello, World!".getBytes())
+  System.in.read()
+  System.exit(0)
 
   abstract class Config
 
