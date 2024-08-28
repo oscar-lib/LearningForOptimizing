@@ -177,7 +177,7 @@ abstract class BanditSelector(
         if (afterNMoves.isCriterionMet) {
           updateWeights()
           afterNMoves.resetCounter()
-          clearStats(neighborhood)
+          clearStats()
         }
       case AfterEveryDescent =>
     }
@@ -381,9 +381,15 @@ abstract class BanditSelector(
     val idx = neighborhoodIdx(neighborhood)
     if (stats(idx).nonEmpty) {
       val aggregatedReward = if (stats(idx).length == 1) {
-        reward(stats(idx).last, neighborhood)
+        val r = reward(stats(idx).last, neighborhood)
+        history.notifyReward(neighborhood, r)
+        r
       } else {
-        val rewardsOnEpisode = stats(idx).map(stat => reward(stat, neighborhood))
+        val rewardsOnEpisode = stats(idx).map(stat => {
+          val r = reward(stat, neighborhood)
+          history.notifyReward(neighborhood, r)
+          r
+        })
         aggregate(rewardsOnEpisode, neighborhood)
       }
       //val newWeight    = newWeightFromReward(neighborhood, weights(idx), aggregatedReward)
