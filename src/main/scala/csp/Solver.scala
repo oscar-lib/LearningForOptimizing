@@ -35,7 +35,24 @@ case class Solver(oscarModel: Model, bandit: String) {
       sn.swap()
     )
 
-    val restartN: Neighborhood = simpleNeighborhoods.shuffle(indices = Some(oscarModel.mostViolatedCars))
+    val mostViolated = oscarModel.mostViolatedCars
+    val violated     = oscarModel.violatedCars
+
+    val restart1: Neighborhood =
+      sn.shuffle(indices = Some(mostViolated)) guard (() =>
+        mostViolated.value.size > 2
+      )
+
+    val restart2: Neighborhood = sn.shuffle(
+      indices = Some(violated),
+      numOfPositions = Some(5 max violated.value.size / 2)
+    )
+
+    val restart3: Neighborhood = sn.shuffle(
+      numOfPositions = Some(oscarModel.instance.nCars / 2)
+    )
+
+    val restart4: Neighborhood = sn.shuffle()
 
     val banditNeighborhood: Neighborhood = bandit.toLowerCase() match {
 //      case "bandit" => BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
@@ -63,12 +80,30 @@ case class Solver(oscarModel: Model, bandit: String) {
         bestSlopeFirst(neighList)
     }
 
-    var search = {
+    var search: Neighborhood = {
       banditNeighborhood match {
         case BanditCombinator(_, _, _, _, _, _, _, _) => banditNeighborhood
         case _ =>
-          banditNeighborhood onExhaustRestartAfter (restartN, 0, obj, minRestarts =
-            if (withTimeout) Int.MaxValue else 15)
+          banditNeighborhood
+            .onExhaustRestartAfter(
+              restart1,
+              5,
+              obj,
+              minRestarts = if (withTimeout) Int.MaxValue else 5
+            )
+            .onExhaustRestartAfter(
+              restart2,
+              5,
+              obj,
+              minRestarts = if (withTimeout) Int.MaxValue else 5
+            )
+            .onExhaustRestartAfter(
+              restart3,
+              5,
+              obj,
+              minRestarts = if (withTimeout) Int.MaxValue else 5
+            )
+//            .orElse(restart4 maxMoves 4)
       }
     }
 

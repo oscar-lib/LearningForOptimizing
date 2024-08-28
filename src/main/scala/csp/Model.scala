@@ -23,7 +23,7 @@ object Model {
   }
 }
 
-class Model(instance: CarSeqProblem) {
+class Model(val instance: CarSeqProblem) {
 
   private val s = new Store()
 
@@ -63,9 +63,9 @@ class Model(instance: CarSeqProblem) {
     )
   }
 
-  val varViolation     = constraintSystem.violations(carSequence)
-  val violatedCars     = filter(varViolation)
-  val mostViolatedCars = argMax(varViolation)
+  private val varViolation       = constraintSystem.violations(carSequence)
+  val violatedCars: SetValue     = filter(varViolation)
+  val mostViolatedCars: SetValue = argMax(varViolation)
 
   constraintSystem.close()
 
