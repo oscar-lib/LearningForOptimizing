@@ -38,13 +38,13 @@ case class Solver(oscarModel: Model, bandit: String) {
     val restartN: Neighborhood = simpleNeighborhoods.shuffle(indices = Some(oscarModel.mostViolatedCars))
 
     val banditNeighborhood: Neighborhood = bandit.toLowerCase() match {
-      case "bandit" => BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
-
-      case "banditaftermove" =>
-        BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
-
-      case "banditrollingaverage" =>
-        BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
+//      case "bandit" => BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
+//
+//      case "banditaftermove" =>
+//        BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
+//
+//      case "banditrollingaverage" =>
+//        BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
 
       case "epsilongreedy" => new EpsilonGreedyBandit(neighList)
 
