@@ -99,17 +99,16 @@ abstract class BanditSelector(
     */
   def getNextNeighborhood: Option[Neighborhood]
 
-  /**
-   * Computes a reward associated to running a neighborhood.
-   * This method is called when the weights are updated, which is called at different time depending on the LearningScheme
-   * (i.e. after every move, descent, etc.)
-   *
-   * @param runStat
-   *   statistics over one call of a neighborhood
-   * @param neighborhood
-   *   neighborhood that has been called
-   * @return
-   */
+  /** Computes a reward associated to running a neighborhood. This method is called when the weights
+    * are updated, which is called at different time depending on the LearningScheme (i.e. after
+    * every move, descent, etc.)
+    *
+    * @param runStat
+    *   statistics over one call of a neighborhood
+    * @param neighborhood
+    *   neighborhood that has been called
+    * @return
+    */
   def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
 
   /** Resets the selector. This resets the tabu list and updates the weights if the learning scheme
@@ -196,7 +195,7 @@ abstract class BanditSelector(
   }
 
   /** Iterator over the indices of valid neighborhood (i.e. the ones not marked as tabu)
-   */
+    */
   object authorizedNeighborhoodIterator {
     def apply(): Iterator[Int] = {
       authorizedNeighborhood.indices.iterator.filter(authorizedNeighborhood(_))
@@ -216,20 +215,24 @@ abstract class BanditSelector(
   }
 
   /** Tells if a neighborhood is marked as tabu
-   *
-   * @param neighborhood one neighborhood used by the selector
-   * @return true if the neighborhood is marked as tabu
-   */
+    *
+    * @param neighborhood
+    *   one neighborhood used by the selector
+    * @return
+    *   true if the neighborhood is marked as tabu
+    */
   def isTabu(neighborhood: Neighborhood): Boolean = {
     val idx = neighborhoodIdx(neighborhood)
     isTabu(idx)
   }
 
   /** Tells if a neighborhood is marked as tabu
-   *
-   * @param idx index of the neighborhood in the neighborhood list
-   * @return true if the neighborhood is marked as tabu
-   */
+    *
+    * @param idx
+    *   index of the neighborhood in the neighborhood list
+    * @return
+    *   true if the neighborhood is marked as tabu
+    */
   def isTabu(idx: Int): Boolean = {
     !authorizedNeighborhood(idx)
   }
@@ -424,6 +427,7 @@ abstract class BanditSelector(
     acceptanceCriterion: AcceptanceCriterion
   ): SearchResult = {
 
+    // Inner function to enable tailrec optimization without making `getMove` final.
     @tailrec
     def doSearch(): SearchResult = {
       if (nTabu == neighborhoods.length) {

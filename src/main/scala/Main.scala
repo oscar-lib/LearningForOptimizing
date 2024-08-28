@@ -23,11 +23,6 @@ import bridge.PythonBridge
 //noinspection SpellCheckingInspection
 object Main extends App {
 
-  val bridge = new PythonBridge()
-  bridge.send("Hello, World!".getBytes())
-  System.in.read()
-  System.exit(0)
-
   abstract class Config
 
   case class SolveInstanceConfig(
@@ -274,8 +269,12 @@ object Main extends App {
     timeout: Int
   ): Unit = {
     val instanceProblem: LiLimProblem = PDPTWParser(file)
-    val oscarModel: PDPTWModel        = PDPTWModel(instanceProblem)
-    val solver: PDPTWSolver           = PDPTWSolver(oscarModel, bandit)
+    val bridge                        = new PythonBridge()
+    bridge.sendStaticProblemData(instanceProblem)
+    System.in.read()
+    System.exit(0)
+    val oscarModel: PDPTWModel = PDPTWModel(instanceProblem)
+    val solver: PDPTWSolver    = PDPTWSolver(oscarModel, bandit)
     solver.solve(verbosity, display, file.getName, timeout)
   }
 
