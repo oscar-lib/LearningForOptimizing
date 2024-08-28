@@ -28,9 +28,12 @@ package csp
   *   number of different options each car can have
   * @param nConf
   *   total number of configurations, each defined by a subset of options
-  * @param maxCarsWithOptInSeq maximum number of cars in a subsequence with the given option
-  * @param optSeqLen subsequence length for the option constraint
-  * @param configs list of configurations
+  * @param maxCarsWithOptInSeq
+  *   maximum number of cars in a subsequence with the given option
+  * @param optSeqLen
+  *   subsequence length for the option constraint
+  * @param configs
+  *   list of configurations
   */
 case class CarSeqProblem(
   nCars: Int,
@@ -63,11 +66,13 @@ case class CarSeqProblem(
   }
 }
 
-/**
- * Class defining a configuration for a CSP instance.
- *
- * @param id identification number
- * @param nCarsWithConf total number of cars with this configuration
- * @param optInConf 0-1 array defining which options belong to this configuration
- */
+/** Class defining a configuration for a CSP instance.
+  *
+  * @param id
+  *   identification number
+  * @param nCarsWithConf
+  *   total number of cars with this configuration
+  * @param optInConf
+  *   0-1 array defining which options belong to this configuration
+  */
 case class CarSeqConf(id: Int, nCarsWithConf: Int, optInConf: Array[Int])

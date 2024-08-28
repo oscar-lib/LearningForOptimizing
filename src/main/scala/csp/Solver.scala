@@ -29,28 +29,19 @@ case class Solver(oscarModel: Model, bandit: String) {
 
     val withTimeout = timeout < Int.MaxValue
 
-    val neighList: List[Neighborhood] = List(
-      sn.swapMostViolated() exhaust sn.wideningFlip(),
-      sn.wideningFlip(),
-      sn.swap()
-    )
+    val neighList: List[Neighborhood] =
+      List(sn.swapMostViolated() exhaust sn.wideningFlip(), sn.wideningFlip(), sn.swap())
 
     val mostViolated = oscarModel.mostViolatedCars
     val violated     = oscarModel.violatedCars
 
     val restart1: Neighborhood =
-      sn.shuffle(indices = Some(mostViolated)) guard (() =>
-        mostViolated.value.size > 2
-      )
+      sn.shuffle(indices = Some(mostViolated)) guard (() => mostViolated.value.size > 2)
 
-    val restart2: Neighborhood = sn.shuffle(
-      indices = Some(violated),
-      numOfPositions = Some(5 max violated.value.size / 2)
-    )
+    val restart2: Neighborhood =
+      sn.shuffle(indices = Some(violated), numOfPositions = Some(5 max violated.value.size / 2))
 
-    val restart3: Neighborhood = sn.shuffle(
-      numOfPositions = Some(oscarModel.instance.nCars / 2)
-    )
+    val restart3: Neighborhood = sn.shuffle(numOfPositions = Some(oscarModel.instance.nCars / 2))
 
     val restart4: Neighborhood = sn.shuffle()
 
