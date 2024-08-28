@@ -23,17 +23,16 @@ case class Solver(oscarModel: Model, bandit: String) {
 
   private val obj: Objective = oscarModel.obj
 
-  private val simpleNeighborhoods = SimpleNeighborhoods(oscarModel)
+  private val sn = SimpleNeighborhoods(oscarModel)
 
   def solve(verbosity: Int, display: Boolean, fileName: String, timeout: Int): Unit = {
 
     val withTimeout = timeout < Int.MaxValue
 
     val neighList: List[Neighborhood] = List(
-      simpleNeighborhoods.swapMostViolated() exhaust simpleNeighborhoods.wideningFlip(),
-      simpleNeighborhoods.wideningFlip(),
-      simpleNeighborhoods.swap()
-//      simpleNeighborhoods.shuffle()
+      sn.swapMostViolated() exhaust sn.wideningFlip(),
+      sn.wideningFlip(),
+      sn.swap()
     )
 
     val restartN: Neighborhood = simpleNeighborhoods.shuffle(indices = Some(oscarModel.mostViolatedCars))
