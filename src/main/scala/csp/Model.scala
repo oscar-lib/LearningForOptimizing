@@ -17,6 +17,10 @@ import oscar.cbls._
 
 import scala.util.Random
 
+/** This object takes care of converting an instance of a car sequencing problem into a model in the
+  * OscaR framework. Notably, the objective function under consideration is the number of violated
+  * option utilization constraints.
+  */
 object Model {
   def apply(instance: CarSeqProblem): Model = {
     new Model(instance)

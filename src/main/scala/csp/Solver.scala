@@ -19,6 +19,15 @@ import oscar.cbls.core.search.Neighborhood
 
 import scala.concurrent.duration.Duration
 
+/** This class is responsible for the handling of the local search procedure for the given car
+  * sequencing problem; in particular, it regulates its behavior depending on the selected bandit
+  * algorithm.
+  *
+  * @param oscarModel
+  *   the model of the given CSP instance
+  * @param bandit
+  *   the name of the chosen bandit algorithm
+  */
 case class Solver(oscarModel: Model, bandit: String) {
 
   private val obj: Objective = oscarModel.obj

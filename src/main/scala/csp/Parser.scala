@@ -16,6 +16,9 @@ package csp
 import java.io.File
 import scala.io.Source
 
+/** This object is responsible for handling the parsing of a data file into an instance of the car
+  * sequencing problem.
+  */
 object Parser {
   def apply(file: File): CarSeqProblem = { // maybe add error handling
     val s     = Source.fromFile(file)

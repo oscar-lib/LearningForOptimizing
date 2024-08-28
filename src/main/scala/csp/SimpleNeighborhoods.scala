@@ -17,6 +17,11 @@ import oscar.cbls.core.search.Neighborhood
 import oscar.cbls.lib.search.neighborhoods.{SwapsNeighborhood, WideningFlipNeighborhood}
 import oscar.cbls.modeling.StandardNeighborhoods
 
+/** This class exposes several methods that should be helpful in declaring a series of neighborhoods
+  * to use for solving the car sequencing problem with local search.
+ *
+  * @param oscarModel the model representing the csp instance
+  */
 case class SimpleNeighborhoods(oscarModel: Model) extends StandardNeighborhoods {
 
   private val carSeq = oscarModel.carSequence
