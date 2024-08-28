@@ -14,6 +14,7 @@
 package pdptw
 
 import combinator._
+import logger.ObjectiveRecorder
 import oscar.cbls._
 import oscar.cbls.business.routing.display
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
@@ -247,6 +248,8 @@ case class Solver(oscarModel: Model, bandit: String) {
         minRestarts = if (withTimeout) Int.MaxValue else 15)
     }
 
+    val recorder = new ObjectiveRecorder(oscarModel.objectiveFunction)
+    search = search.afterMove(recorder.notifyMove())
     if (displaySolution)
       search = search
         .afterMove(demoDisplay.drawRoutes())
@@ -264,5 +267,6 @@ case class Solver(oscarModel: Model, bandit: String) {
     }
     println(oscarModel.toString)
     println("bestObj=" + oscarModel.objectiveFunction.value)
+    println(recorder)
   }
 }
