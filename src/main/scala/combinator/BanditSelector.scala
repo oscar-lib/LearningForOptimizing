@@ -161,7 +161,7 @@ abstract class BanditSelector(
     appendStats(stats, neighborhood)
     searchResult match {
       case NoMoveFound  => setTabu(neighborhood)
-      case MoveFound(_) =>
+      case MoveFound(_) => resetTabu()
     }
     learningScheme match {
       case AfterEveryMove =>
@@ -189,7 +189,7 @@ abstract class BanditSelector(
     neighborhoodStats: NeighborhoodStats,
     neighborhood: Neighborhood
   ): Unit = {
-    maxSlope = Math.max(maxSlope, neighborhoodStats.slope)
+    maxSlope = Math.max(maxSlope, Math.abs(neighborhoodStats.slope))
     maxRunTimeNano = Math.max(maxRunTimeNano, neighborhoodStats.timeNano)
     val idx = neighborhoodIdx(neighborhood)
     stats(idx).append(neighborhoodStats)
