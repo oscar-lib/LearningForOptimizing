@@ -23,16 +23,16 @@ import scala.concurrent.duration.Duration
   * sequencing problem; in particular, it regulates its behavior depending on the selected bandit
   * algorithm.
   *
-  * @param oscarModel
+  * @param cspModel
   *   the model of the given CSP instance
   * @param bandit
   *   the name of the chosen bandit algorithm
   */
-case class Solver(oscarModel: Model, bandit: String) {
+case class Solver(cspModel: Model, bandit: String) {
 
-  private val obj: Objective = oscarModel.obj
+  private val obj: Objective = cspModel.obj
 
-  private val sn = SimpleNeighborhoods(oscarModel)
+  private val sn = SimpleNeighborhoods(cspModel)
 
   def solve(verbosity: Int, display: Boolean, fileName: String, timeout: Int): Unit = {
 
@@ -41,8 +41,8 @@ case class Solver(oscarModel: Model, bandit: String) {
     val neighList: List[Neighborhood] =
       List(sn.swapMostViolated() exhaust sn.wideningFlip(), sn.wideningFlip(), sn.swap())
 
-    val mostViolated = oscarModel.mostViolatedCars
-    val violated     = oscarModel.violatedCars
+    val mostViolated = cspModel.mostViolatedCars
+    val violated     = cspModel.violatedCars
 
     val restart1: Neighborhood =
       sn.shuffle(indices = Some(mostViolated)) guard (() => mostViolated.value.size > 2)
@@ -50,7 +50,7 @@ case class Solver(oscarModel: Model, bandit: String) {
     val restart2: Neighborhood =
       sn.shuffle(indices = Some(violated), numOfPositions = Some(5 max violated.value.size / 2))
 
-    val restart3: Neighborhood = sn.shuffle(numOfPositions = Some(oscarModel.instance.nCars / 2))
+    val restart3: Neighborhood = sn.shuffle(numOfPositions = Some(cspModel.instance.nCars / 2))
 
     val restart4: Neighborhood = sn.shuffle()
 
@@ -107,7 +107,7 @@ case class Solver(oscarModel: Model, bandit: String) {
       }
     }
 
-    val c = oscarModel.constraintSystem
+    val c = cspModel.constraintSystem
     if (withTimeout) {
       search = search.weakTimeout(Duration(timeout, "second")) saveBestAndRestoreOnExhaust obj
     }
@@ -120,10 +120,10 @@ case class Solver(oscarModel: Model, bandit: String) {
       search.profilingOnConsole()
       println(obj)
     }
-    println(oscarModel)
+    println(cspModel)
 
-    println("car sequence:" + oscarModel.carSequence.map(_.value).mkString(","))
-    println("bestObj=" + oscarModel.obj.value)
+    println("car sequence:" + cspModel.carSequence.map(_.value).mkString(","))
+    println("bestObj=" + cspModel.obj.value)
     println(
       if (c.violation.value == 0) "Problem solved"
       else s"PROBLEM COULD NOT BE SOLVED: ${c.violation}"
