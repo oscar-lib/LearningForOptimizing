@@ -40,16 +40,18 @@ case class SimpleNeighborhoods(oscarModel: Model) extends StandardNeighborhoods 
     indices: Option[() => Iterable[Int]] = None,
     numOfPositions: Option[Int] = None
   ): Neighborhood = {
-    indices match {
-      case Some(i) =>
-        numOfPositions match {
-          case Some(num) =>
-            val f = () => num
-            shuffleNeighborhood(carSeq, i, f, name = s"shuffle on indices (n. to shuffle: $num)")
-          case None => shuffleNeighborhood(carSeq, i, name = "shuffle on indices")
-        }
-      case None    => shuffleNeighborhood(carSeq, name = "shuffleAllCars")
-    }
+    shuffleNeighborhood(
+      carSeq,
+      indices match {
+        case Some(x) => x
+        case None    => null
+      },
+      numberOfShuffledPositions = numOfPositions match {
+        case Some(x) => () => x
+        case None    => () => Int.MaxValue
+      },
+      name = "Shuffle Cars"
+    )
   }
 
   def wideningFlip(): Neighborhood = WideningFlipNeighborhood(carSeq)
