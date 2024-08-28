@@ -2,7 +2,7 @@ package logger
 
 import combinator.{BanditSelector, NeighborhoodUtils}
 import oscar.cbls.core.search
-import oscar.cbls.core.search.{MoveFound, Neighborhood, SearchResult}
+import oscar.cbls.core.search.{MoveFound, Neighborhood, NeighborhoodCombinator, SearchResult}
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -55,12 +55,14 @@ class NeighborSelectionHistory(val neighborhoods: List[Neighborhood]) {
    * @return
    */
   override def toString: String = {
-    s"neighborhoods=$neighborhoods\ntimestamps=${prettyStringArrayBufferGeneric(timeStamps)}\nresets=$resetTimeStamp"
+    s"neighborhoods=${prettyStringGeneric(neighborhoods)}\n" +
+      s"timestamps=${prettyStringGeneric(timeStamps)}\n" +
+      s"resets=${prettyStringGeneric(resetTimeStamp)}"
   }
 
-  def prettyStringArrayBufferGeneric[G](arrayBuffer: ArrayBuffer[G]): String = {
-    arrayBuffer.map { row =>
-      row.toString
+  def prettyStringGeneric[G](iter: Iterable[G]): String = {
+    iter.map { entry =>
+      entry.toString
     }.mkString("[", ", ", "]")
   }
 
@@ -96,7 +98,41 @@ class BanditSelectionHistory(neighborhoods: List[Neighborhood]) extends Neighbor
 
 }
 
+object BanditSelectionHistory {
+
+  /**
+   * Optionally retrieves the string representing the history of the moves being formed
+   * For this to work, the neighborhood must be a BanditSelector, or contain a BanditSelector
+   *
+   * @param neighborhood neighborhood whose history must be retrieved as a String
+   * @return String representation of the history, provided that the neighborhood contained a BanditSelector
+   */
+  def historyString(neighborhood: Neighborhood): Option[String] = {
+    neighborhood match {
+      case bandit : BanditSelector =>
+        Some(bandit.history.toString)
+      case n: NeighborhoodCombinator =>
+        for (sub <- n.subNeighborhoods) {
+          // recursive call to get the history of the sub-neighborhood contained in this neighborhood
+          val substring = historyString(sub)
+          substring match {
+            case Some(value) => return Some(value) // return first valid description being found
+            case None =>
+          }
+        }
+        None
+      case _ =>
+        None
+    }
+  }
+
+}
+
 class TimedIteration(val iteration: Long, val timeBeforeNano: Long, val durationNano: Long) {
+
+  override def toString: String = {
+    s"(i=$iteration, t=$timeBeforeNano, d=$durationNano)"
+  }
 
 }
 

@@ -387,7 +387,8 @@ abstract class BanditSelector(
         aggregate(rewardsOnEpisode, neighborhood)
       }
       //val newWeight    = newWeightFromReward(neighborhood, weights(idx), aggregatedReward)
-      val newWeight    = weights(idx) + (aggregatedReward - weights(idx)) / nSelected(idx)
+      //val newWeight    = weights(idx) + (aggregatedReward - weights(idx)) / nSelected(idx)
+      val newWeight = (1 - learningRate) * weights(idx) + learningRate * aggregatedReward
       setWeight(idx, newWeight)
     }
   }

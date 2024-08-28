@@ -14,6 +14,7 @@
 package pdptw
 
 import combinator._
+import logger.BanditSelectionHistory
 import oscar.cbls._
 import oscar.cbls.business.routing.display
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
@@ -24,6 +25,7 @@ import oscar.cbls.core.search.{Neighborhood, NeighborhoodCombinator}
 import oscar.cbls.core.search.profiling.CommonProfilingData
 import oscar.cbls.lib.search.combinators.{DynAndThen, Restart}
 
+import scala.util.Random
 import scala.concurrent.duration.Duration
 
 case class Solver(oscarModel: Model, bandit: String) {
@@ -157,7 +159,7 @@ case class Solver(oscarModel: Model, bandit: String) {
         )
       else null
 
-    val neighList = List(
+    var neighList = List(
       simpleNeighborhoods.couplePointInsertUnroutedFirst(10),
 //      simpleNeighborhoods.couplePointInsertUnroutedFirst(10,best = true),
       simpleNeighborhoods.couplePointInsertRoutedFirst(10),
@@ -173,6 +175,8 @@ case class Solver(oscarModel: Model, bandit: String) {
       simpleNeighborhoods.segmentExchanges(pdptw.n)
 //      simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
     )
+    //neighList = Random.shuffle(neighList)
+
     var search = bandit.toLowerCase() match {
       case "bandit" =>
         new BanditCombinator(
@@ -252,7 +256,7 @@ case class Solver(oscarModel: Model, bandit: String) {
 
     if (displaySolution)
       search = search
-        .afterMove(demoDisplay.drawRoutes()) // TODO use callback to update history
+        .afterMove(demoDisplay.drawRoutes())
         .showObjectiveFunction(oscarModel.objectiveFunction)
     if (withTimeout)
       search = search.weakTimeout(Duration(timeout, "second")) saveBestAndRestoreOnExhaust obj
@@ -269,7 +273,7 @@ case class Solver(oscarModel: Model, bandit: String) {
     println("bestObj=" + oscarModel.objectiveFunction.value)
 
     if (verbosity > 0) {
-      val historyAsString = historyString(search)
+      val historyAsString = BanditSelectionHistory.historyString(search)
       historyAsString match {
         case Some(history) => println(history)
         case None =>
@@ -277,31 +281,7 @@ case class Solver(oscarModel: Model, bandit: String) {
     }
   }
 
-  /**
-   * Optionally retrieves the string representing the history of the moves being formed
-   * For this to work, the neighborhood must be a BanditSelector, or contain a BanditSelector
-   *
-   * @param neighborhood neighborhood whose history must be retrieved as a String
-   * @return String representation of the history, provided that the neighborhood contained a BanditSelector
-   */
-  def historyString(neighborhood: Neighborhood): Option[String] = {
-    neighborhood match {
-      case bandit : BanditSelector =>
-        Some(bandit.history.toString)
-      case n: NeighborhoodCombinator =>
-        for (sub <- n.subNeighborhoods) {
-          // recursive call to get the history of the sub-neighborhood contained in this neighborhood
-          val substring = historyString(sub)
-          substring match {
-            case Some(value) => return Some(value) // return first valid description being found
-            case None =>
-          }
-        }
-        None
-      case _ =>
-        None
-    }
-  }
+
 
 }
 
