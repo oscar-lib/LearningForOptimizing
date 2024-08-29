@@ -3,10 +3,10 @@
 
 # ------ parameters for the run -------
 declare -a BanditType=("ucbNew" "epsilonGreedyNew")
-timeout=300  # timeout in seconds
-nRuns=10   # number of time an instance is run (to take randomness into account)
-nParallel=4  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
-run_script="./xp/run_one_instance.sh"  # executable for running the experiments
+timeout=1  # timeout in seconds
+nRuns=1   # number of time an instance is run (to take randomness into account)
+nParallel=1  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
+run_script="./xp/pdptw_run_one_instance.sh"  # executable for running the experiments
 myDate=`printf '%(%Y-%m-%d_%H_%M_%S)T\n' -1`
 commitId=`git rev-parse --short HEAD`
 outFilename="xp/${myDate}_${commitId}_results.csv"  # where the results will be written
@@ -20,6 +20,7 @@ echo "compiling..."
 sbt clean
 sbt assembly
 echo "compilation done"
+echo "running experiments on $nParallel core(s)"
 # creates the file so that the header is present
 echo "instance,bandit,timeout,unroutedNodes,nVehicles,travelLength,objective" > $outFilename
 
@@ -28,11 +29,12 @@ do
   for bandit in "${BanditType[@]}"
   do
     # extracts the instances from the data folder
-    find bench/ -type f | sed "s/$/,$bandit/"  >> $inputFile
+    find bench/pdptw/ -type f | sed "s/$/,$bandit/"  >> $inputFile
   done
 done
 
 # ------ actually run the solver -------
 cat $inputFile | parallel -j $nParallel --colsep ',' $run_script {1} {2} $timeout >> $outFilename
+echo "experiments have been run"
 rm -f $inputFile
 
