@@ -1,6 +1,6 @@
 ### Parameter file for the ACOTSP software
 # name       switch           type values               [conditions (using R syntax)]
-bandit       "--bandit "      c    (ucb,epsilongreedy,...)
+bandit       "--bandit "      c    (ucb,epsilongreedy)
 #
 # UCB parameters
 lrUCB        "--lr "          r    (0.0, 1.0)           | bandit == "ucb"
