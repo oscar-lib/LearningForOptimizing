@@ -392,7 +392,7 @@ abstract class BanditSelector(
         val rewardsOnEpisode = stats(idx).map(stat => reward(stat, neighborhood))
         aggregate(rewardsOnEpisode, neighborhood)
       }
-      val newWeight = (1 - learningRate) * weights(idx) + learningRate * aggregatedReward
+      val newWeight = newWeightFromReward(neighborhood, weights(idx), aggregatedReward)
       setWeight(idx, newWeight)
     }
   }
@@ -426,7 +426,7 @@ abstract class BanditSelector(
     *   new weight to set for the neighborhood
     */
   def newWeightFromReward(neighborhood: Neighborhood, oldWeight: Double, reward: Double): Double = {
-    oldWeight + learningRate * reward
+    (1 - learningRate) * oldWeight + learningRate * reward
   }
 
   /** Combines multiple rewards into a single one by taking their average. This is useful if the
