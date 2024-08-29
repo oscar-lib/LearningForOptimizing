@@ -52,6 +52,8 @@ object Main extends App {
 
   private val parser = new OptionParser[Config]("lfo") {
     // noinspection SpellCheckingInspection
+    head("lfo", "2.0")
+    help("help").abbr("h").text("Prints this usage text")
     cmd("solveInstance")
       .action((_, _) => SolveInstanceConfig())
       .text("use <solveInstance> to solve an instance of a problem")
