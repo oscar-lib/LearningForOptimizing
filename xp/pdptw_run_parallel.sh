@@ -7,6 +7,10 @@ timeout=1  # timeout in seconds
 nRuns=1   # number of time an instance is run (to take randomness into account)
 nParallel=1  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
 run_script="./xp/pdptw_run_one_instance.sh"  # executable for running the experiments
+# path to the file where the instances to run are written
+# each line in this file should be the full path to an instance to run
+instances="examples/pdptw/test_instances_2023.txt"
+
 myDate=`printf '%(%Y-%m-%d_%H_%M_%S)T\n' -1`
 commitId=`git rev-parse --short HEAD`
 outFilename="xp/${myDate}_${commitId}_results.csv"  # where the results will be written
@@ -29,7 +33,7 @@ do
   for bandit in "${BanditType[@]}"
   do
     # extracts the instances from the data folder
-    find bench/pdptw/ -type f | sed "s/$/,$bandit/"  >> $inputFile
+    cat examples/pdptw/test_instances_2023.txt | sed "s/$/,$bandit/"  >> $inputFile
   done
 done
 

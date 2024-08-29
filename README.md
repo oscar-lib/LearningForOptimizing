@@ -38,13 +38,13 @@ Where `INSTANCE`, `BANDIT`, `TIMEOUT` are the path to an instance, the name of t
 For instance the command 
 
 ```
-./xp/run_one_instance.sh bench/LC1_2_1.txt epsilongreedy 2
+./xp/run_one_instance.sh examples/pdptw/pdptw_100/lc101.txt epsilongreedy 2
 ```
 
 Gives an output similar to: 
 
 ```
-bench/LC1_2_1.txt,epsilongreedy,2,0,30,3996.112,212000000000
+examples/pdptw/pdptw_100/lc101.txt,epsilongreedy,2,0,30,3996.112,212000000000
 ```
 
 Giving the name of the instance, the name of the bandit, the timeout, the number of unrouted nodes, the number of vehicles, the travel length and the objective
