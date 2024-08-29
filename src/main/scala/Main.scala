@@ -17,12 +17,14 @@ import scopt.OptionParser
 
 import java.io.File
 
+/** Object that handles the option parsing and launches the main logic accordingly.
+  */
 //noinspection SpellCheckingInspection
 object Main extends App {
 
-  abstract class Config
+  private abstract class Config
 
-  case class SolveInstanceConfig(
+  private case class SolveInstanceConfig(
     instance: File = null,
     verbosity: Int = 0,
     problem: String = "",
@@ -31,7 +33,7 @@ object Main extends App {
     timeout: Int = Int.MaxValue
   ) extends Config()
 
-  case class SolveSeriesConfig(
+  private case class SolveSeriesConfig(
     seriesSize: Int = 0,
     verbosity: Int = 0,
     problem: String = "",
@@ -39,19 +41,19 @@ object Main extends App {
     timeout: Int = Int.MaxValue
   ) extends Config()
 
-  case class SolveAllConfig(
+  private case class SolveAllConfig(
     verbosity: Int = 0,
     problem: String = "",
     bandit: String = "bestSlopeFirst",
     timeout: Int = Int.MaxValue
   ) extends Config()
 
-  case class NoConfig() extends Config()
+  private case class NoConfig() extends Config()
 
-  private val parser = new OptionParser[Config]("LearningForOptimizing") {
+  private val parser = new OptionParser[Config]("lfo") {
     // noinspection SpellCheckingInspection
     cmd("solveInstance")
-      .action((x, c) => SolveInstanceConfig())
+      .action((_, _) => SolveInstanceConfig())
       .text("use <solveInstance> to solve an instance of a problem")
       .children(
         opt[File]("input")
@@ -81,7 +83,7 @@ object Main extends App {
           .abbr("b")
           .text(
             "Use this option to set the bandit used:\n" +
-              "    - bandit         : the modified bandit algorithm\n" +
+//              "    - bandit         : the modified bandit algorithm\n" +
               "    - epsilongreedy  : an implementation of the epsilon greedy\n" +
               "    - random         : choose neighborhoods at random\n" +
               "    - bestslopefirst : the default method"
@@ -96,11 +98,11 @@ object Main extends App {
           .abbr("v")
           .text(
             "Use this option to set the verbosity during search :\n" +
-              "    - 0 : Nothing is printed\n" +
-              "    - 1 : Every seconds, an abstract of the neighborhood is printed\n" +
-              "    - 2 : Every accepted movement is printed\n" +
-              "    - 3 : Every tried neighborhood is printed\n" +
-              "    - 4 : Every tried value is printed (AVOID THIS if you don't want to be flooded"
+              "    - 0: Nothing is printed\n" +
+              "    - 1: Every seconds, an abstract of the neighborhood is printed\n" +
+              "    - 2: Every accepted movement is printed\n" +
+              "    - 3: Every tried neighborhood is printed\n" +
+              "    - 4: Every tried value is printed (AVOID THIS if you don't want to be flooded)"
           )
           .action((x, c) =>
             c match {
@@ -110,7 +112,7 @@ object Main extends App {
           ),
         opt[Unit]("display")
           .text("Display the solution resolution on a map")
-          .action((x, c) =>
+          .action((_, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(display = true)
               case _                         => throw new Error("Unexpected Error")
@@ -127,15 +129,15 @@ object Main extends App {
       )
 
     cmd("solveSeries")
-      .action((x, c) => SolveSeriesConfig())
+      .action((_, _) => SolveSeriesConfig())
       .text("use <solve> to solve a problem")
       .children(
         opt[Int]("size")
           .required()
           .text(
-            // todo change for csp
-            "Required: The size (100,200,400,600,800,1000) of the instances to solve" +
-              " (fetching all of them)"
+            "Required: The size of the instances to solve:\n" +
+              "    - pdptw: 100, 200, 400, 600, 800, 1000\n" +
+              "    - csp:   100, 200, 300, 400, 500"
           )
           .action((x, c) =>
             c match {
@@ -153,15 +155,15 @@ object Main extends App {
           )
           .action((x, c) =>
             c match {
-              case conf: SolveInstanceConfig => conf.copy(problem = x)
-              case _                         => throw new Error("Unexpected Error")
+              case conf: SolveSeriesConfig => conf.copy(problem = x)
+              case _                       => throw new Error(s"Couldn't parse $x")
             }
           ),
         opt[String]("bandit")
           .abbr("b")
           .text(
             "Use this option to set the bandit used:\n" +
-              "    - bandit         : the modified bandit algorithm\n" +
+//              "    - bandit         : the modified bandit algorithm\n" +
               "    - epsilongreedy  : an implementation of the epsilon greedy\n" +
               "    - random         : choose neighborhoods at random\n" +
               "    - bestslopefirst : the default method"
@@ -180,7 +182,7 @@ object Main extends App {
               "    - 1 : Every seconds, an abstract of the neighborhood is printed\n" +
               "    - 2 : Every accepted movement is printed\n" +
               "    - 3 : Every tried neighborhood is printed\n" +
-              "    - 4 : Every tried value is printed (AVOID THIS if you don't want to be flooded"
+              "    - 4 : Every tried value is printed (AVOID THIS if you don't want to be flooded)"
           )
           .action((x, c) =>
             c match {
@@ -199,8 +201,8 @@ object Main extends App {
       )
 
     cmd("solveAll")
-      .action((x, c) => SolveAllConfig())
-      .text("use <solve> to solve all PDPTW in the examples folder")
+      .action((_, _) => SolveAllConfig())
+      .text("Solve all problem instances in the examples folder")
       .children(
         opt[Int]("verbosity")
           .abbr("v")
@@ -210,7 +212,7 @@ object Main extends App {
               "    - 1 : Every seconds, an abstract of the neighborhood is printed\n" +
               "    - 2 : Every accepted movement is printed\n" +
               "    - 3 : Every tried neighborhood is printed\n" +
-              "    - 4 : Every tried value is printed (AVOID THIS if you don't want to be flooded"
+              "    - 4 : Every tried value is printed (AVOID THIS if you don't want to be flooded)"
           )
           .action((x, c) =>
             c match {
@@ -228,15 +230,15 @@ object Main extends App {
           )
           .action((x, c) =>
             c match {
-              case conf: SolveInstanceConfig => conf.copy(problem = x)
-              case _                         => throw new Error("Unexpected Error")
+              case conf: SolveAllConfig => conf.copy(problem = x)
+              case _                    => throw new Error("Unexpected Error")
             }
           ),
         opt[String]("bandit")
           .abbr("b")
           .text(
             "Use this option to set the bandit used:\n" +
-              "    - bandit         : the modified bandit algorithm\n" +
+//              "    - bandit         : the modified bandit algorithm\n" +
               "    - epsilongreedy  : an implementation of the epsilon greedy\n" +
               "    - random         : choose neighborhoods at random\n" +
               "    - bestslopefirst : the default method"
@@ -251,8 +253,8 @@ object Main extends App {
           .text("Add a weak time out to the search")
           .action((x, c) =>
             c match {
-              case conf: SolveInstanceConfig => conf.copy(timeout = x)
-              case _                         => throw new Error("Unexpected Error")
+              case conf: SolveAllConfig => conf.copy(timeout = x)
+              case _                    => throw new Error("Unexpected Error")
             }
           )
       )
@@ -291,6 +293,7 @@ object Main extends App {
         case _: NoConfig =>
           println("Error: No Command Given")
           println("Try --help for more information")
+
         case i: SolveInstanceConfig =>
           i.problem match {
             case "csp"   => solveCSP(i.instance, i.verbosity, i.bandit, i.display, i.timeout)
@@ -299,6 +302,17 @@ object Main extends App {
           }
 
         case s: SolveSeriesConfig =>
+          def checkSize(s: SolveSeriesConfig): Unit = {
+            val validSizes = s.problem match {
+              case "pdptw" => List(100, 200, 400, 600, 800, 1000)
+              case "csp"   => List(100, 200, 300, 400, 500)
+              case x       => throw new Error(s"Invalid problem name: $x")
+            }
+            if (!validSizes.contains(s.seriesSize)) {
+              throw new Error(s"Size ${s.seriesSize} invalid for ${s.problem} setting")
+            }
+          }
+          checkSize(s)
           s.problem match {
             case "csp" =>
               val dir   = new File(s"examples/csp/csp_${s.seriesSize}")
@@ -315,12 +329,12 @@ object Main extends App {
           a.problem match {
             case "csp" =>
               val dir   = new File(s"examples/csp")
-              val dirs  = dir.listFiles
+              val dirs  = dir.listFiles.filter(_.isDirectory)
               val files = dirs.flatMap(_.listFiles.filter(_.isFile))
               files.foreach(x => solveCSP(x, a.verbosity, a.bandit, display = false, a.timeout))
             case "pdptw" =>
               val dir   = new File(s"examples/pdptw")
-              val dirs  = dir.listFiles
+              val dirs  = dir.listFiles.filter(_.isDirectory)
               val files = dirs.flatMap(_.listFiles.filter(_.isFile))
               files.foreach(x => solvePDPTW(x, a.verbosity, a.bandit, display = false, a.timeout))
             case x => throw new Error(s"Invalid problem name: $x")
