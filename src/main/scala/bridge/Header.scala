@@ -68,7 +68,7 @@ object Header {
   }
 
   def recv(input: InputStream): Header = {
-    val headerBytes = new Array[Byte](VERSION_SIZE)
+    val headerBytes = new Array[Byte](HEADER_SIZE)
     input.read(headerBytes)
     return Header.fromBytes(headerBytes)
   }

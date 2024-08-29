@@ -34,6 +34,8 @@ object Model {
 class Model(liLimProblem: LiLimProblem) {
 
   //////////// VRP ////////////
+  /** Number of vehicles
+    */
   private val v: Int       = liLimProblem.vehicles.length
   private val n: Int       = v + liLimProblem.nodes.length
   lazy val pdpProblem: VRP = new VRP(new Store(), n, v, debug = false)
@@ -174,6 +176,10 @@ class Model(liLimProblem: LiLimProblem) {
     obj
   }
 
+  def lilimProblem(): LiLimProblem = {
+    return this.liLimProblem
+  }
+
   override def toString: String = {
     case class PointData(coupleId: Int, routingId: Int, problemId: Int, prefix: String)
 
@@ -181,9 +187,9 @@ class Model(liLimProblem: LiLimProblem) {
       if (nId < v)
         None
       else {
-        val coupleAndIndex = liLimProblem.demands.zipWithIndex.filter(p =>
-          (p._1.fromNodeId + v - 1) == nId || (p._1.toNodeId + v - 1) == nId
-        ).head
+        val coupleAndIndex = liLimProblem.demands.zipWithIndex
+          .filter(p => (p._1.fromNodeId + v - 1) == nId || (p._1.toNodeId + v - 1) == nId)
+          .head
         Some(
           PointData(
             coupleAndIndex._2,

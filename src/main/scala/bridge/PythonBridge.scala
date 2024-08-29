@@ -19,15 +19,30 @@ class PythonBridge(port: Int = 5000) {
   implicit val couRw: ReadWriter[LiLimCouple]  = macroRW
   implicit val pbRw: ReadWriter[LiLimProblem]  = macroRW
 
-  def sendStaticProblemData(problem: LiLimProblem) = {
-    val json = write(problem)
+  def sendStaticProblemData(problem: LiLimProblem, nActions: Int) = {
+    val json = write(problem).dropRight(1) + s",\"nActions\":$nActions}"
     val msg  = Message.create(MessageType.STATIC_DATA, json.getBytes())
     this.output.write(msg.toBytes())
     val resp = Message.recv(this.input)
     if (resp.msgType() != MessageType.ACK) {
+      println(resp.header(), resp.body())
       throw new Exception("Failed to send static problem data")
     }
   }
 
-  def notifyTransition() = {}
+  def askInference(state: List[List[Int]]): List[Double] = {
+    val jsonString = upickle.default.write(state)
+    val message    = Message.create(MessageType.INFERENCE_REQ, jsonString.getBytes())
+    this.output.write(message.toBytes())
+    val response = Message.recv(this.input)
+    if (response.msgType() != MessageType.INFERENCE_RSP) {
+      throw new Exception("Failed to get inference response")
+    }
+    val qvalues = ujson.read(response.body()).arr.map(_.num).toList
+    return qvalues
+  }
+
+  def sendReward(reward: Double) = {
+    // this.output.write()
+  }
 }

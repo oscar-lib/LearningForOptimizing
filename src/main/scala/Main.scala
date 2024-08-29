@@ -269,12 +269,8 @@ object Main extends App {
     timeout: Int
   ): Unit = {
     val instanceProblem: LiLimProblem = PDPTWParser(file)
-    val bridge                        = new PythonBridge()
-    bridge.sendStaticProblemData(instanceProblem)
-    System.in.read()
-    System.exit(0)
-    val oscarModel: PDPTWModel = PDPTWModel(instanceProblem)
-    val solver: PDPTWSolver    = PDPTWSolver(oscarModel, bandit)
+    val oscarModel: PDPTWModel        = PDPTWModel(instanceProblem)
+    val solver: PDPTWSolver           = PDPTWSolver(oscarModel, bandit)
     solver.solve(verbosity, display, file.getName, timeout)
   }
 

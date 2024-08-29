@@ -212,7 +212,12 @@ case class Solver(oscarModel: Model, bandit: String) {
           minRestarts = if (withTimeout) Int.MaxValue else 15
         )
       case "qlearning" => {
-        new QLearningNeighborhoodSelector(neighList, obj.model, this.pdptw) onExhaustRestartAfter (
+        new QLearningNeighborhoodSelector(
+          neighList,
+          obj.model,
+          this.oscarModel.lilimProblem(),
+          this.oscarModel.pdpProblem
+        ) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           0,
           obj,

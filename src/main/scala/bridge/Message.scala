@@ -4,10 +4,29 @@ import java.net.Socket
 import java.io.InputStream
 
 object MessageType extends Enumeration {
-  final val ACK           = Value(0)
-  final val ERROR         = Value(1)
-  final val STATIC_DATA   = Value(2)
-  final val CURRENT_STATE = Value(3)
+
+  /** [bidirectional] Acknowledge message.
+    */
+  final val ACK   = Value(0)
+  final val ERROR = Value(1)
+
+  /** [scala to python] Send the static problem data at startup. Expects an ACK in response.
+    */
+  final val STATIC_DATA = Value(2)
+
+  /** [scala to python] Send the state and ask for an inference */
+  final val INFERENCE_REQ = Value(3)
+
+  /** [python to scala] Response to an inference request with the qvalues */
+  final val INFERENCE_RSP = Value(4)
+
+  /** [scala to python] Send the reward signal for the previous transition
+    */
+  final val REWARD = Value(5)
+
+  /** [scala to python] Notifies the end of an episode (reset in the search)
+    */
+  final val END_EPISODE = Value(6)
 
 }
 
@@ -19,6 +38,10 @@ class Message(header: Header, body: Array[Byte]) {
 
   def header(): Header = {
     return header
+  }
+
+  def body(): Array[Byte] = {
+    return body
   }
 
   def msgType(): MessageType.Value = {

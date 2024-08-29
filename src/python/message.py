@@ -1,13 +1,17 @@
 from dataclasses import dataclass
 from enum import IntEnum
 import socket
+import json
 
 
 class MessageType(IntEnum):
     ACK = 0
     ERROR = 1
     STATIC_DATA = 2
-    CURRENT_STATE = 3
+    INFERENCE_REQ = 3
+    INFERENCE_RSP = 4
+    REWARD = 5
+    END_EPISODE = 6
 
 
 @dataclass
@@ -62,3 +66,9 @@ class Message:
     @staticmethod
     def ack() -> "Message":
         return Message(Header(1, 0, MessageType.ACK), b"")
+
+    @staticmethod
+    def inference_resp(qvalues: list[float]) -> "Message":
+        json_bytes = json.dumps(qvalues).encode()
+        header = Header(1, len(json_bytes), MessageType.INFERENCE_RSP)
+        return Message(header, json_bytes)

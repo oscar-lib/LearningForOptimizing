@@ -9,6 +9,7 @@ dependencies = [
     "numpy>=2.1.0",
     "python-dotenv",
     "torch-geometric>=2.5.3",
+    "icecream>=2.1.3",
 ]
 
 
