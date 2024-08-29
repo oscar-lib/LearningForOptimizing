@@ -17,12 +17,21 @@ import oscar.cbls.core.search.{MoveFound, Neighborhood, NoMoveFound, SearchResul
 
 /** Lightweight store of information regarding the execution of a move
   *
-  * @param hasImproved whether the move has improved the solution quality or not
-  * @param foundMove whether a move has been found or not
-  * @param slope the slope, i.e., the ratio between the quality of improvement and its performance cost
-  * @param timeNano the elapsed time
+  * @param foundMove
+  *   whether a move has been found or not
+  * @param hasImproved
+  *   whether the move has improved the solution quality or not
+  * @param slope
+  *   the slope, i.e., the ratio between the quality of improvement and its performance cost
+  * @param timeNano
+  *   the elapsed time
   */
-case class NeighborhoodStats(hasImproved: Boolean, foundMove: Boolean, slope: Double, timeNano: Long)
+case class NeighborhoodStats(
+  foundMove: Boolean,
+  hasImproved: Boolean,
+  slope: Double,
+  timeNano: Long
+)
 
 object NeighborhoodStats {
 
@@ -36,13 +45,13 @@ object NeighborhoodStats {
     */
   def apply(searchResult: SearchResult, neighborhood: Neighborhood): NeighborhoodStats = {
     NeighborhoodStats(
-      searchResult match {
+      foundMove = searchResult match {
         case NoMoveFound  => false
         case MoveFound(_) => true
       },
-      NeighborhoodUtils.lastCallGain(neighborhood) > 0,
-      NeighborhoodUtils.slope(neighborhood),
-      NeighborhoodUtils.lastCallDuration(neighborhood)
+      hasImproved = NeighborhoodUtils.lastCallGain(neighborhood) > 0,
+      slope = NeighborhoodUtils.slope(neighborhood),
+      timeNano = NeighborhoodUtils.lastCallDuration(neighborhood)
     )
   }
 }
