@@ -52,6 +52,9 @@ abstract class BanditSelector(
 
   private val _profiler: SelectionProfiler = new SelectionProfiler(this, neighborhoods)
 
+  // The higher this value, the smaller the minimum weight of a neighborhood
+  private val minWeightFactor: Double = 25
+
   override def profiler: SelectionProfiler = _profiler
 
   // number of neighborhoods marked as tabu
@@ -118,7 +121,7 @@ abstract class BanditSelector(
    * @return
    */
   def minWeight() : Double = {
-    (1.0 / neighborhoods.length) / 25
+    (1.0 / neighborhoods.length) / minWeightFactor
   }
 
   /** Resets the selector. This resets the tabu list and updates the weights if the learning scheme
