@@ -16,7 +16,7 @@ package combinator
 import oscar.cbls.core.search.Neighborhood
 
 class UCBNew(neighborhoods: List[Neighborhood])
-    extends BanditSelector(neighborhoods, AfterEveryMove) {
+    extends BanditSelector(neighborhoods, AfterEveryMove, rewardModel = new OriginalRewardModel()) {
 
   private var t: Int = 0   // number of times the bandit was called to provide the next neighborhood
   private val wSol   = 0.4 // weight rewarding a move being found
@@ -51,14 +51,4 @@ class UCBNew(neighborhoods: List[Neighborhood])
     Some(neighborhoods(neigh_idx))
   }
 
-  /** The method that computes a reward associated to a neighborhood.
-    *
-    * @return
-    *   Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
-    */
-  override def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
-    wSol * rewardFoundMove(runStat) +
-      wEff * rewardExecutionTime(runStat) +
-      wSlope * rewardSlope(runStat)
-  }
 }
