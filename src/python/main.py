@@ -1,4 +1,4 @@
-from experience_server import ExperienceServer
+from runner import Runner
 from dotenv import load_dotenv
 import logging
 import os
@@ -12,5 +12,5 @@ if __name__ == "__main__":
         print(f"Setting log level to {level}")
         logging.basicConfig(level=level)
 
-    server = ExperienceServer()
+    server = Runner()
     server.run()

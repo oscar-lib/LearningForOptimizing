@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import IntEnum
+import logging
 import socket
 import json
 
@@ -8,8 +9,8 @@ class MessageType(IntEnum):
     ACK = 0
     ERROR = 1
     STATIC_DATA = 2
-    INFERENCE_REQ = 3
-    INFERENCE_RSP = 4
+    ACTION_REQ = 3
+    ACTION_RSP = 4
     REWARD = 5
     END_EPISODE = 6
 
@@ -32,8 +33,9 @@ class Header:
     def recv(cls, conn: socket.socket):
         bytes = conn.recv(12)
         if len(bytes) == 0:
-            raise ConnectionResetError()
-        return cls.from_bytes(bytes)
+            raise ConnectionResetError("Connection closed by remote while waiting for header bytes")
+        header = cls.from_bytes(bytes)
+        return header
 
     def to_bytes(self) -> bytes:
         return self.version.to_bytes(4, byteorder="big") + self.nbytes.to_bytes(4, byteorder="big") + self.type.to_bytes(4, byteorder="big")
@@ -47,10 +49,12 @@ class Message:
     @classmethod
     def recv(cls, conn: socket.socket) -> "Message":
         header = Header.recv(conn)
-        data = conn.recv(header.nbytes)
-        if len(data) == 0:
-            raise ConnectionResetError()
-        return cls(header, data)
+        if header.nbytes > 0:
+            data = conn.recv(header.nbytes)
+            if len(data) == 0:
+                raise ConnectionResetError(f"Connection closed by remote while waiting for payload data of {header}")
+            return cls(header, data)
+        return cls(header, b"")
 
     def to_bytes(self) -> bytes:
         return self.header.to_bytes() + self.body
@@ -68,7 +72,7 @@ class Message:
         return Message(Header(1, 0, MessageType.ACK), b"")
 
     @staticmethod
-    def inference_resp(qvalues: list[float]) -> "Message":
-        json_bytes = json.dumps(qvalues).encode()
-        header = Header(1, len(json_bytes), MessageType.INFERENCE_RSP)
-        return Message(header, json_bytes)
+    def inference_resp(action: int) -> "Message":
+        int_bytes = action.to_bytes(4, byteorder="big")
+        header = Header(1, len(int_bytes), MessageType.ACTION_RSP)
+        return Message(header, int_bytes)

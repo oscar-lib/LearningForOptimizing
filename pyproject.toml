@@ -10,6 +10,7 @@ dependencies = [
     "python-dotenv",
     "torch-geometric>=2.5.3",
     "icecream>=2.1.3",
+    "sumtree>=0.2.7",
 ]
 
 

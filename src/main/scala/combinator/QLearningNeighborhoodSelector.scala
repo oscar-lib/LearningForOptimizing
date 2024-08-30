@@ -68,26 +68,18 @@ class QLearningNeighborhoodSelector(
   }
 
   private def getAvailableActions(): List[Int] = {
-    var availableActions: List[Int] = List.empty
-    for (i <- 0 until this.nActions) {
-      if (!this.isTabu(i)) {
-        availableActions = availableActions :+ i
-      }
-    }
-    return availableActions
+    (0 until nActions).filterNot(isTabu).toList
   }
 
   override def getNextNeighborhood: Option[Neighborhood] = {
-    val state   = this.getCurrentSearchState()
-    val qvalues = this.bridge.askInference(state)
-    this.egreedy(qvalues) match {
-      case None         => None
-      case Some(action) => Some(this.neighborhoods(action))
-    }
+    val state  = this.getCurrentSearchState()
+    val action = this.bridge.askAction(state, this.authorizedNeighborhood)
+    Some(this.neighborhoods(action))
   }
 
   override def notifyMove(searchResult: SearchResult, neighborhood: Neighborhood): Unit = {
     if (searchResult == NoMoveFound) {
+      println("No move found")
       setTabu(neighborhood)
     }
     val stats  = NeighborhoodStats(searchResult, neighborhood)
@@ -95,9 +87,8 @@ class QLearningNeighborhoodSelector(
     this.bridge.sendReward(reward)
   }
 
-  override def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
-    val r = this.rewardModel(runStat, neighborhood)
-    return r
+  override def reset(): Unit = {
+    super.reset()
+    this.bridge.sendEpisodeEnded()
   }
-
 }

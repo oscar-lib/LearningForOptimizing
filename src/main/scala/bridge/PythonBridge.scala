@@ -8,6 +8,9 @@ import pdptw.LiLimProblem
 import pdptw.LiLimDepot
 import pdptw.LiLimVehicle
 import pdptw.LiLimCouple
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import org.apache.xpath.operations.Bool
 
 class PythonBridge(port: Int = 5000) {
   val socket                                   = new Socket("localhost", port)
@@ -30,19 +33,32 @@ class PythonBridge(port: Int = 5000) {
     }
   }
 
-  def askInference(state: List[List[Int]]): List[Double] = {
-    val jsonString = upickle.default.write(state)
+  def askAction(state: List[List[Int]], availabeActions: Array[Boolean]): Int = {
+    val jsonState  = upickle.default.write(state)
+    val jsonAvail  = upickle.default.write(availabeActions)
+    val jsonString = s"""{"routes":$jsonState,"available":$jsonAvail}"""
     val message    = Message.create(MessageType.INFERENCE_REQ, jsonString.getBytes())
     this.output.write(message.toBytes())
     val response = Message.recv(this.input)
     if (response.msgType() != MessageType.INFERENCE_RSP) {
       throw new Exception("Failed to get inference response")
     }
-    val qvalues = ujson.read(response.body()).arr.map(_.num).toList
-    return qvalues
+    val body   = response.body()
+    val action = ByteBuffer.wrap(body).order(ByteOrder.BIG_ENDIAN).getInt()
+    action
   }
 
   def sendReward(reward: Double) = {
-    // this.output.write()
+    val rewardBytes =
+      ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putFloat(reward.toFloat).array()
+    println(reward)
+    val msg = Message.create(MessageType.REWARD, rewardBytes)
+    this.output.write(msg.toBytes())
+  }
+
+  def sendEpisodeEnded() = {
+    val msg   = Message.create(MessageType.END_EPISODE)
+    val bytes = msg.toBytes()
+    this.output.write(bytes)
   }
 }

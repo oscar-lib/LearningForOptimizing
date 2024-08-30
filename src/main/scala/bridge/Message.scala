@@ -61,7 +61,7 @@ object Message {
     return new Message(header, body)
   }
 
-  def create(msgType: MessageType.Value, body: Array[Byte]): Message = {
+  def create(msgType: MessageType.Value, body: Array[Byte] = Array.empty): Message = {
     val header = new Header(1, body.length, msgType)
     return new Message(header, body)
   }

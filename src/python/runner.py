@@ -1,15 +1,13 @@
-import json
 import logging
 import socket
-import time
 
-import numpy as np
-from icecream import ic
+from optimenv import EpisodeEndException, OptimEnv
+from dqn import DQN
 from message import Message, MessageType
 from problem import Problem
 
 
-class ExperienceServer:
+class Runner:
     def __init__(self, port: int = 5000):
         self.port = port
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -31,7 +29,6 @@ class ExperienceServer:
         with conn:
             logging.info(f"Connected to {addr}")
             try:
-                logging.info("Waiting for static problem data")
                 req = Message.recv(conn)
                 if req.type != MessageType.STATIC_DATA:
                     error = f"Expected message of type {MessageType.STATIC_DATA} from the client, got {req.type}"
@@ -40,33 +37,20 @@ class ExperienceServer:
                     return
                 problem = Problem.parse(req.body)
                 conn.send(Message.ack().to_bytes())
+                agent = DQN.default(problem)
+                env = OptimEnv(problem, conn)
+                t = 0
                 while True:
-                    logging.info("Waiting for experience data")
-                    req = Message.recv(conn)
-                    match req.type:
-                        case MessageType.INFERENCE_REQ:
-                            resp = self.handle_inference_request(problem, req.body)
-                        case MessageType.REWARD:
-                            resp = self.handle_reward(problem, req.body)
-                        case MessageType.END_EPISODE:
-                            resp = self.handle_end_episode(problem, req.body)
-                        case other:
-                            resp = Message.error(f"Unexpected message type: {other}")
-                    conn.send(resp.to_bytes())
+                    obs = env.reset()
+                    try:
+                        while True:
+                            t += 1
+                            action = agent.select_action(obs)
+                            next_obs, reward = env.step(action)
+                            agent.learn(t, obs, action, reward, next_obs)
+                            obs = next_obs
+                    except EpisodeEndException:
+                        agent.notify_episode_end()
             except ConnectionResetError:
                 logging.info(f"Connection with {addr} closed")
                 return
-
-    def handle_inference_request(self, problem: Problem, body: bytes):
-        routes = json.loads(body)
-        problem.build_agent_input(routes)
-        resp = Message.inference_resp(np.random.random(problem.n_actions).tolist())
-        return resp
-
-    def handle_reward(self, problem: Problem, body: bytes):
-        logging.debug(body)
-        return Message.ack()
-
-    def handle_end_episode(self, problem: Problem, body: bytes):
-        logging.debug(body)
-        return Message.ack()
