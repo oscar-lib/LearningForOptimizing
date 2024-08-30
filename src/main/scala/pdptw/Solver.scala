@@ -181,7 +181,7 @@ case class Solver(
     )
     var search = bandit.toLowerCase() match {
       case "bandit" =>
-        new BanditCombinator(
+        BanditCombinator(
           neighList,
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           if (withTimeout) Int.MaxValue else 15,
@@ -189,7 +189,7 @@ case class Solver(
           stats => rewardFunction(stats, neighList.length)
         ) saveBestAndRestoreOnExhaust obj
       case "banditaftermove" =>
-        new BanditCombinator(
+        BanditCombinator(
           neighList,
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           if (withTimeout) Int.MaxValue else 15,
@@ -198,7 +198,7 @@ case class Solver(
           afterMove = true
         ) saveBestAndRestoreOnExhaust obj
       case "banditrollingaverage" =>
-        new BanditCombinator(
+        BanditCombinator(
           neighList,
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           if (withTimeout) Int.MaxValue else 15,
