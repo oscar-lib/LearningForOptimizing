@@ -22,33 +22,48 @@ import java.io.File
 //noinspection SpellCheckingInspection
 object Main extends App {
 
-  private abstract class Config
+  private sealed abstract class Config
 
   private case class SolveInstanceConfig(
     instance: File = null,
+    display: Boolean = false,
     verbosity: Int = 0,
     problem: String = "",
     bandit: String = "bestSlopeFirst",
-    display: Boolean = false,
-    timeout: Int = Int.MaxValue
-  ) extends Config()
+    timeout: Int = Int.MaxValue,
+    seed: Long = 0,
+    learningRate: Double = 0.1,
+    slopeWeight: Double = 0.4,
+    efficiencyWeight: Double = 0.2,
+    moveFoundWeight: Double = 0.4
+  ) extends Config
 
   private case class SolveSeriesConfig(
     seriesSize: Int = 0,
     verbosity: Int = 0,
     problem: String = "",
     bandit: String = "bestSlopeFirst",
-    timeout: Int = Int.MaxValue
-  ) extends Config()
+    timeout: Int = Int.MaxValue,
+    seed: Long = 0,
+    learningRate: Double = 0.1,
+    slopeWeight: Double = 0.4,
+    efficiencyWeight: Double = 0.2,
+    moveFoundWeight: Double = 0.4
+  ) extends Config
 
   private case class SolveAllConfig(
     verbosity: Int = 0,
     problem: String = "",
     bandit: String = "bestSlopeFirst",
-    timeout: Int = Int.MaxValue
-  ) extends Config()
+    timeout: Int = Int.MaxValue,
+    seed: Long = 0,
+    learningRate: Double = 0.1,
+    slopeWeight: Double = 0.4,
+    efficiencyWeight: Double = 0.2,
+    moveFoundWeight: Double = 0.4
+  ) extends Config
 
-  private case class NoConfig() extends Config()
+  private case class NoConfig() extends Config
 
   private val parser = new OptionParser[Config]("lfo") {
     // noinspection SpellCheckingInspection
@@ -121,10 +136,54 @@ object Main extends App {
             }
           ),
         opt[Int]("timeout")
-          .text("Add a weak time out to the search")
+          .text("Add a weak timeout to the search")
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(timeout = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("learningRate")
+          .abbr("lr")
+          .text("Set the learning rate for the bandit algorithm (default: 0.1)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(learningRate = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("slopeWeight")
+          .abbr("sw")
+          .text("Set the reward weight for a neighborhood's slope (default: 0.4)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(slopeWeight = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("efficiencyWeight")
+          .abbr("ew")
+          .text("Set the reward weight for a neighborhood's execution time (default: 0.2)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(efficiencyWeight = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("moveFoundWeight")
+          .abbr("mfw")
+          .text("Set the reward weight for the neighborhood finding a valid move (default: 0.4)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(moveFoundWeight = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Long]("seed")
+          .text("Set the random seed (currently unused)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(seed = x)
               case _                         => throw new Error("Unexpected Error")
             }
           )
@@ -193,11 +252,55 @@ object Main extends App {
             }
           ),
         opt[Int]("timeout")
-          .text("Add a weak time out to the search")
+          .text("Add a weak timeout to the search")
           .action((x, c) =>
             c match {
-              case conf: SolveInstanceConfig => conf.copy(timeout = x)
-              case _                         => throw new Error("Unexpected Error")
+              case conf: SolveSeriesConfig => conf.copy(timeout = x)
+              case _                       => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("learningRate")
+          .abbr("lr")
+          .text("Set the learning rate for the bandit algorithm (default: 0.1)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveSeriesConfig => conf.copy(learningRate = x)
+              case _                       => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("slopeWeight")
+          .abbr("sw")
+          .text("Set the reward weight for a neighborhood's slope (default: 0.4)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveSeriesConfig => conf.copy(slopeWeight = x)
+              case _                       => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("efficiencyWeight")
+          .abbr("ew")
+          .text("Set the reward weight for a neighborhood's execution time (default: 0.2)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveSeriesConfig => conf.copy(efficiencyWeight = x)
+              case _                       => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("moveFoundWeight")
+          .abbr("mfw")
+          .text("Set the reward weight for the neighborhood finding a valid move (default: 0.4)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveSeriesConfig => conf.copy(moveFoundWeight = x)
+              case _                       => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Long]("seed")
+          .text("Set the random seed (currently unused)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveSeriesConfig => conf.copy(seed = x)
+              case _                       => throw new Error("Unexpected Error")
             }
           )
       )
@@ -252,10 +355,54 @@ object Main extends App {
             }
           ),
         opt[Int]("timeout")
-          .text("Add a weak time out to the search")
+          .text("Add a weak timeout to the search")
           .action((x, c) =>
             c match {
               case conf: SolveAllConfig => conf.copy(timeout = x)
+              case _                    => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("learningRate")
+          .abbr("lr")
+          .text("Set the learning rate for the bandit algorithm (default: 0.1)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveAllConfig => conf.copy(learningRate = x)
+              case _                    => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("slopeWeight")
+          .abbr("sw")
+          .text("Set the reward weight for a neighborhood's slope (default: 0.4)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveAllConfig => conf.copy(slopeWeight = x)
+              case _                    => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("efficiencyWeight")
+          .abbr("ew")
+          .text("Set the reward weight for a neighborhood's execution time (default: 0.2)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveAllConfig => conf.copy(efficiencyWeight = x)
+              case _                    => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("moveFoundWeight")
+          .abbr("mfw")
+          .text("Set the reward weight for the neighborhood finding a valid move (default: 0.4)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveAllConfig => conf.copy(moveFoundWeight = x)
+              case _                    => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Long]("seed")
+          .text("Set the random seed (currently unused)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveAllConfig => conf.copy(seed = x)
               case _                    => throw new Error("Unexpected Error")
             }
           )
