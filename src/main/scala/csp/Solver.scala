@@ -70,15 +70,15 @@ case class Solver(
 //      case "banditrollingaverage" =>
 //        BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
 
-      case "epsilongreedy" => new EpsilonGreedyBandit(neighList)
+//      case "epsilongreedy" => new EpsilonGreedyBandit(neighList)
 
-      case "epsilongreedynew" => new EpsilonGreedyBanditNew(neighList)
+      case "epsilongreedy" => new EpsilonGreedyBanditNew(neighList)
 
-      case "ucbnew" => new UCB1(neighList)
+      case "ucb" => new UCBNew(neighList)
 
       case "bestslopefirst" => bestSlopeFirst(neighList)
 
-      case "bestsslopefirstnew" => new BestSlopeFirstNew(neighList)
+//      case "bestsslopefirstnew" => new BestSlopeFirstNew(neighList)
 
       case "random" => new RandomCombinator(neighList)
 
