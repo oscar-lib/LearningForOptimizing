@@ -414,11 +414,16 @@ object Main extends App {
     verbosity: Int,
     bandit: String,
     display: Boolean,
-    timeout: Int
+    timeout: Int,
+    learningRate: Double,
+    slopeWeight: Double,
+    efficiencyWeight: Double,
+    moveFoundWeight: Double
   ): Unit = {
     val instanceProblem: LiLimProblem = PDPTWParser(file)
     val oscarModel: PDPTWModel        = PDPTWModel(instanceProblem)
-    val solver: PDPTWSolver           = PDPTWSolver(oscarModel, bandit)
+    val solver: PDPTWSolver =
+      PDPTWSolver(oscarModel, bandit, learningRate, slopeWeight, efficiencyWeight, moveFoundWeight)
     solver.solve(verbosity, display, file.getName, timeout)
   }
 
@@ -427,11 +432,16 @@ object Main extends App {
     verbosity: Int,
     bandit: String,
     display: Boolean,
-    timeout: Int
+    timeout: Int,
+    learningRate: Double,
+    slopeWeight: Double,
+    efficiencyWeight: Double,
+    moveFoundWeight: Double
   ): Unit = {
     val instance: CarSeqProblem = CSPParser(file)
     val oscarModel: CSPModel    = CSPModel(instance)
-    val solver: CSPSolver       = CSPSolver(oscarModel, bandit)
+    val solver: CSPSolver =
+      CSPSolver(oscarModel, bandit, learningRate, slopeWeight, efficiencyWeight, moveFoundWeight)
     solver.solve(verbosity, display, file.getName, timeout)
   }
 
@@ -445,9 +455,31 @@ object Main extends App {
 
         case i: SolveInstanceConfig =>
           i.problem match {
-            case "csp"   => solveCSP(i.instance, i.verbosity, i.bandit, i.display, i.timeout)
-            case "pdptw" => solvePDPTW(i.instance, i.verbosity, i.bandit, i.display, i.timeout)
-            case x       => throw new Error(s"Invalid problem name: $x")
+            case "csp" =>
+              solveCSP(
+                i.instance,
+                i.verbosity,
+                i.bandit,
+                i.display,
+                i.timeout,
+                i.learningRate,
+                i.slopeWeight,
+                i.efficiencyWeight,
+                i.moveFoundWeight
+              )
+            case "pdptw" =>
+              solvePDPTW(
+                i.instance,
+                i.verbosity,
+                i.bandit,
+                i.display,
+                i.timeout,
+                i.learningRate,
+                i.slopeWeight,
+                i.efficiencyWeight,
+                i.moveFoundWeight
+              )
+            case x => throw new Error(s"Invalid problem name: $x")
           }
 
         case s: SolveSeriesConfig =>
@@ -466,11 +498,35 @@ object Main extends App {
             case "csp" =>
               val dir   = new File(s"examples/csp/csp_${s.seriesSize}")
               val files = dir.listFiles.filter(_.isFile)
-              files.foreach(x => solveCSP(x, s.verbosity, s.bandit, display = false, s.timeout))
+              files.foreach(x =>
+                solveCSP(
+                  x,
+                  s.verbosity,
+                  s.bandit,
+                  display = false,
+                  s.timeout,
+                  s.learningRate,
+                  s.slopeWeight,
+                  s.efficiencyWeight,
+                  s.moveFoundWeight
+                )
+              )
             case "pdptw" =>
               val dir   = new File(s"examples/pdptw/pdptw_${s.seriesSize}")
               val files = dir.listFiles.filter(_.isFile)
-              files.foreach(x => solvePDPTW(x, s.verbosity, s.bandit, display = false, s.timeout))
+              files.foreach(x =>
+                solvePDPTW(
+                  x,
+                  s.verbosity,
+                  s.bandit,
+                  display = false,
+                  s.timeout,
+                  s.learningRate,
+                  s.slopeWeight,
+                  s.efficiencyWeight,
+                  s.moveFoundWeight
+                )
+              )
             case x => throw new Error(s"Invalid problem name: $x")
           }
 
@@ -480,12 +536,36 @@ object Main extends App {
               val dir   = new File(s"examples/csp")
               val dirs  = dir.listFiles.filter(_.isDirectory)
               val files = dirs.flatMap(_.listFiles.filter(_.isFile))
-              files.foreach(x => solveCSP(x, a.verbosity, a.bandit, display = false, a.timeout))
+              files.foreach(x =>
+                solveCSP(
+                  x,
+                  a.verbosity,
+                  a.bandit,
+                  display = false,
+                  a.timeout,
+                  a.learningRate,
+                  a.slopeWeight,
+                  a.efficiencyWeight,
+                  a.moveFoundWeight
+                )
+              )
             case "pdptw" =>
               val dir   = new File(s"examples/pdptw")
               val dirs  = dir.listFiles.filter(_.isDirectory)
               val files = dirs.flatMap(_.listFiles.filter(_.isFile))
-              files.foreach(x => solvePDPTW(x, a.verbosity, a.bandit, display = false, a.timeout))
+              files.foreach(x =>
+                solvePDPTW(
+                  x,
+                  a.verbosity,
+                  a.bandit,
+                  display = false,
+                  a.timeout,
+                  a.learningRate,
+                  a.slopeWeight,
+                  a.efficiencyWeight,
+                  a.moveFoundWeight
+                )
+              )
             case x => throw new Error(s"Invalid problem name: $x")
           }
       }

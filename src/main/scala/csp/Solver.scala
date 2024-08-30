@@ -28,7 +28,14 @@ import scala.concurrent.duration.Duration
   * @param bandit
   *   the name of the chosen bandit algorithm
   */
-case class Solver(cspModel: Model, bandit: String) {
+case class Solver(
+  cspModel: Model,
+  bandit: String,
+  learningRate: Double,
+  slopeWeight: Double,
+  efficiencyWeight: Double,
+  moveFoundWeight: Double
+) {
 
   private val obj: Objective = cspModel.obj
 

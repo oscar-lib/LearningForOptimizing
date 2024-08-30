@@ -25,7 +25,14 @@ import oscar.cbls.business.routing.visu.RoutingMapTypes
 import java.nio.file.Paths
 import scala.concurrent.duration.Duration
 
-case class Solver(oscarModel: Model, bandit: String) {
+case class Solver(
+  oscarModel: Model,
+  bandit: String,
+  learningRate: Double,
+  slopeWeight: Double,
+  efficiencyWeight: Double,
+  moveFoundWeight: Double
+) {
   private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix
   private val pdptw: VRP                                 = oscarModel.pdpProblem
   private val obj: Objective                             = oscarModel.objectiveFunction
@@ -281,10 +288,11 @@ case class Solver(oscarModel: Model, bandit: String) {
     }
     println(oscarModel.toString)
     println("bestObj=" + oscarModel.objectiveFunction.value)
-    //println(recorder)
+    // println(recorder)
     val instanceName = Paths.get(fileName).getFileName.toString
-    val bestKnownSolution = recorder.getBestKnownSolution("bks/pdptw_bks.csv", instanceName).getOrElse(0.0)
-    //println(recorder.primalGapOverTime(bestKnownSolution, timeout))
+    val bestKnownSolution =
+      recorder.getBestKnownSolution("bks/pdptw_bks.csv", instanceName).getOrElse(0.0)
+    // println(recorder.primalGapOverTime(bestKnownSolution, timeout))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f")
   }
