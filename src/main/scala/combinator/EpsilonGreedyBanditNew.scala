@@ -41,9 +41,4 @@ class EpsilonGreedyBanditNew(l: List[Neighborhood], epsilon: Double = 0.7)
     }
   }
 
-  override def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
-    wSol * rewardFoundMove(runStat) +
-      wEff * rewardExecutionTime(runStat) +
-      wSlope * rewardSlope(runStat)
-  }
 }

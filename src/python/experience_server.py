@@ -43,11 +43,30 @@ class ExperienceServer:
                 while True:
                     logging.info("Waiting for experience data")
                     req = Message.recv(conn)
-                    routes = json.loads(req.body)
-                    problem.build_agent_input(routes)
-                    resp = Message.inference_resp(np.random.random(problem.n_actions).tolist())
-                    b = resp.to_bytes()
-                    conn.send(b)
+                    match req.type:
+                        case MessageType.INFERENCE_REQ:
+                            resp = self.handle_inference_request(problem, req.body)
+                        case MessageType.REWARD:
+                            resp = self.handle_reward(problem, req.body)
+                        case MessageType.END_EPISODE:
+                            resp = self.handle_end_episode(problem, req.body)
+                        case other:
+                            resp = Message.error(f"Unexpected message type: {other}")
+                    conn.send(resp.to_bytes())
             except ConnectionResetError:
                 logging.info(f"Connection with {addr} closed")
                 return
+
+    def handle_inference_request(self, problem: Problem, body: bytes):
+        routes = json.loads(body)
+        problem.build_agent_input(routes)
+        resp = Message.inference_resp(np.random.random(problem.n_actions).tolist())
+        return resp
+
+    def handle_reward(self, problem: Problem, body: bytes):
+        logging.debug(body)
+        return Message.ack()
+
+    def handle_end_episode(self, problem: Problem, body: bytes):
+        logging.debug(body)
+        return Message.ack()
