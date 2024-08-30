@@ -2,7 +2,8 @@
 # usage: ./script [instance] [bandit] [timeout]
 # example: ./xp/run_one_instance.sh bench/LC1_2_1.txt epsilongreedy 1
 params=$*
-launch_solver="java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
+root=".."
+launch_solver="java -jar $root/target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
 output=`$launch_solver ${params}`
 # post process to extract only the relevant information
 unroutedNodes=$(echo "$output" | grep 'Unrouted nodes' | awk -F': ' '{print $2}')
