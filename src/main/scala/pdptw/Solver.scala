@@ -214,7 +214,13 @@ case class Solver(
 //          minRestarts = if (withTimeout) Int.MaxValue else 15
 //        )
       case "epsilongreedy" =>
-        new EpsilonGreedyBanditNew(neighList) onExhaustRestartAfter (
+        new EpsilonGreedyBanditNew(
+          neighList,
+          learningRate = learningRate,
+          slopeWeight = slopeWeight,
+          efficiencyWeight = efficiencyWeight,
+          moveFoundWeight = moveFoundWeight
+        ) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           0,
           obj,
@@ -228,7 +234,13 @@ case class Solver(
 //          minRestarts = if (withTimeout) Int.MaxValue else 15
 //        )
       case "ucb" =>
-        new UCBNew(neighList) onExhaustRestartAfter (
+        new UCBNew(
+          neighList,
+          learningRate = learningRate,
+          slopeWeight = slopeWeight,
+          efficiencyWeight = efficiencyWeight,
+          moveFoundWeight = moveFoundWeight
+        ) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           0,
           obj,

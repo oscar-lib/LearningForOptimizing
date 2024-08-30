@@ -72,9 +72,23 @@ case class Solver(
 
 //      case "epsilongreedy" => new EpsilonGreedyBandit(neighList)
 
-      case "epsilongreedy" => new EpsilonGreedyBanditNew(neighList)
+      case "epsilongreedy" =>
+        new EpsilonGreedyBanditNew(
+          neighList,
+          learningRate = learningRate,
+          slopeWeight = slopeWeight,
+          efficiencyWeight = efficiencyWeight,
+          moveFoundWeight = moveFoundWeight
+        )
 
-      case "ucb" => new UCBNew(neighList)
+      case "ucb" =>
+        new UCBNew(
+          neighList,
+          learningRate = learningRate,
+          slopeWeight = slopeWeight,
+          efficiencyWeight = efficiencyWeight,
+          moveFoundWeight = moveFoundWeight
+        )
 
       case "bestslopefirst" => bestSlopeFirst(neighList)
 
