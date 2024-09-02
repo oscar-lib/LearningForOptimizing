@@ -18,10 +18,13 @@ import scopt.OptionParser
 import java.io.File
 
 import java.net.Socket
-import bridge.PythonBridge
+import py4j.GatewayServer
 
 //noinspection SpellCheckingInspection
 object Main extends App {
+
+  val gateway = new GatewayServer(new SocketBridge, 25333)
+  System.exit(0);
 
   abstract class Config
 

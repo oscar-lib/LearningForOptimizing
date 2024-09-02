@@ -8,7 +8,8 @@ scalacOptions ++= Seq("-deprecation", "-feature", "-unchecked")
 libraryDependencies ++= Seq(
   "oscar"            %% "oscar-cbls" % "5.0.0-SNAPSHOT",
   "com.github.scopt" %% "scopt"      % "4.1.0",
-  "com.lihaoyi"      %% "upickle"    % "4.0.0"
+  "com.lihaoyi"      %% "upickle"    % "4.0.0",
+  "net.sf.py4j"       % "py4j"       % "0.10.9.7"
 )
 
 assemblyMergeStrategy in assembly := {

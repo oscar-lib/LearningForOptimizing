@@ -1,7 +1,7 @@
 package combinator
 
 import oscar.cbls.core.search.Neighborhood
-import bridge.PythonBridge
+import bridge.SocketBridge
 import oscar.cbls.core.computation.Store
 import oscar.cbls.business.routing.model.VRP
 import pdptw.LiLimProblem
@@ -27,7 +27,7 @@ class QLearningNeighborhoodSelector(
 
   private val nActions  = neighborhoods.length
   private val nVehicles = problem.vehicles.length
-  private val bridge    = new PythonBridge()
+  private val bridge    = SocketBridge(5000)
   bridge.sendStaticProblemData(this.problem, this.nActions)
 
   private def getCurrentSearchState(): List[List[Int]] = {
