@@ -17,33 +17,46 @@ import oscar.cbls.core.search.Neighborhood
 import oscar.cbls.lib.search.neighborhoods.{SwapsNeighborhood, WideningFlipNeighborhood}
 import oscar.cbls.modeling.StandardNeighborhoods
 
-case class SimpleNeighborhoods(oscarModel: Model) extends StandardNeighborhoods {
+/** This class exposes several methods that should be helpful in declaring a series of neighborhoods
+  * to use for solving the car sequencing problem with local search.
+ *
+  * @param cspModel the model representing the csp instance
+  */
+case class SimpleNeighborhoods(cspModel: Model) extends StandardNeighborhoods {
 
-  private val carSeq = oscarModel.carSequence
+  private val carSeq = cspModel.carSequence
 
-  def swap(): Neighborhood = swapsNeighborhood(carSeq, "swap everywhere")
+  def swap(): Neighborhood = swapsNeighborhood(
+    carSeq,
+    "swap everywhere",
+    symmetryCanBeBrokenOnIndices = false,
+    symmetryCanBeBrokenOnValue = true
+  )
 
   def swapMostViolated(): Neighborhood = swapsNeighborhood(
     carSeq,
     "mostViolatedSwap",
-    searchZone2 = () => { val v = oscarModel.mostViolatedCars.value; (_, _) => v },
-    symmetryCanBeBrokenOnIndices = false
+    searchZone2 = () => { val v = cspModel.mostViolatedCars.value; (_, _) => v },
+    symmetryCanBeBrokenOnIndices = false,
+    symmetryCanBeBrokenOnValue = true
   )
 
   def shuffle(
     indices: Option[() => Iterable[Int]] = None,
     numOfPositions: Option[Int] = None
   ): Neighborhood = {
-    indices match {
-      case Some(i) =>
-        numOfPositions match {
-          case Some(num) =>
-            val f = () => num
-            shuffleNeighborhood(carSeq, i, f, name = s"shuffle on indices (n. to shuffle: $num)")
-          case None => shuffleNeighborhood(carSeq, i, name = "shuffle on indices")
-        }
-      case None    => shuffleNeighborhood(carSeq, name = "shuffleAllCars")
-    }
+    shuffleNeighborhood(
+      carSeq,
+      indices match {
+        case Some(x) => x
+        case None    => null
+      },
+      numberOfShuffledPositions = numOfPositions match {
+        case Some(x) => () => x
+        case None    => () => Int.MaxValue
+      },
+      name = "Shuffle Cars"
+    )
   }
 
   def wideningFlip(): Neighborhood = WideningFlipNeighborhood(carSeq)

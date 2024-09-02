@@ -31,7 +31,7 @@ object Model {
   }
 }
 
-class Model(liLimProblem: LiLimProblem) {
+class Model(val liLimProblem: LiLimProblem) {
 
   //////////// VRP ////////////
   /** Number of vehicles

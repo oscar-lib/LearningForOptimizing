@@ -14,6 +14,7 @@
 package pdptw
 
 import combinator._
+import logger.ObjectiveRecorder
 import oscar.cbls._
 import oscar.cbls.business.routing.display
 import oscar.cbls.business.routing.invariants.timeWindow.TransferFunction
@@ -21,6 +22,7 @@ import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.business.routing.model.helpers.DistanceHelper
 import oscar.cbls.business.routing.visu.RoutingMapTypes
 
+import java.nio.file.Paths
 import scala.concurrent.duration.Duration
 
 case class Solver(oscarModel: Model, bandit: String) {
@@ -260,6 +262,21 @@ case class Solver(oscarModel: Model, bandit: String) {
         minRestarts = if (withTimeout) Int.MaxValue else 15)
     }
 
+    val recorder = new ObjectiveRecorder(
+      oscarModel.objectiveFunction,
+      _ => {
+        if (pdptw.unrouted.value.nonEmpty)
+          None // unrouted nodes, does not correspond to a real solution
+        else   // all nodes are routed, returns the length of the tour
+          Some(
+            oscarModel.routeLengthsInvariant
+              .map(_.value)
+              .sum
+              .toDouble / oscarModel.liLimProblem.multiplierFactor
+          )
+      }
+    )
+    search = search.afterMove(recorder.notifyMove())
     if (displaySolution)
       search = search
         .afterMove(demoDisplay.drawRoutes())
@@ -277,5 +294,11 @@ case class Solver(oscarModel: Model, bandit: String) {
     }
     println(oscarModel.toString)
     println("bestObj=" + oscarModel.objectiveFunction.value)
+    //println(recorder)
+    val instanceName = Paths.get(fileName).getFileName.toString
+    val bestKnownSolution = recorder.getBestKnownSolution("bks/pdptw_bks.csv", instanceName).getOrElse(0.0)
+    //println(recorder.primalGapOverTime(bestKnownSolution, timeout))
+    val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
+    println(f"integralPrimalGap=$integralPrimalGap%.3f")
   }
 }

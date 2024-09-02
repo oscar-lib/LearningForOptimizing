@@ -17,13 +17,17 @@ import oscar.cbls._
 
 import scala.util.Random
 
+/** This object takes care of converting an instance of a car sequencing problem into a model in the
+  * OscaR framework. Notably, the objective function under consideration is the number of violated
+  * option utilization constraints.
+  */
 object Model {
   def apply(instance: CarSeqProblem): Model = {
     new Model(instance)
   }
 }
 
-class Model(instance: CarSeqProblem) {
+class Model(val instance: CarSeqProblem) {
 
   private val s = new Store()
 
@@ -63,9 +67,9 @@ class Model(instance: CarSeqProblem) {
     )
   }
 
-  val varViolation     = constraintSystem.violations(carSequence)
-  val violatedCars     = filter(varViolation)
-  val mostViolatedCars = argMax(varViolation)
+  private val varViolation       = constraintSystem.violations(carSequence)
+  val violatedCars: SetValue     = filter(varViolation)
+  val mostViolatedCars: SetValue = argMax(varViolation)
 
   constraintSystem.close()
 

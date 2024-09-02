@@ -16,6 +16,9 @@ package csp
 import java.io.File
 import scala.io.Source
 
+/** This object is responsible for handling the parsing of a data file into an instance of the car
+  * sequencing problem.
+  */
 object Parser {
   def apply(file: File): CarSeqProblem = { // maybe add error handling
     val s     = Source.fromFile(file)
@@ -28,7 +31,7 @@ object Parser {
     val confList: List[CarSeqConf] = {
       val b = List.newBuilder[CarSeqConf]
       while (lines.hasNext) {
-        val arr                    = lines.next().split("\\s").map(_.toInt)
+        val arr = lines.next().split("\\s").map(_.toInt)
         require(arr.length == 2 + nOptions, "Invalid file")
         val Array(id, nCarsInConf) = arr.take(2)
         val optInConf              = arr.drop(2)
