@@ -50,6 +50,7 @@ class Runner:
                             action = agent.select_action(obs)
                             next_obs, reward = env.step(action)
                             logs = agent.learn(t, obs, action, reward, next_obs)
+                            logs = logs | {"action": action, "reward": reward}
                             self.logger.log(logs, t)
                             obs = next_obs
                     except EpisodeEndException:

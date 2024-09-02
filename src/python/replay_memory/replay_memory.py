@@ -1,6 +1,6 @@
 from collections import deque
 from dataclasses import dataclass
-from typing import Deque, NamedTuple
+from typing import Deque
 import torch
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
@@ -20,9 +20,16 @@ class Batch:
     next_obs: Data
     next_available_actions: torch.Tensor
 
-    @property
-    def batch(self):
-        pass
+    def to(self, device: torch.device) -> "Batch":
+        return Batch(
+            obs=self.obs.to(device.index),
+            available_actions=self.available_actions.to(device),
+            actions=self.actions.to(device),
+            rewards=self.rewards.to(device),
+            dones=self.dones.to(device),
+            next_obs=self.next_obs.to(device.index),
+            next_available_actions=self.next_available_actions.to(device),
+        )
 
 
 @dataclass

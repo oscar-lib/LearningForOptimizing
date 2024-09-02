@@ -33,9 +33,13 @@ class DQN:
         lr: float = 1e-4,
         grad_norm_clipping: Optional[float] = None,
         double_qlearning: bool = False,
+        device: Optional[torch.device] = None,
     ):
-        self.qnetwork = qnetwork
-        self.qtarget = deepcopy(qnetwork)
+        if device is None:
+            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.device = device
+        self.qnetwork = qnetwork.to(device)
+        self.qtarget = deepcopy(qnetwork).to(device)
         self.memory = memory
         self.gamma = gamma
         self.batch_size = batch_size
@@ -59,6 +63,7 @@ class DQN:
         )
 
     def select_action(self, obs: Observation) -> int:
+        obs.graph = obs.graph.to(self.device.index)
         qvalues = self.compute_qvalues(obs.graph).squeeze().numpy(force=True)
         action = self.policy.get_action(qvalues, np.array(obs.available_actions))
         return action
@@ -70,6 +75,7 @@ class DQN:
         self.memory.end_episode()
 
     def learn(self, time_step: int, obs: Observation, action: int, reward: float, next_obs: Observation) -> dict[str, float]:
+        next_obs.graph = next_obs.graph.to(self.device.index)
         self.memory.add(obs, action, reward, next_obs)
         if not self._can_update():
             return {}
@@ -96,10 +102,10 @@ class DQN:
         return next_values
 
     def optimise_qnetwork(self):
-        batch = self.memory.sample(self.batch_size)
+        batch = self.memory.sample(self.batch_size).to(self.device)
 
         # Qvalues and qvalues with target network computation
-        qvalues: torch.Tensor = self.qnetwork.forward(batch.obs)
+        qvalues = self.qnetwork.forward(batch.obs)
         qvalues = torch.gather(qvalues, dim=-1, index=batch.actions)
         qvalues = qvalues.squeeze(-1)
 

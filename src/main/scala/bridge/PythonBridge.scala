@@ -12,7 +12,7 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import org.apache.xpath.operations.Bool
 
-class PythonBridge(port: Int = 5000) {
+class PythonBridge(port: Int = 5555) {
   val socket                                   = new Socket("localhost", port)
   val input                                    = socket.getInputStream
   val output                                   = socket.getOutputStream

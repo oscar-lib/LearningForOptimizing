@@ -17,3 +17,4 @@ uv.lock
 # Others
 .env
 logs/
+.devcontainer
