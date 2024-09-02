@@ -27,8 +27,8 @@ import scala.concurrent.duration.Duration
   *
   * @param cspModel
   *   the model of the given CSP instance
-  * @param bandit
-  *   the name of the chosen bandit algorithm
+  * @param in
+  *   the remaining input data
   */
 case class Solver(cspModel: Model, in: SolverInput) {
 

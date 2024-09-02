@@ -27,6 +27,15 @@ import oscar.cbls.business.routing.visu.RoutingMapTypes
 import java.nio.file.Paths
 import scala.concurrent.duration.Duration
 
+/** This class is responsible for the handling of the local search procedure for the given pickup
+  * and delivery problem with time windows; in particular, it regulates its behavior depending on
+  * the selected bandit algorithm.
+  *
+  * @param oscarModel
+  *   the model of the given PDPTW instance
+  * @param in
+  *   the remaining input data
+  */
 case class Solver(oscarModel: Model, in: SolverInput) {
   private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix
   private val pdptw: VRP                                 = oscarModel.pdpProblem
