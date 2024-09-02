@@ -13,6 +13,8 @@
 
 package pdptw
 
+import util.SolverInput
+
 import combinator._
 import logger.ObjectiveRecorder
 import oscar.cbls._
@@ -25,14 +27,7 @@ import oscar.cbls.business.routing.visu.RoutingMapTypes
 import java.nio.file.Paths
 import scala.concurrent.duration.Duration
 
-case class Solver(
-  oscarModel: Model,
-  bandit: String,
-  learningRate: Double,
-  slopeWeight: Double,
-  efficiencyWeight: Double,
-  moveFoundWeight: Double
-) {
+case class Solver(oscarModel: Model, in: SolverInput) {
   private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix
   private val pdptw: VRP                                 = oscarModel.pdpProblem
   private val obj: Objective                             = oscarModel.objectiveFunction
@@ -179,7 +174,7 @@ case class Solver(
       simpleNeighborhoods.segmentExchanges(pdptw.n)
 //      simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
     )
-    var search = bandit.toLowerCase() match {
+    var search = in.bandit.toLowerCase() match {
 //      case "bandit" =>
 //        BanditCombinator(
 //          neighList,
@@ -214,13 +209,7 @@ case class Solver(
 //          minRestarts = if (withTimeout) Int.MaxValue else 15
 //        )
       case "epsilongreedy" =>
-        new EpsilonGreedyBanditNew(
-          neighList,
-          learningRate = learningRate,
-          slopeWeight = slopeWeight,
-          efficiencyWeight = efficiencyWeight,
-          moveFoundWeight = moveFoundWeight
-        ) onExhaustRestartAfter (
+        new EpsilonGreedyBanditNew(neighList, in) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           0,
           obj,
@@ -234,13 +223,7 @@ case class Solver(
 //          minRestarts = if (withTimeout) Int.MaxValue else 15
 //        )
       case "ucb" =>
-        new UCBNew(
-          neighList,
-          learningRate = learningRate,
-          slopeWeight = slopeWeight,
-          efficiencyWeight = efficiencyWeight,
-          moveFoundWeight = moveFoundWeight
-        ) onExhaustRestartAfter (
+        new UCBNew(neighList, in) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           0,
           obj,

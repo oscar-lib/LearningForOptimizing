@@ -14,6 +14,7 @@
 import pdptw.{LiLimProblem, Model => PDPTWModel, Parser => PDPTWParser, Solver => PDPTWSolver}
 import csp.{CarSeqProblem, Model => CSPModel, Parser => CSPParser, Solver => CSPSolver}
 import scopt.OptionParser
+import util.SolverInput
 
 import java.io.File
 
@@ -35,7 +36,8 @@ object Main extends App {
     learningRate: Double = 0.1,
     slopeWeight: Double = 0.4,
     efficiencyWeight: Double = 0.2,
-    moveFoundWeight: Double = 0.4
+    moveFoundWeight: Double = 0.4,
+    epsilon: Double = 0.7
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -48,7 +50,8 @@ object Main extends App {
     learningRate: Double = 0.1,
     slopeWeight: Double = 0.4,
     efficiencyWeight: Double = 0.2,
-    moveFoundWeight: Double = 0.4
+    moveFoundWeight: Double = 0.4,
+    epsilon: Double = 0.7
   ) extends Config
 
   private case class SolveAllConfig(
@@ -60,7 +63,8 @@ object Main extends App {
     learningRate: Double = 0.1,
     slopeWeight: Double = 0.4,
     efficiencyWeight: Double = 0.2,
-    moveFoundWeight: Double = 0.4
+    moveFoundWeight: Double = 0.4,
+    epsilon: Double = 0.7
   ) extends Config
 
   private case class NoConfig() extends Config
@@ -176,6 +180,15 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(moveFoundWeight = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("epsilon")
+          .abbr("e")
+          .text("Set the initial value for the main parameter of epsilon-greedy (default: 0.7)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(epsilon = x)
               case _                         => throw new Error("Unexpected Error")
             }
           ),
@@ -295,6 +308,15 @@ object Main extends App {
               case _                       => throw new Error("Unexpected Error")
             }
           ),
+        opt[Double]("epsilon")
+          .abbr("e")
+          .text("Set the initial value for the main parameter of epsilon-greedy (default: 0.7)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveSeriesConfig => conf.copy(epsilon = x)
+              case _                       => throw new Error("Unexpected Error")
+            }
+          ),
         opt[Long]("seed")
           .text("Set the random seed (currently unused)")
           .action((x, c) =>
@@ -398,6 +420,15 @@ object Main extends App {
               case _                    => throw new Error("Unexpected Error")
             }
           ),
+        opt[Double]("epsilon")
+          .abbr("e")
+          .text("Set the initial value for the main parameter of epsilon-greedy (default: 0.7)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveAllConfig => conf.copy(epsilon = x)
+              case _                    => throw new Error("Unexpected Error")
+            }
+          ),
         opt[Long]("seed")
           .text("Set the random seed (currently unused)")
           .action((x, c) =>
@@ -409,40 +440,18 @@ object Main extends App {
       )
   }
 
-  private def solvePDPTW(
-    file: File,
-    verbosity: Int,
-    bandit: String,
-    display: Boolean,
-    timeout: Int,
-    learningRate: Double,
-    slopeWeight: Double,
-    efficiencyWeight: Double,
-    moveFoundWeight: Double
-  ): Unit = {
-    val instanceProblem: LiLimProblem = PDPTWParser(file)
+  private def solvePDPTW(in: SolverInput): Unit = {
+    val instanceProblem: LiLimProblem = PDPTWParser(in.file)
     val oscarModel: PDPTWModel        = PDPTWModel(instanceProblem)
-    val solver: PDPTWSolver =
-      PDPTWSolver(oscarModel, bandit, learningRate, slopeWeight, efficiencyWeight, moveFoundWeight)
-    solver.solve(verbosity, display, file.getName, timeout)
+    val solver: PDPTWSolver           = PDPTWSolver(oscarModel, in)
+    solver.solve(in.verbosity, in.display, in.file.getName, in.timeout)
   }
 
-  private def solveCSP(
-    file: File,
-    verbosity: Int,
-    bandit: String,
-    display: Boolean,
-    timeout: Int,
-    learningRate: Double,
-    slopeWeight: Double,
-    efficiencyWeight: Double,
-    moveFoundWeight: Double
-  ): Unit = {
-    val instance: CarSeqProblem = CSPParser(file)
+  private def solveCSP(in: SolverInput): Unit = {
+    val instance: CarSeqProblem = CSPParser(in.file)
     val oscarModel: CSPModel    = CSPModel(instance)
-    val solver: CSPSolver =
-      CSPSolver(oscarModel, bandit, learningRate, slopeWeight, efficiencyWeight, moveFoundWeight)
-    solver.solve(verbosity, display, file.getName, timeout)
+    val solver: CSPSolver       = CSPSolver(oscarModel, in)
+    solver.solve(in.verbosity, in.display, in.file.getName, in.timeout)
   }
 
   parser.parse(args, NoConfig()) match {
@@ -454,31 +463,23 @@ object Main extends App {
           println("Try --help for more information")
 
         case i: SolveInstanceConfig =>
+          val in = SolverInput(
+            i.instance,
+            i.verbosity,
+            i.bandit,
+            i.display,
+            i.timeout,
+            i.learningRate,
+            i.slopeWeight,
+            i.efficiencyWeight,
+            i.moveFoundWeight,
+            i.epsilon
+          )
           i.problem match {
             case "csp" =>
-              solveCSP(
-                i.instance,
-                i.verbosity,
-                i.bandit,
-                i.display,
-                i.timeout,
-                i.learningRate,
-                i.slopeWeight,
-                i.efficiencyWeight,
-                i.moveFoundWeight
-              )
+              solveCSP(in)
             case "pdptw" =>
-              solvePDPTW(
-                i.instance,
-                i.verbosity,
-                i.bandit,
-                i.display,
-                i.timeout,
-                i.learningRate,
-                i.slopeWeight,
-                i.efficiencyWeight,
-                i.moveFoundWeight
-              )
+              solvePDPTW(in)
             case x => throw new Error(s"Invalid problem name: $x")
           }
 
@@ -498,8 +499,8 @@ object Main extends App {
             case "csp" =>
               val dir   = new File(s"examples/csp/csp_${s.seriesSize}")
               val files = dir.listFiles.filter(_.isFile)
-              files.foreach(x =>
-                solveCSP(
+              files.foreach(x => {
+                val in = SolverInput(
                   x,
                   s.verbosity,
                   s.bandit,
@@ -508,14 +509,16 @@ object Main extends App {
                   s.learningRate,
                   s.slopeWeight,
                   s.efficiencyWeight,
-                  s.moveFoundWeight
+                  s.moveFoundWeight,
+                  s.epsilon
                 )
-              )
+                solveCSP(in)
+              })
             case "pdptw" =>
               val dir   = new File(s"examples/pdptw/pdptw_${s.seriesSize}")
               val files = dir.listFiles.filter(_.isFile)
-              files.foreach(x =>
-                solvePDPTW(
+              files.foreach(x => {
+                val in = SolverInput(
                   x,
                   s.verbosity,
                   s.bandit,
@@ -524,9 +527,11 @@ object Main extends App {
                   s.learningRate,
                   s.slopeWeight,
                   s.efficiencyWeight,
-                  s.moveFoundWeight
+                  s.moveFoundWeight,
+                  s.epsilon
                 )
-              )
+                solvePDPTW(in)
+              })
             case x => throw new Error(s"Invalid problem name: $x")
           }
 
@@ -536,8 +541,8 @@ object Main extends App {
               val dir   = new File(s"examples/csp")
               val dirs  = dir.listFiles.filter(_.isDirectory)
               val files = dirs.flatMap(_.listFiles.filter(_.isFile))
-              files.foreach(x =>
-                solveCSP(
+              files.foreach(x => {
+                val in = SolverInput(
                   x,
                   a.verbosity,
                   a.bandit,
@@ -546,15 +551,17 @@ object Main extends App {
                   a.learningRate,
                   a.slopeWeight,
                   a.efficiencyWeight,
-                  a.moveFoundWeight
+                  a.moveFoundWeight,
+                  a.epsilon
                 )
-              )
+                solveCSP(in)
+              })
             case "pdptw" =>
               val dir   = new File(s"examples/pdptw")
               val dirs  = dir.listFiles.filter(_.isDirectory)
               val files = dirs.flatMap(_.listFiles.filter(_.isFile))
-              files.foreach(x =>
-                solvePDPTW(
+              files.foreach(x => {
+                val in = SolverInput(
                   x,
                   a.verbosity,
                   a.bandit,
@@ -563,9 +570,11 @@ object Main extends App {
                   a.learningRate,
                   a.slopeWeight,
                   a.efficiencyWeight,
-                  a.moveFoundWeight
+                  a.moveFoundWeight,
+                  a.epsilon
                 )
-              )
+                solvePDPTW(in)
+              })
             case x => throw new Error(s"Invalid problem name: $x")
           }
       }

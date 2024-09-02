@@ -13,6 +13,8 @@
 
 package csp
 
+import util.SolverInput
+
 import combinator._
 import oscar.cbls._
 import oscar.cbls.core.search.Neighborhood
@@ -28,14 +30,7 @@ import scala.concurrent.duration.Duration
   * @param bandit
   *   the name of the chosen bandit algorithm
   */
-case class Solver(
-  cspModel: Model,
-  bandit: String,
-  learningRate: Double,
-  slopeWeight: Double,
-  efficiencyWeight: Double,
-  moveFoundWeight: Double
-) {
+case class Solver(cspModel: Model, in: SolverInput) {
 
   private val obj: Objective = cspModel.obj
 
@@ -61,7 +56,7 @@ case class Solver(
 
     val restart4: Neighborhood = sn.shuffle()
 
-    val banditNeighborhood: Neighborhood = bandit.toLowerCase() match {
+    val banditNeighborhood: Neighborhood = in.bandit.toLowerCase() match {
 //      case "bandit" => BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
 //
 //      case "banditaftermove" =>
@@ -73,22 +68,10 @@ case class Solver(
 //      case "epsilongreedy" => new EpsilonGreedyBandit(neighList)
 
       case "epsilongreedy" =>
-        new EpsilonGreedyBanditNew(
-          neighList,
-          learningRate = learningRate,
-          slopeWeight = slopeWeight,
-          efficiencyWeight = efficiencyWeight,
-          moveFoundWeight = moveFoundWeight
-        )
+        new EpsilonGreedyBanditNew(neighList, in)
 
       case "ucb" =>
-        new UCBNew(
-          neighList,
-          learningRate = learningRate,
-          slopeWeight = slopeWeight,
-          efficiencyWeight = efficiencyWeight,
-          moveFoundWeight = moveFoundWeight
-        )
+        new UCBNew(neighList, in)
 
       case "bestslopefirst" => bestSlopeFirst(neighList)
 
