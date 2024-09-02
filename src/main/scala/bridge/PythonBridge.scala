@@ -51,7 +51,6 @@ class PythonBridge(port: Int = 5000) {
   def sendReward(reward: Double) = {
     val rewardBytes =
       ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putFloat(reward.toFloat).array()
-    println(reward)
     val msg = Message.create(MessageType.REWARD, rewardBytes)
     this.output.write(msg.toBytes())
   }

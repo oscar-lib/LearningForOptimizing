@@ -16,3 +16,4 @@ uv.lock
 
 # Others
 .env
+logs/
