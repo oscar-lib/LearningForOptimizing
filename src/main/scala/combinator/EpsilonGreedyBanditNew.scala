@@ -13,23 +13,21 @@
 
 package combinator
 
+import util.SolverInput
+
 import oscar.cbls.core.search.Neighborhood
 
 import scala.util.Random
 
-class EpsilonGreedyBanditNew(
-  l: List[Neighborhood],
-  epsilon: Double = 0.7,
-  learningRate: Double,
-  slopeWeight: Double,
-  efficiencyWeight: Double,
-  moveFoundWeight: Double
-) extends BanditSelector(l, learningScheme = AfterEveryMove, learningRate = learningRate) {
+class EpsilonGreedyBanditNew(l: List[Neighborhood], in: SolverInput)
+    extends BanditSelector(l, learningScheme = AfterEveryMove, learningRate = in.learningRate) {
 
   private var t: Int = 0 // number of times the bandit was called to provide the next neighborhood
-  private val wSol   = moveFoundWeight  // weight rewarding a move being found
-  private val wEff   = efficiencyWeight // weight rewarding small execution time
-  private val wSlope = slopeWeight      // weight rewarding the slope
+  private val wSol   = in.moveFoundWeight  // weight rewarding a move being found
+  private val wEff   = in.efficiencyWeight // weight rewarding small execution time
+  private val wSlope = in.slopeWeight      // weight rewarding the slope
+
+  private val epsilon = in.epsilon
 
   /** The method that provides a neighborhood.
     *
