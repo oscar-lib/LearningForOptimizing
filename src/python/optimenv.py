@@ -4,7 +4,7 @@ import struct
 from dataclasses import dataclass
 from socket import socket
 
-from message import Message, MessageType
+from bridge.protocol.message import Message, MessageType
 from problem import Problem
 from torch_geometric.data import Data
 
