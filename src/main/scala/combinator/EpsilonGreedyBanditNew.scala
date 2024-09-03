@@ -13,17 +13,21 @@
 
 package combinator
 
+import util.SolverInput
+
 import oscar.cbls.core.search.Neighborhood
 
 import scala.util.Random
 
-class EpsilonGreedyBanditNew(l: List[Neighborhood], epsilon: Double = 0.7)
-    extends BanditSelector(l, learningScheme = AfterEveryMove) {
+class EpsilonGreedyBanditNew(l: List[Neighborhood], in: SolverInput)
+    extends BanditSelector(l, learningScheme = AfterEveryMove, learningRate = in.learningRate) {
 
-  private var t: Int = 0   // number of times the bandit was called to provide the next neighborhood
-  private val wSol   = 0.4 // weight rewarding a move being found
-  private val wEff   = 0.2 // weight rewarding small execution time
-  private val wSlope = 0.4 // weight rewarding the slope
+  private var t: Int = 0 // number of times the bandit was called to provide the next neighborhood
+  private val wSol   = in.moveFoundWeight  // weight rewarding a move being found
+  private val wEff   = in.efficiencyWeight // weight rewarding small execution time
+  private val wSlope = in.slopeWeight      // weight rewarding the slope
+
+  private val epsilon = in.epsilon
 
   /** The method that provides a neighborhood.
     *
@@ -33,7 +37,7 @@ class EpsilonGreedyBanditNew(l: List[Neighborhood], epsilon: Double = 0.7)
   override def getNextNeighborhood: Option[Neighborhood] = {
     t += 1
     val epsilon_t: Double = epsilon * Math.sqrt(l.length.toDouble / t)
-    val prob_t: Double   = Random.nextDouble()
+    val prob_t: Double    = Random.nextDouble()
     if (prob_t > epsilon_t) { // gives the best neighborhood
       getBestNeighborhood
     } else { // return based on the weights as probability

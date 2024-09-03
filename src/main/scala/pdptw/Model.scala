@@ -31,7 +31,7 @@ object Model {
   }
 }
 
-class Model(liLimProblem: LiLimProblem) {
+class Model(val liLimProblem: LiLimProblem) {
 
   //////////// VRP ////////////
   private val v: Int       = liLimProblem.vehicles.length
@@ -181,9 +181,9 @@ class Model(liLimProblem: LiLimProblem) {
       if (nId < v)
         None
       else {
-        val coupleAndIndex = liLimProblem.demands.zipWithIndex.filter(p =>
-          (p._1.fromNodeId + v - 1) == nId || (p._1.toNodeId + v - 1) == nId
-        ).head
+        val coupleAndIndex = liLimProblem.demands.zipWithIndex
+          .filter(p => (p._1.fromNodeId + v - 1) == nId || (p._1.toNodeId + v - 1) == nId)
+          .head
         Some(
           PointData(
             coupleAndIndex._2,

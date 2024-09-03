@@ -12,16 +12,16 @@
 // If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
 
 package combinator
-
+import util.SolverInput
 import oscar.cbls.core.search.Neighborhood
 
-class UCBNew(neighborhoods: List[Neighborhood])
-    extends BanditSelector(neighborhoods, AfterEveryMove) {
+class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput)
+    extends BanditSelector(neighborhoods, AfterEveryMove, learningRate = in.learningRate) {
 
-  private var t: Int = 0   // number of times the bandit was called to provide the next neighborhood
-  private val wSol   = 0.4 // weight rewarding a move being found
-  private val wEff   = 0.2 // weight rewarding small execution time
-  private val wSlope = 0.4 // weight rewarding the slope
+  private var t: Int = 0 // number of times the bandit was called to provide the next neighborhood
+  private val wSol   = in.moveFoundWeight  // weight rewarding a move being found
+  private val wEff   = in.efficiencyWeight // weight rewarding small execution time
+  private val wSlope = in.slopeWeight      // weight rewarding the slope
   private var neigh_idx_max: Vector[Int] = Vector.empty
 
   /** The method that provides a neighborhood.
