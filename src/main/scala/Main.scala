@@ -37,7 +37,8 @@ object Main extends App {
     slopeWeight: Double = 0.4,
     efficiencyWeight: Double = 0.2,
     moveFoundWeight: Double = 0.4,
-    epsilon: Double = 0.7
+    epsilon: Double = 0.7,
+    confidence: Double = 1
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -51,7 +52,8 @@ object Main extends App {
     slopeWeight: Double = 0.4,
     efficiencyWeight: Double = 0.2,
     moveFoundWeight: Double = 0.4,
-    epsilon: Double = 0.7
+    epsilon: Double = 0.7,
+      confidence: Double = 1
   ) extends Config
 
   private case class SolveAllConfig(
@@ -64,7 +66,8 @@ object Main extends App {
     slopeWeight: Double = 0.4,
     efficiencyWeight: Double = 0.2,
     moveFoundWeight: Double = 0.4,
-    epsilon: Double = 0.7
+    epsilon: Double = 0.7,
+    confidence: Double = 1
   ) extends Config
 
   private case class NoConfig() extends Config
@@ -192,6 +195,15 @@ object Main extends App {
               case _                         => throw new Error("Unexpected Error")
             }
           ),
+        opt[Double]("confidence")
+          .abbr("c")
+          .text("Set the value for the weight of the confidence width for UCB (default: 1.0)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(confidence = x)
+              case _                       => throw new Error("Unexpected Error")
+            }
+          ),
         opt[Long]("seed")
           .text("Set the random seed (currently unused)")
           .action((x, c) =>
@@ -317,6 +329,15 @@ object Main extends App {
               case _                       => throw new Error("Unexpected Error")
             }
           ),
+        opt[Double]("confidence")
+          .abbr("c")
+          .text("Set the value for the weight of the confidence width for UCB (default: 1.0)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveSeriesConfig => conf.copy(confidence = x)
+              case _                       => throw new Error("Unexpected Error")
+            }
+          ),
         opt[Long]("seed")
           .text("Set the random seed (currently unused)")
           .action((x, c) =>
@@ -429,6 +450,15 @@ object Main extends App {
               case _                    => throw new Error("Unexpected Error")
             }
           ),
+        opt[Double]("confidence")
+          .abbr("c")
+          .text("Set the value for the weight of the confidence width for UCB (default: 1.0)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveAllConfig => conf.copy(confidence = x)
+              case _                       => throw new Error("Unexpected Error")
+            }
+          ),
         opt[Long]("seed")
           .text("Set the random seed (currently unused)")
           .action((x, c) =>
@@ -473,7 +503,8 @@ object Main extends App {
             i.slopeWeight,
             i.efficiencyWeight,
             i.moveFoundWeight,
-            i.epsilon
+            i.epsilon,
+            i.confidence
           )
           i.problem match {
             case "csp" =>
@@ -510,7 +541,8 @@ object Main extends App {
                   s.slopeWeight,
                   s.efficiencyWeight,
                   s.moveFoundWeight,
-                  s.epsilon
+                  s.epsilon,
+                  s.confidence
                 )
                 solveCSP(in)
               })
@@ -528,7 +560,8 @@ object Main extends App {
                   s.slopeWeight,
                   s.efficiencyWeight,
                   s.moveFoundWeight,
-                  s.epsilon
+                  s.epsilon,
+                  s.confidence
                 )
                 solvePDPTW(in)
               })
@@ -552,7 +585,8 @@ object Main extends App {
                   a.slopeWeight,
                   a.efficiencyWeight,
                   a.moveFoundWeight,
-                  a.epsilon
+                  a.epsilon,
+                  a.confidence
                 )
                 solveCSP(in)
               })
@@ -571,7 +605,8 @@ object Main extends App {
                   a.slopeWeight,
                   a.efficiencyWeight,
                   a.moveFoundWeight,
-                  a.epsilon
+                  a.epsilon,
+                  a.confidence
                 )
                 solvePDPTW(in)
               })

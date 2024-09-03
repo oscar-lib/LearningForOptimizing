@@ -22,6 +22,7 @@ class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput)
   private val wSol   = in.moveFoundWeight  // weight rewarding a move being found
   private val wEff   = in.efficiencyWeight // weight rewarding small execution time
   private val wSlope = in.slopeWeight      // weight rewarding the slope
+  private val wConf  = in.confidence       // weight of the confidence width
   private var neigh_idx_max: Vector[Int] = Vector.empty
 
   /** The method that provides a neighborhood.
@@ -38,7 +39,7 @@ class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput)
       val ucbIdx =
         if (nSelected(idx) == 0) Double.MinValue
         else
-          weights(idx) / nSelected(idx) + math.sqrt(2 * math.log(t) / nSelected(idx))
+          weights(idx) / nSelected(idx) + wConf * math.sqrt(2 * math.log(t) / nSelected(idx))
       if (ucbIdx == maxUcb) {
         neigh_idx_max +:= idx
       } else if (ucbIdx > maxUcb) {
