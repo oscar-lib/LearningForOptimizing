@@ -49,7 +49,11 @@ object NeighborhoodStats {
         case NoMoveFound  => false
         case MoveFound(_) => true
       },
-      hasImproved = NeighborhoodUtils.lastCallGain(neighborhood) > 0,
+      // In OscaR.CBLS lastCallGain is not set to zero if no move were found
+      hasImproved = searchResult match {
+        case NoMoveFound  => false
+        case MoveFound(_) => NeighborhoodUtils.lastCallGain(neighborhood) > 0
+      },
       slope = NeighborhoodUtils.slope(neighborhood),
       timeNano = NeighborhoodUtils.lastCallDuration(neighborhood)
     )
