@@ -27,22 +27,6 @@ import java.io.FileOutputStream
 //noinspection SpellCheckingInspection
 object Main extends App {
 
-  val writer = new FileOutputStream("/tmp/ipc-scala2py")
-
-  var end = false
-  while (!end) {
-    print("> ")
-    val line = scala.io.StdIn.readLine()
-    if (line == "q") {
-      writer.close()
-      end = true
-    } else {
-      writer.write(line.getBytes())
-      writer.flush()
-    }
-  }
-  System.exit(0);
-
   abstract class Config
 
   case class SolveInstanceConfig(

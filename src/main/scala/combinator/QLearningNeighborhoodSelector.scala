@@ -27,7 +27,7 @@ class QLearningNeighborhoodSelector(
 
   private val nActions  = neighborhoods.length
   private val nVehicles = problem.vehicles.length
-  private val bridge    = SocketBridge(5000)
+  private val bridge    = SocketBridge(5555)
   bridge.sendStaticProblemData(this.problem, this.nActions)
 
   private def getCurrentSearchState(): List[List[Int]] = {
