@@ -1,3 +1,5 @@
+from typing import Optional
+from datetime import datetime
 from .abstract_logger import AbstractLogger
 from .csv_logger import CSVLogger
 from .wandb_logger import WandbLogger
@@ -6,13 +8,15 @@ from .wandb_logger import WandbLogger
 class Logger(AbstractLogger):
     def __init__(
         self,
-        logdir: str,
+        logdir: Optional[str] = None,
         csv: bool | CSVLogger = False,
         wandb: bool | WandbLogger = False,
         quiet=False,
     ) -> None:
+        if logdir is None:
+            logdir = datetime.now().strftime("logs/%Y-%m-%d_%H-%M-%S")
         self.loggers = list[AbstractLogger]()
-        assert csv, "At least one logger must be provided."
+        assert csv or wandb, "At least one logger must be provided."
         super().__init__(logdir, quiet)
         if csv:
             if isinstance(csv, CSVLogger):
