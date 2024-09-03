@@ -1,15 +1,16 @@
 ### Parameter file for the Learning for Optimizing software
-# name       switch           type values               [conditions (using R syntax)]
-bandit       "--bandit "      c    (ucb,epsilongreedy)
+# name             switch        type values               [conditions (using R syntax)]
+bandit             "--bandit "   c    (ucb,epsilongreedy)
 #
-# UCB parameters
-lrUCB        "--lr "          r    (0.0, 1.0)           | bandit == "ucb"
-wSolUCB      "--wSol "        r    (0.0, 1.0)           | bandit == "ucb"
-wEffUCB	     "--wEff "        r    (0.0, 1.0)           | bandit == "ucb"
-wSlopeUCB    "--wSlope "      r    (0.0, 1.0)           | bandit == "ucb"
+# Shared parameters
+learningrate       "-lr "        r    (0.0, 1.0)           | bandit == "ucb" | bandit == "epsilongreedy"
+movefoundweight    "-mfw "       r    (0.0, 1.0)           | bandit == "ucb" | bandit == "epsilongreedy"
+efficiencyweight   "-ew "        r    (0.0, 1.0)           | bandit == "ucb" | bandit == "epsilongreedy"
+slopeweight        "-sw "        r    (0.0, 1.0)           | bandit == "ucb" | bandit == "epsilongreedy"
 #
-# EpsilonGreedy parameters
-lrEG         "--lr "          r    (0.0, 1.0)           | bandit == "epsilongreedy"
-wSolEps      "--wSol "        r    (0.0, 1.0)           | bandit == "epsilongreedy"
-wEffEps	     "--wEff "        r    (0.0, 1.0)           | bandit == "epsilongreedy"
-wSlopeEps    "--wSlope "      r    (0.0, 1.0)           | bandit == "epsilongreedy"
+# UCB parameter
+#
+confidence         "-c "         r    (0.2, 5.0)           | bandit == "ucb"
+#
+# EpsilonGreedy parameter
+epsilon            "-e "         r    (0.0, 1.0)           | bandit == "epsilongreedy"
