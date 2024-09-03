@@ -19,5 +19,5 @@ class SocketBridge(Bridge):
     def read(self, nbytes: int) -> bytes:
         return self.socket.recv(nbytes)
 
-    def send(self, msg: Message):
-        self.socket.send(msg.to_bytes())
+    def send(self, msg: bytes):
+        self.socket.send(msg)

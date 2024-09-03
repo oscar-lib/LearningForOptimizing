@@ -1,3 +1,4 @@
+import torch
 from dqn import DQN
 from logger import Logger
 from bridge.protocol.message import Message, MessageType
@@ -10,7 +11,7 @@ class Runner:
     def __init__(self, bridge: Bridge):
         self.bridge = bridge
 
-    def run(self):
+    def run(self, device: torch.device):
         logger = Logger(wandb=True, csv=True)
         logger.info("Starting runner")
         try:
@@ -22,7 +23,7 @@ class Runner:
                 return
             problem = Problem.parse(req.body)
             self.bridge.send(Message.ack().to_bytes())
-            agent = DQN.default(problem)
+            agent = DQN.default(problem).to(device)
             env = OptimEnv(problem, self.bridge)
             t = 0
             while True:

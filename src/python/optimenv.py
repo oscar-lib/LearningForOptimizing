@@ -24,10 +24,10 @@ class OptimEnv:
         self.bridge = bridge
         self.pending_msg = None
 
-    def reset(self) -> Observation:
+    def reset(self) -> Data:
         return self.observation()
 
-    def step(self, action: int) -> tuple[Observation, float]:
+    def step(self, action: int) -> tuple[Data, float]:
         self.bridge.send(Message.inference_resp(action).to_bytes())
         req = self.bridge.recv()
         if req.type == MessageType.END_EPISODE:
@@ -44,12 +44,7 @@ class OptimEnv:
             raise EpisodeEndException()
         if req.type != MessageType.ACTION_REQ:
             raise ValueError(f"Expected message of type {MessageType.ACTION_REQ.name} from the client, got {req.type.name}")
-        data = json.loads(req.body)
-        routes = data["routes"]
-        available_actions = data["available"]
+        routes = json.loads(req.body)
         data = self.problem.build_agent_input(routes)
         # TODO: move build_agent_input to the environment
-        return Observation(
-            data,
-            available_actions,
-        )
+        return data

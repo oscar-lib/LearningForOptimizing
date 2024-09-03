@@ -36,15 +36,10 @@ class Bridge(protected val input: InputStream, protected val output: OutputStrea
       throw new Exception("Failed to send static problem data")
     }
   }
-  def askAction(state: List[List[Int]], availabeActions: Array[Boolean]): Int = {
-    val jsonState  = upickle.default.write(state)
-    val jsonAvail  = upickle.default.write(availabeActions)
-    val jsonString = s"""{"routes":$jsonState,"available":$jsonAvail}"""
-    val message    = Message.create(MessageType.INFERENCE_REQ, jsonString.getBytes())
-    val start      = System.currentTimeMillis()
+  def askAction(state: List[List[Int]]): Int = {
+    val jsonState = upickle.default.write(state)
+    val message   = Message.create(MessageType.INFERENCE_REQ, jsonState.getBytes())
     this.output.write(message.toBytes())
-    val end = System.currentTimeMillis()
-    println(s"Time to send message: ${end - start}")
     val response = Message.recv(this.input)
     if (response.msgType() != MessageType.INFERENCE_RSP) {
       throw new Exception("Failed to get inference response")
@@ -102,10 +97,12 @@ class NamedPipeBridge(input: InputStream, output: OutputStream)
 
 object NamedPipeBridge {
 
-  def apply(pipeNum: Int): NamedPipeBridge = {
-
-    val pipeOut = s"pipes/$pipeNum-s2p"
-    val pipeIn  = s"pipes/$pipeNum-p2s"
+  def apply(): NamedPipeBridge = {
+    // Scala is responsible for creating the pipes.
+    // Python is responsible for cleaning them up after the run.
+    val id      = System.nanoTime()
+    val pipeOut = s"pipes/s2p-$id"
+    val pipeIn  = s"pipes/p2s-$id"
     new File("pipes").mkdirs();
     createFifo(pipeOut)
     createFifo(pipeIn)
@@ -123,17 +120,13 @@ object NamedPipeBridge {
         "-a",
         "dqn"
       )
-    // process.start()
+    process.start()
     val input  = new FileInputStream(new File(pipeIn))
     val output = new FileOutputStream(new File(pipeOut))
     new NamedPipeBridge(input, output)
   }
 
   def createFifo(path: String) = {
-    // val f = new File(path)
-    // if (f.exists()) {
-    //   f.delete()
-    // }
     val process = new ProcessBuilder("mkfifo", path).start()
     process.waitFor()
   }

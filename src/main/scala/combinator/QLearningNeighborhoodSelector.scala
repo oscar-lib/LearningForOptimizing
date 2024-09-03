@@ -25,7 +25,7 @@ class QLearningNeighborhoodSelector(
   private val nActions  = neighborhoods.length
   private val nVehicles = problem.vehicles.length
   // private val bridge    = SocketBridge(5555)
-  val bridge = NamedPipeBridge(0)
+  val bridge = NamedPipeBridge()
   bridge.sendStaticProblemData(this.problem, this.nActions)
 
   private def getCurrentSearchState(): List[List[Int]] = {
@@ -45,15 +45,11 @@ class QLearningNeighborhoodSelector(
 
   override def getNextNeighborhood: Option[Neighborhood] = {
     val state  = this.getCurrentSearchState()
-    val action = this.bridge.askAction(state, this.authorizedNeighborhood)
+    val action = this.bridge.askAction(state)
     Some(this.neighborhoods(action))
   }
 
   override def notifyMove(searchResult: SearchResult, neighborhood: Neighborhood): Unit = {
-    if (searchResult == NoMoveFound) {
-      println("No move found")
-      setTabu(neighborhood)
-    }
     val stats  = NeighborhoodStats(searchResult, neighborhood)
     val reward = this.rewardModel(stats, neighborhood)
     this.bridge.sendReward(reward)

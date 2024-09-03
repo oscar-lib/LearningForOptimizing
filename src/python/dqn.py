@@ -38,8 +38,8 @@ class DQN:
         if device is None:
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.device = device
-        self.qnetwork = qnetwork.to(device)
-        self.qtarget = deepcopy(qnetwork).to(device)
+        self.qnetwork = qnetwork.to(device, non_blocking=True)
+        self.qtarget = deepcopy(qnetwork).to(device, non_blocking=True)
         self.memory = memory
         self.gamma = gamma
         self.batch_size = batch_size
@@ -62,10 +62,10 @@ class DQN:
             grad_norm_clipping=None,
         )
 
-    def select_action(self, obs: Observation) -> int:
-        obs.graph = obs.graph.to(self.device.index)
-        qvalues = self.compute_qvalues(obs.graph).squeeze().numpy(force=True)
-        action = self.policy.get_action(qvalues, np.array(obs.available_actions))
+    def select_action(self, obs: Data) -> int:
+        obs = obs.to(self.device.index, non_blocking=True)
+        qvalues = self.compute_qvalues(obs).squeeze().numpy(force=True)
+        action = self.policy.get_action(qvalues)
         return action
 
     def compute_qvalues(self, state) -> torch.Tensor:
@@ -74,8 +74,8 @@ class DQN:
     def notify_episode_end(self):
         self.memory.end_episode()
 
-    def learn(self, time_step: int, obs: Observation, action: int, reward: float, next_obs: Observation) -> dict[str, float]:
-        next_obs.graph = next_obs.graph.to(self.device.index)
+    def learn(self, time_step: int, obs: Data, action: int, reward: float, next_obs: Data) -> dict[str, float]:
+        next_obs = next_obs.to(self.device.index, non_blocking=True)
         self.memory.add(obs, action, reward, next_obs)
         if not self._can_update():
             return {}
@@ -96,7 +96,6 @@ class DQN:
             qvalues_for_index = self.qnetwork.forward(batch.next_obs)
         else:
             qvalues_for_index = next_qvalues
-        qvalues_for_index[batch.next_available_actions == 0.0] = -torch.inf
         indices = torch.argmax(qvalues_for_index, dim=-1, keepdim=True)
         next_values = torch.gather(next_qvalues, -1, indices).squeeze(-1)
         return next_values
@@ -125,3 +124,9 @@ class DQN:
             logs["grad_norm"] = grad_norm.item()
         self.optimiser.step()
         return logs, td_error
+
+    def to(self, device: torch.device):
+        self.device = device
+        self.qnetwork = self.qnetwork.to(device, non_blocking=True)
+        self.qtarget = self.qtarget.to(device, non_blocking=True)
+        return self

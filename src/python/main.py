@@ -1,4 +1,7 @@
 from typing import Literal, Optional
+
+import torch
+from time import time
 from runner import Runner
 import typed_argparse as tap
 from bridge import SocketBridge, NamedPipeBridge
@@ -10,12 +13,7 @@ class Args(tap.TypedArgs):
     input_pipe: Optional[str] = tap.arg("-i", help="Input pipe name")
     output_pipe: Optional[str] = tap.arg("-o", help="Output pipe name")
     algorithm: Literal["dqn", "ppo"] = tap.arg("-a", help="Algorithm to use", default="dqn")
-
-    def validate(self):
-        if self.communication == "pipe" and (self.input_pipe is None or self.output_pipe is None):
-            raise Exception("Input and output pipes are required for pipe communication")
-        if self.algorithm == "ppo":
-            raise NotImplementedError("PPO is not implemented yet")
+    device: Literal["gpu", "cpu"] = tap.arg("-d", help="Device to use", default="cpu")
 
 
 def main(args: Args):
@@ -30,9 +28,14 @@ def main(args: Args):
             bridge = NamedPipeBridge(args.input_pipe, args.output_pipe)
         case other:
             raise Exception(f"Unknown communication method: {other}")
+    if args.device == "gpu":
+        device_index = int(time() * 1000) % torch.cuda.device_count()
+        device = torch.device(f"cuda:{device_index}")
+    else:
+        device = torch.device("cpu")
 
     server = Runner(bridge)
-    server.run()
+    server.run(device)
 
 
 if __name__ == "__main__":

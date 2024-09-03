@@ -19,3 +19,5 @@ uv.lock
 .env
 logs/
 .devcontainer
+# Directory used for named pipes
+pipes/ 
