@@ -18,12 +18,29 @@ import scopt.OptionParser
 import java.io.File
 
 import java.net.Socket
-import py4j.GatewayServer
+import java.io.BufferedReader
+import java.io.FileReader
+import java.io.FileWriter
+import java.io.BufferedWriter
+import java.io.FileOutputStream
 
 //noinspection SpellCheckingInspection
 object Main extends App {
 
-  val gateway = new GatewayServer(new SocketBridge, 25333)
+  val writer = new FileOutputStream("/tmp/ipc-scala2py")
+
+  var end = false
+  while (!end) {
+    print("> ")
+    val line = scala.io.StdIn.readLine()
+    if (line == "q") {
+      writer.close()
+      end = true
+    } else {
+      writer.write(line.getBytes())
+      writer.flush()
+    }
+  }
   System.exit(0);
 
   abstract class Config
