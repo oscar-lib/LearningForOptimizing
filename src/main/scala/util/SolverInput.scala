@@ -14,20 +14,31 @@ import java.io.File
 // You should have received a copy of the GNU Lesser General Public License along with OscaR.
 // If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
 
-/**
- * Helper case class for passing input values.
- *
- * @param file input instance file path
- * @param verbosity output verbosity level
- * @param bandit name of the bandit algorithm
- * @param display whether to display solving output or not
- * @param timeout weak timeout duration (in seconds)
- * @param learningRate bandit learning rate
- * @param slopeWeight learning weight of a move's slope
- * @param efficiencyWeight learning weight of a move's efficiency w.r.t. elapsed time
- * @param moveFoundWeight learning weight of a neighborhood finding a move
- * @param epsilon the initial value of the parameter for the epsilon-greedy bandit
- */
+/** Helper case class for passing input values.
+  *
+  * @param file
+  *   input instance file path
+  * @param verbosity
+  *   output verbosity level
+  * @param bandit
+  *   name of the bandit algorithm
+  * @param display
+  *   whether to display solving output or not
+  * @param timeout
+  *   weak timeout duration (in seconds)
+  * @param learningRate
+  *   bandit learning rate
+  * @param slopeWeight
+  *   learning weight of a move's slope
+  * @param efficiencyWeight
+  *   learning weight of a move's efficiency w.r.t. elapsed time
+  * @param moveFoundWeight
+  *   learning weight of a neighborhood finding a move
+  * @param epsilon
+  *   the initial value of the parameter for the epsilon-greedy bandit
+  * @param confidence
+  *   the weight of the confidence width for the UCB bandit
+  */
 case class SolverInput(
   file: File,
   verbosity: Int,
@@ -38,5 +49,6 @@ case class SolverInput(
   slopeWeight: Double,
   efficiencyWeight: Double,
   moveFoundWeight: Double,
-  epsilon: Double
+  epsilon: Double,
+  confidence: Double
 )
