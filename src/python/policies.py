@@ -73,9 +73,11 @@ class EpsilonGreedy(Policy):
     def constant(cls, eps: float):
         return cls(schedule.ConstantSchedule(eps))
 
-    def get_action(self, qvalues: np.ndarray) -> int:
-        if self.epsilon.value < random.random():
-            return random.randint(0, len(qvalues) - 1)
+    def get_action(self, qvalues: np.ndarray, available_actions: np.ndarray) -> int:
+        r = random.random()
+        if self.epsilon.value < r:
+            return int(random.choice(np.nonzero(available_actions)[0]))
+        qvalues[available_actions == 0] = -np.inf
         return int(np.argmax(qvalues).item())
 
     def update(self, step_num: int):

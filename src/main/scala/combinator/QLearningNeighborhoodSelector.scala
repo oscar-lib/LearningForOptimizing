@@ -19,7 +19,7 @@ class QLearningNeighborhoodSelector(
       learningScheme = AfterEveryMove, // Not used
       seed: Int,                       // Not used
       learningRate = 0.0,              // Not used
-      rewardModel = new NormalizedWindowedMaxGain(100)
+      rewardModel = new NormalizedLogGain()
     ) {
 
   private val nActions  = neighborhoods.length
@@ -45,11 +45,14 @@ class QLearningNeighborhoodSelector(
 
   override def getNextNeighborhood: Option[Neighborhood] = {
     val state  = this.getCurrentSearchState()
-    val action = this.bridge.askAction(state)
+    val action = this.bridge.askAction(state, this.authorizedNeighborhood)
     Some(this.neighborhoods(action))
   }
 
   override def notifyMove(searchResult: SearchResult, neighborhood: Neighborhood): Unit = {
+    if (searchResult == NoMoveFound) {
+      setTabu(neighborhood)
+    }
     val stats  = NeighborhoodStats(searchResult, neighborhood)
     val reward = this.rewardModel(stats, neighborhood)
     this.bridge.sendReward(reward)

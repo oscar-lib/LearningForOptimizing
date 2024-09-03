@@ -62,20 +62,20 @@ class DQN:
             grad_norm_clipping=None,
         )
 
-    def select_action(self, obs: Data) -> int:
-        obs = obs.to(self.device.index, non_blocking=True)
+    def select_action(self, obs: Observation):
+        obs.graph = obs.graph.to(self.device.index, non_blocking=True)
         qvalues = self.compute_qvalues(obs).squeeze().numpy(force=True)
-        action = self.policy.get_action(qvalues)
-        return action
+        action = self.policy.get_action(qvalues, obs.available_actions)
+        return action, qvalues
 
-    def compute_qvalues(self, state) -> torch.Tensor:
-        return self.qnetwork.forward(state)
+    def compute_qvalues(self, state: Observation) -> torch.Tensor:
+        return self.qnetwork.forward(state.graph)
 
     def notify_episode_end(self):
         self.memory.end_episode()
 
-    def learn(self, time_step: int, obs: Data, action: int, reward: float, next_obs: Data) -> dict[str, float]:
-        next_obs = next_obs.to(self.device.index, non_blocking=True)
+    def learn(self, time_step: int, obs: Observation, action: int, reward: float, next_obs: Observation) -> dict[str, float]:
+        next_obs.graph = next_obs.graph.to(self.device.index, non_blocking=True)
         self.memory.add(obs, action, reward, next_obs)
         if not self._can_update():
             return {}

@@ -31,10 +31,10 @@ class Runner:
                 try:
                     while True:
                         t += 1
-                        action = agent.select_action(obs)
+                        action, qvalues = agent.select_action(obs)
                         next_obs, reward = env.step(action)
                         logs = agent.learn(t, obs, action, reward, next_obs)
-                        logs = logs | {"action": action, "reward": reward}
+                        logs = logs | {"action": action, "reward": reward} | {f"q-{i}": q for i, q in enumerate(qvalues)}
                         logger.log(logs, t)
                         obs = next_obs
                 except EpisodeEndException:

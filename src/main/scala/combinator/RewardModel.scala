@@ -81,7 +81,12 @@ abstract class NormalizedGain() extends RewardModel {
 
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
-    val gain     = profiler._lastCallGain
+    val gain = if (!runStat.foundMove) {
+      -1
+    } else {
+      profiler._lastCallGain
+    }
+
     this.update(gain)
     return this.normalize(gain)
   }
@@ -142,5 +147,19 @@ class NormalizedWindowedMeanGain(windowSize: Int) extends NormalizedGain {
 
   override protected def normalize(gain: Long): Double = {
     gain.toDouble / (this.sum.toDouble / window.size)
+  }
+}
+
+/** Returns the log_10 of the gain of the last move if it has improved the solution and -0.1
+  * otherwise.
+  */
+class NormalizedLogGain extends RewardModel {
+  override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
+    val profiler = NeighborhoodUtils.getProfiler(neighborhood)
+    if (!runStat.foundMove || profiler._lastCallGain <= 0) {
+      -0.1
+    } else {
+      math.log10(profiler._lastCallGain.toDouble)
+    }
   }
 }

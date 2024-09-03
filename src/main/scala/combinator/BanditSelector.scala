@@ -249,7 +249,7 @@ abstract class BanditSelector(
 
   /** Reset the list of tabu neighborhoods and update the sum of weights for valid neighborhoods
     */
-  private def resetTabu(): Unit = {
+  protected def resetTabu(): Unit = {
     if (nTabu != 0) {
       for (idx <- authorizedNeighborhood.indices) {
         if (isTabu(idx)) {
