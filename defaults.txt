@@ -1,0 +1,4 @@
+## Initial candidate configuration for irace
+bandit          learningrate    movefoundweight    efficiencyweight    slopeweight    confidence   epsilon
+"ucb"           0.1             0.4                0.2                 0.4            1.0          NA
+"epsilongreedy" 0.1             0.4                0.2                 0.4            NA           0.7
