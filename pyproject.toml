@@ -14,6 +14,7 @@ dependencies = [
     "sumtree>=0.2.7",
     "wandb>=0.17.8",
     "py4j>=0.10.9.7",
+    "typed-argparse>=0.3.1",
 ]
 
 

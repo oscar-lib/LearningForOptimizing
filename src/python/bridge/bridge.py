@@ -1,27 +1,24 @@
-import socket
-from typing import Callable
-from .protocol import Message
+from .protocol import Message, Header
+from abc import ABC, abstractmethod
 
 
-class Bridge:
-    def __init__(self, input_stream: socket.socket, output_stream: socket.socket, callback: Callable[[Message], None]):
-        self.input = input_stream
-        self.output = output_stream
-        self.callback = callback
+class Bridge(ABC):
+    def recv(self) -> Message:
+        header_bytes = self.read(Header.SIZE)
+        if len(header_bytes) == 0:
+            raise ConnectionResetError("Connection closed by remote while waiting for header bytes")
+        header = Header.from_bytes(header_bytes)
+        if header.nbytes == 0:
+            return Message(header, b"")
+        data = self.read(header.nbytes)
+        if len(data) == 0:
+            raise ConnectionResetError(f"Connection closed by remote while waiting for payload data of {header}")
+        return Message(header, data)
 
-    def run(self):
-        while True:
-            msg = Message.recv(self.input)
-            self.callback(msg)
+    @abstractmethod
+    def read(self, nbytes: int) -> bytes:
+        """Read a message from the input stream"""
 
-    @staticmethod
-    def from_socket(port: int, callback: Callable[[Message], None]):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        sock.bind(("127.0.0.1", port))
-        return Bridge(sock, sock, callback)
-
-    @staticmethod
-    def from_named_pipe(callback: Callable[[Message], None]):
-        pipe_in = open("/tmp/ipc-scala2py", "rb")
-        pipe_out = open("/tmp/ipc-py2scala", "wb")
+    @abstractmethod
+    def send(self, bytes: bytes):
+        """Write a message to the output stream"""

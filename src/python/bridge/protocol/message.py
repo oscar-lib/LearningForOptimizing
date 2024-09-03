@@ -1,8 +1,7 @@
 from dataclasses import dataclass
 from enum import IntEnum
-import logging
+from typing import ClassVar
 import socket
-import json
 
 
 class MessageType(IntEnum):
@@ -21,9 +20,11 @@ class Header:
     nbytes: int
     type: MessageType
 
+    SIZE: ClassVar[int] = 12
+
     @classmethod
     def from_bytes(cls, data: bytes):
-        assert len(data) == 12
+        assert len(data) == Header.SIZE
         version = int.from_bytes(data[:4], byteorder="big")
         nbytes = int.from_bytes(data[4:8], byteorder="big")
         msg_type = MessageType(int.from_bytes(data[8:12], byteorder="big"))
@@ -31,7 +32,7 @@ class Header:
 
     @classmethod
     def recv(cls, conn: socket.socket):
-        bytes = conn.recv(12)
+        bytes = conn.recv(Header.SIZE)
         if len(bytes) == 0:
             raise ConnectionResetError("Connection closed by remote while waiting for header bytes")
         header = cls.from_bytes(bytes)

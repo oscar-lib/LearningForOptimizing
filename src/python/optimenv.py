@@ -1,9 +1,8 @@
 import json
-import logging
 import struct
 from dataclasses import dataclass
-from socket import socket
 
+from bridge import Bridge
 from bridge.protocol.message import Message, MessageType
 from problem import Problem
 from torch_geometric.data import Data
@@ -20,17 +19,17 @@ class Observation:
 
 
 class OptimEnv:
-    def __init__(self, problem: Problem, sock: socket):
+    def __init__(self, problem: Problem, bridge: Bridge):
         self.problem = problem
-        self.socket = sock
+        self.bridge = bridge
         self.pending_msg = None
 
     def reset(self) -> Observation:
         return self.observation()
 
     def step(self, action: int) -> tuple[Observation, float]:
-        self.socket.send(Message.inference_resp(action).to_bytes())
-        req = Message.recv(self.socket)
+        self.bridge.send(Message.inference_resp(action).to_bytes())
+        req = self.bridge.recv()
         if req.type == MessageType.END_EPISODE:
             raise EpisodeEndException()
         if req.type != MessageType.REWARD:
@@ -40,7 +39,7 @@ class OptimEnv:
         return obs_, reward
 
     def observation(self):
-        req = Message.recv(self.socket)
+        req = self.bridge.recv()
         if req.type == MessageType.END_EPISODE:
             raise EpisodeEndException()
         if req.type != MessageType.ACTION_REQ:
