@@ -7,27 +7,25 @@ import oscar.cbls.business.routing.model.VRP
 import pdptw.LiLimProblem
 import oscar.cbls.core.search.SearchResult
 import oscar.cbls.core.search.NoMoveFound
+import bridge.NamedPipeBridge
 
 class QLearningNeighborhoodSelector(
   neighborhoods: List[Neighborhood],
-  store: Store,
   problem: LiLimProblem,
   vrp: VRP,
-  learningScheme: LearningScheme = AfterEveryMove,
-  epsilon: Double = 0.1,
-  seed: Int = 42,
-  learningRate: Double = 0.1
+  seed: Int = 42
 ) extends BanditSelector(
       neighborhoods: List[Neighborhood],
-      learningScheme: LearningScheme,
-      seed: Int,
-      learningRate: Double,
+      learningScheme = AfterEveryMove, // Not used
+      seed: Int,                       // Not used
+      learningRate = 0.0,              // Not used
       rewardModel = new NormalizedWindowedMaxGain(100)
     ) {
 
   private val nActions  = neighborhoods.length
   private val nVehicles = problem.vehicles.length
-  private val bridge    = SocketBridge(5555)
+  // private val bridge    = SocketBridge(5555)
+  val bridge = NamedPipeBridge(0)
   bridge.sendStaticProblemData(this.problem, this.nActions)
 
   private def getCurrentSearchState(): List[List[Int]] = {
@@ -39,32 +37,6 @@ class QLearningNeighborhoodSelector(
       }
     }
     return routes
-  }
-
-  /** Selects the next neighborhood to explore using an epsilon-greedy strategy.
-    *
-    * @param qvalues
-    * @return
-    *   the index of the neighborhood to explore
-    */
-  private def egreedy(qvalues: List[Double]): Option[Int] = {
-    val availableActions = this.getAvailableActions()
-    if (availableActions.isEmpty) {
-      return None
-    }
-    val rand = scala.util.Random.nextDouble()
-    if (rand < this.epsilon) {
-      return Some((rand * availableActions.length).toInt)
-    }
-    var maxIndex = availableActions(0)
-    var max      = qvalues(maxIndex)
-    for (action <- availableActions.drop(1)) {
-      if (qvalues(action) > max) {
-        max = qvalues(action)
-        maxIndex = action
-      }
-    }
-    return Some(maxIndex)
   }
 
   private def getAvailableActions(): List[Int] = {

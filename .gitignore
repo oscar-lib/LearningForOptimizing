@@ -13,6 +13,7 @@ metals.sbt
 .venv
 uv.lock
 *.pyc
+.ipynb_checkpoints
 
 # Others
 .env

@@ -23,6 +23,7 @@ import java.io.FileReader
 import java.io.FileWriter
 import java.io.BufferedWriter
 import java.io.FileOutputStream
+import bridge.NamedPipeBridge
 
 //noinspection SpellCheckingInspection
 object Main extends App {

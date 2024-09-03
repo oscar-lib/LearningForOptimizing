@@ -13,6 +13,11 @@ import java.nio.ByteOrder
 import org.apache.xpath.operations.Bool
 import java.io.InputStream
 import java.io.OutputStream
+import java.io.File
+import java.io.BufferedReader
+import java.io.FileReader
+import java.io.FileInputStream
+import java.io.FileOutputStream
 
 class Bridge(protected val input: InputStream, protected val output: OutputStream) {
   implicit val depRw: ReadWriter[LiLimDepot]   = macroRW
@@ -36,7 +41,10 @@ class Bridge(protected val input: InputStream, protected val output: OutputStrea
     val jsonAvail  = upickle.default.write(availabeActions)
     val jsonString = s"""{"routes":$jsonState,"available":$jsonAvail}"""
     val message    = Message.create(MessageType.INFERENCE_REQ, jsonString.getBytes())
+    val start      = System.currentTimeMillis()
     this.output.write(message.toBytes())
+    val end = System.currentTimeMillis()
+    println(s"Time to send message: ${end - start}")
     val response = Message.recv(this.input)
     if (response.msgType() != MessageType.INFERENCE_RSP) {
       throw new Exception("Failed to get inference response")
@@ -56,6 +64,7 @@ class Bridge(protected val input: InputStream, protected val output: OutputStrea
     val bytes = msg.toBytes()
     this.output.write(bytes)
   }
+
 }
 
 object Bridge {
@@ -80,7 +89,7 @@ class SocketBridge(input: InputStream, output: OutputStream)
     extends Bridge(input: InputStream, output: OutputStream) {}
 
 object SocketBridge {
-  def apply(port: Int = 5000): SocketBridge = {
+  def apply(port: Int = 5555): SocketBridge = {
     val socket = new Socket("localhost", port)
     val input  = socket.getInputStream
     val output = socket.getOutputStream
@@ -90,3 +99,42 @@ object SocketBridge {
 
 class NamedPipeBridge(input: InputStream, output: OutputStream)
     extends Bridge(input: InputStream, output: OutputStream) {}
+
+object NamedPipeBridge {
+
+  def apply(pipeNum: Int): NamedPipeBridge = {
+
+    val pipeOut = s"pipes/$pipeNum-s2p"
+    val pipeIn  = s"pipes/$pipeNum-p2s"
+    new File("pipes").mkdirs();
+    createFifo(pipeOut)
+    createFifo(pipeIn)
+
+    val process =
+      new ProcessBuilder(
+        ".venv/bin/python",
+        "src/python/main.py",
+        "-c",
+        "pipe",
+        "-i",
+        pipeOut,
+        "-o",
+        pipeIn,
+        "-a",
+        "dqn"
+      )
+    // process.start()
+    val input  = new FileInputStream(new File(pipeIn))
+    val output = new FileOutputStream(new File(pipeOut))
+    new NamedPipeBridge(input, output)
+  }
+
+  def createFifo(path: String) = {
+    // val f = new File(path)
+    // if (f.exists()) {
+    //   f.delete()
+    // }
+    val process = new ProcessBuilder("mkfifo", path).start()
+    process.waitFor()
+  }
+}
