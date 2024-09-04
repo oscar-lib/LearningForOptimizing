@@ -2,10 +2,13 @@ target/
 project/project/
 .bsp/
 .idea/
-
 .vscode
 .metals
 .bloop
 .bsp
 metals.sbt
-/pdptw-arena/
+**/pdptw-arena/
+**/pdptw-ucb-arena/
+**/pdptw-epsilon-arena/
+**/csp-ucb-arena/
+**/csp-epsilon-arena/
