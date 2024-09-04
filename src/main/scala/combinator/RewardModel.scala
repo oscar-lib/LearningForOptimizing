@@ -56,7 +56,7 @@ class OriginalRewardModel(
   }
 }
 
-class SlopeReward() extends RewardModel {
+class SlopeReward extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     SlopeReward(runStat)
   }
@@ -78,7 +78,7 @@ object SlopeReward {
   }
 }
 
-abstract class NormalizedGain() extends RewardModel {
+abstract class NormalizedGain extends RewardModel {
 
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
@@ -91,7 +91,7 @@ abstract class NormalizedGain() extends RewardModel {
   protected def normalize(gain: Long): Double
 }
 
-class NormalizedMaxGain() extends NormalizedGain {
+class NormalizedMaxGain extends NormalizedGain {
   protected var maxGain: Long = Long.MinValue
 
   protected def update(gain: Long): Unit = {
