@@ -13,6 +13,8 @@
 
 package csp
 
+import util.SolverInput
+
 import combinator._
 import oscar.cbls._
 import oscar.cbls.core.search.Neighborhood
@@ -25,10 +27,10 @@ import scala.concurrent.duration.Duration
   *
   * @param cspModel
   *   the model of the given CSP instance
-  * @param bandit
-  *   the name of the chosen bandit algorithm
+  * @param in
+  *   the remaining input data
   */
-case class Solver(cspModel: Model, bandit: String) {
+case class Solver(cspModel: Model, in: SolverInput) {
 
   private val obj: Objective = cspModel.obj
 
@@ -39,7 +41,16 @@ case class Solver(cspModel: Model, bandit: String) {
     val withTimeout = timeout < Int.MaxValue
 
     val neighList: List[Neighborhood] =
-      List(sn.swapMostViolated() exhaust sn.wideningFlip(), sn.wideningFlip(), sn.swap())
+      List(
+        sn.wideningSwapMostViolated(),
+        sn.swapMostViolated(),
+        sn.wideningFlipMostViolated(),
+        sn.wideningSwap(),
+        sn.wideningFlip(),
+        sn.swap(),
+        sn.oneCarMove(),
+        sn.oneCarMoveMostViolated()
+      )
 
     val mostViolated = cspModel.mostViolatedCars
     val violated     = cspModel.violatedCars
@@ -54,7 +65,7 @@ case class Solver(cspModel: Model, bandit: String) {
 
     val restart4: Neighborhood = sn.shuffle()
 
-    val banditNeighborhood: Neighborhood = bandit.toLowerCase() match {
+    val banditNeighborhood: Neighborhood = in.bandit.toLowerCase() match {
 //      case "bandit" => BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
 //
 //      case "banditaftermove" =>
@@ -63,15 +74,17 @@ case class Solver(cspModel: Model, bandit: String) {
 //      case "banditrollingaverage" =>
 //        BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
 
-      case "epsilongreedy" => new EpsilonGreedyBandit(neighList)
+//      case "epsilongreedy" => new EpsilonGreedyBandit(neighList)
 
-      case "epsilongreedynew" => new EpsilonGreedyBanditNew(neighList)
+      case "epsilongreedy" =>
+        new EpsilonGreedyBanditNew(neighList, in)
 
-      case "ucbnew" => new UCB1(neighList)
+      case "ucb" =>
+        new UCBNew(neighList, in)
 
       case "bestslopefirst" => bestSlopeFirst(neighList)
 
-      case "bestsslopefirstnew" => new BestSlopeFirstNew(neighList)
+//      case "bestsslopefirstnew" => new BestSlopeFirstNew(neighList)
 
       case "random" => new RandomCombinator(neighList)
 
@@ -86,19 +99,19 @@ case class Solver(cspModel: Model, bandit: String) {
         case _ =>
           banditNeighborhood
             .onExhaustRestartAfter(
-              restart1,
+              restart1.acceptAll(),
               5,
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5
             )
             .onExhaustRestartAfter(
-              restart2,
+              restart2.acceptAll(),
               5,
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5
             )
             .onExhaustRestartAfter(
-              restart3,
+              restart3.acceptAll(),
               5,
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5

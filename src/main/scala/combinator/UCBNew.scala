@@ -12,16 +12,23 @@
 // If not, see http://www.gnu.org/licenses/lgpl-3.0.en.html
 
 package combinator
-
+import util.SolverInput
 import oscar.cbls.core.search.Neighborhood
 
-class UCBNew(neighborhoods: List[Neighborhood])
-    extends BanditSelector(neighborhoods, AfterEveryMove, rewardModel = new OriginalRewardModel()) {
+class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput)
+    extends BanditSelector(
+      neighborhoods,
+      AfterEveryMove,
+      learningRate = in.learningRate,
+      rewardModel = new OriginalRewardModel(
+        wSol = in.moveFoundWeight,
+        wEff = in.efficiencyWeight,
+        wSlope = in.slopeWeight
+      )
+    ) {
 
-  private var t: Int = 0   // number of times the bandit was called to provide the next neighborhood
-  private val wSol   = 0.4 // weight rewarding a move being found
-  private val wEff   = 0.2 // weight rewarding small execution time
-  private val wSlope = 0.4 // weight rewarding the slope
+  private var t: Int = 0 // number of times the bandit was called to provide the next neighborhood
+  private val wConf                      = in.confidence // weight of the confidence width
   private var neigh_idx_max: Vector[Int] = Vector.empty
 
   /** The method that provides a neighborhood.
@@ -38,7 +45,7 @@ class UCBNew(neighborhoods: List[Neighborhood])
       val ucbIdx =
         if (nSelected(idx) == 0) Double.MinValue
         else
-          weights(idx) / nSelected(idx) + math.sqrt(2 * math.log(t) / nSelected(idx))
+          weights(idx) / nSelected(idx) + wConf * math.sqrt(2 * math.log(t) / nSelected(idx))
       if (ucbIdx == maxUcb) {
         neigh_idx_max +:= idx
       } else if (ucbIdx > maxUcb) {

@@ -13,6 +13,8 @@
 
 package pdptw
 
+import util.SolverInput
+
 import combinator._
 import logger.ObjectiveRecorder
 import oscar.cbls._
@@ -25,7 +27,16 @@ import oscar.cbls.business.routing.visu.RoutingMapTypes
 import java.nio.file.Paths
 import scala.concurrent.duration.Duration
 
-case class Solver(oscarModel: Model, bandit: String) {
+/** This class is responsible for the handling of the local search procedure for the given pickup
+  * and delivery problem with time windows; in particular, it regulates its behavior depending on
+  * the selected bandit algorithm.
+  *
+  * @param oscarModel
+  *   the model of the given PDPTW instance
+  * @param in
+  *   the remaining input data
+  */
+case class Solver(oscarModel: Model, in: SolverInput) {
   private val distancesAndTimeMatrix: Array[Array[Long]] = oscarModel.distanceAndTimeMatrix
   private val pdptw: VRP                                 = oscarModel.pdpProblem
   private val obj: Objective                             = oscarModel.objectiveFunction
@@ -172,75 +183,76 @@ case class Solver(oscarModel: Model, bandit: String) {
       simpleNeighborhoods.segmentExchanges(pdptw.n)
 //      simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
     )
-    var search = bandit.toLowerCase() match {
-      case "bandit" =>
-        new BanditCombinator(
-          neighList,
-          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-          if (withTimeout) Int.MaxValue else 15,
-          obj,
-          stats => rewardFunction(stats, neighList.length)
-        ) saveBestAndRestoreOnExhaust obj
-      case "banditaftermove" =>
-        new BanditCombinator(
-          neighList,
-          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-          if (withTimeout) Int.MaxValue else 15,
-          obj,
-          stats => rewardFunctionAfterMove(stats, neighList.length),
-          afterMove = true
-        ) saveBestAndRestoreOnExhaust obj
-      case "banditrollingaverage" =>
-        new BanditCombinator(
-          neighList,
-          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-          if (withTimeout) Int.MaxValue else 15,
-          obj,
-          stats => rewardFunction(stats, neighList.length),
-          rollingAverage = true
-        ) saveBestAndRestoreOnExhaust obj
+    var search = in.bandit.toLowerCase() match {
+//      case "bandit" =>
+//        BanditCombinator(
+//          neighList,
+//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+//          if (withTimeout) Int.MaxValue else 15,
+//          obj,
+//          stats => rewardFunction(stats, neighList.length)
+//        ) saveBestAndRestoreOnExhaust obj
+//      case "banditaftermove" =>
+//        BanditCombinator(
+//          neighList,
+//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+//          if (withTimeout) Int.MaxValue else 15,
+//          obj,
+//          stats => rewardFunctionAfterMove(stats, neighList.length),
+//          afterMove = true
+//        ) saveBestAndRestoreOnExhaust obj
+//      case "banditrollingaverage" =>
+//        BanditCombinator(
+//          neighList,
+//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+//          if (withTimeout) Int.MaxValue else 15,
+//          obj,
+//          stats => rewardFunction(stats, neighList.length),
+//          rollingAverage = true
+//        ) saveBestAndRestoreOnExhaust obj
+//      case "epsilongreedy" =>
+//        new EpsilonGreedyBandit(neighList) onExhaustRestartAfter (
+//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+//          0,
+//          obj,
+//          minRestarts = if (withTimeout) Int.MaxValue else 15
+//        )
       case "epsilongreedy" =>
-        new EpsilonGreedyBandit(neighList) onExhaustRestartAfter (
+        new EpsilonGreedyBanditNew(neighList, in) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           0,
           obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15
         )
-      case "epsilongreedynew" =>
-        new EpsilonGreedyBanditNew(neighList) onExhaustRestartAfter (
-          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-          0,
-          obj,
-          minRestarts = if (withTimeout) Int.MaxValue else 15
-        )
-      case "ucb1" =>
-        new UCB1(neighList) onExhaustRestartAfter (
-          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-          0,
-          obj,
-          minRestarts = if (withTimeout) Int.MaxValue else 15
-        )
-      case "ucbnew" =>
-        new UCBNew(neighList) onExhaustRestartAfter (
+//      case "ucb1" =>
+//        new UCB1(neighList) onExhaustRestartAfter (
+//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+//          0,
+//          obj,
+//          minRestarts = if (withTimeout) Int.MaxValue else 15
+//        )
+      case "ucb" =>
+        new UCBNew(neighList, in) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           0,
           obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15
         )
       case "bestslopefirst" =>
-        println("Using bestSlopeFirst")
+//        println("Using bestSlopeFirst")
         bestSlopeFirst(neighList) onExhaustRestartAfter (simpleNeighborhoods.emptyMultiplesVehicle(
           pdptw.v / 10
         ), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
-      case "bestslopefirstnew" =>
-        new BestSlopeFirstNew(neighList) onExhaustRestartAfter (simpleNeighborhoods
-          .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
-        minRestarts = if (withTimeout) Int.MaxValue else 15)
+//      case "bestslopefirstnew" =>
+//        new BestSlopeFirstNew(neighList) onExhaustRestartAfter (simpleNeighborhoods
+//          .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
+//        minRestarts = if (withTimeout) Int.MaxValue else 15)
       case "random" =>
         new RandomCombinator(neighList) onExhaustRestartAfter (simpleNeighborhoods
           .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
+
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(neighList) onExhaustRestartAfter (simpleNeighborhoods.emptyMultiplesVehicle(
@@ -281,10 +293,11 @@ case class Solver(oscarModel: Model, bandit: String) {
     }
     println(oscarModel.toString)
     println("bestObj=" + oscarModel.objectiveFunction.value)
-    //println(recorder)
+    // println(recorder)
     val instanceName = Paths.get(fileName).getFileName.toString
-    val bestKnownSolution = recorder.getBestKnownSolution("bks/pdptw_bks.csv", instanceName).getOrElse(0.0)
-    //println(recorder.primalGapOverTime(bestKnownSolution, timeout))
+    val bestKnownSolution =
+      recorder.getBestKnownSolution("bks/pdptw_bks.csv", instanceName).getOrElse(0.0)
+    // println(recorder.primalGapOverTime(bestKnownSolution, timeout))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f")
   }
