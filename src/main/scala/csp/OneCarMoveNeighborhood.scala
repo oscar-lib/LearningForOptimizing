@@ -4,57 +4,60 @@ import oscar.cbls.CBLSIntVar
 import oscar.cbls.core.search.{EasyNeighborhoodMultiLevel, First, Move}
 
 object OneCarMoveNeighborhood {
+
   /** Neighborhoods dedicated for the CSP that moves a car of the sequence to another place.
-   *
-   * Through this process, some car could be shifted forward or backward in the sequence.
-   *
-   * Example :
-   * [0,1,2,3,4,5,6,7,8,9]
-   *  Moving 5 before 1
-   * [0,5,1,2,3,4,6,7,8,9]
-   *
-   * 1,2,3 and 4 were shifted forward
-   *
-   * NOTE : Way faster with CBLSSeqVar but we don't have the time to change everything about CSP
-   *
-   * @param vars The sequence representing the CSP
-   * @param carsIndexToMove a function returning the car we are allowed to move.
-   * @param relevantPredecessorsIndex a function returning the relevant new predecessors of the value.
-   * @param name The name of this Neighborhood (default class name)
-   */
+    *
+    * Through this process, some car could be shifted forward or backward in the sequence.
+    *
+    * Example : [0,1,2,3,4,5,6,7,8,9] Moving 5 before 1 [0,5,1,2,3,4,6,7,8,9]
+    *
+    * 1,2,3 and 4 were shifted forward
+    *
+    * NOTE : Way faster with CBLSSeqVar but we don't have the time to change everything about CSP
+    *
+    * @param vars
+    *   The sequence representing the CSP
+    * @param carsIndexToMove
+    *   a function returning the car we are allowed to move
+    * @param relevantPredecessorsIndex
+    *   a function returning the relevant new predecessors of the value
+    * @param name
+    *   The name of this Neighborhood (default class name)
+    */
   def apply(
-             vars: Array[CBLSIntVar],
-             carsIndexToMove: () => Iterable[Int] = () => Iterable.empty[Int],
-             relevantPredecessorsIndex: Long => Iterable[Int] = _ => Iterable.empty[Int],
-             name: String = "OneCarMove"
+    vars: Array[CBLSIntVar],
+    carsIndexToMove: () => Iterable[Int] = () => Iterable.empty[Int],
+    relevantPredecessorsIndex: Long => Iterable[Int] = _ => Iterable.empty[Int],
+    name: String = "OneCarMove"
   ): OneCarMoveNeighborhood = {
     new OneCarMoveNeighborhood(vars, carsIndexToMove, relevantPredecessorsIndex, name)
   }
 }
 
 /** Neighborhoods dedicated for the CSP that moves a car of the sequence to another place.
- *
- * Through this process, some car could be shifted forward or backward in the sequence.
- *
- * Example :
- * [0,1,2,3,4,5,6,7,8,9]
- *  Moving 5 before 1
- * [0,5,1,2,3,4,6,7,8,9]
- *
- * 1,2,3 and 4 were shifted forward
- *
- * NOTE : Way faster with CBLSSeqVar but we don't have the time to change everything about CSP
- *
- * @param vars The sequence representing the CSP
- * @param carsIndexToMove a function returning the car we are allowed to move.
- * @param relevantPredecessorsIndex a function returning the relevant new predecessors of the value.
- * @param name The name of this Neighborhood (default class name)
- */
+  *
+  * Through this process, some car could be shifted forward or backward in the sequence.
+  *
+  * Example : [0,1,2,3,4,5,6,7,8,9] Moving 5 before 1 [0,5,1,2,3,4,6,7,8,9]
+  *
+  * 1,2,3 and 4 were shifted forward
+  *
+  * NOTE : Way faster with CBLSSeqVar but we don't have the time to change everything about CSP
+  *
+  * @param vars
+  *   The sequence representing the CSP
+  * @param carsIndexToMove
+  *   a function returning the car we are allowed to move.
+  * @param relevantPredecessorsIndex
+  *   a function returning the relevant new predecessors of the value.
+  * @param name
+  *   The name of this Neighborhood (default class name)
+  */
 class OneCarMoveNeighborhood(
-                              vars: Array[CBLSIntVar],
-                              carsIndexToMove: () => Iterable[Int],
-                              relevantPredecessorsIndex: Long => Iterable[Int],
-                              name: String
+  vars: Array[CBLSIntVar],
+  carsIndexToMove: () => Iterable[Int],
+  relevantPredecessorsIndex: Long => Iterable[Int],
+  name: String
 ) extends EasyNeighborhoodMultiLevel[OneCarMoveMove](name) {
 
   private var carPosition: Int       = -1
@@ -82,9 +85,9 @@ class OneCarMoveNeighborhood(
 
     for (carIndex <- carsIndexToMoveIterator) {
       carPosition = carIndex
-      val carValue                 = vars(carPosition).value
+      val carValue = vars(carPosition).value
       val relevantPredecessorsIndexNow =
-        if(relevantPredecessorsIndex(carValue).isEmpty) vars.indices
+        if (relevantPredecessorsIndex(carValue).isEmpty) vars.indices
         else relevantPredecessorsIndex(carValue)
 
       val (relevantPredecessorsIndexIterator, notifyFound2) =
