@@ -22,5 +22,3 @@ fi
 
 #sbt clean && sbt assembly
 irace -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --parallel 4 --train-instances-file "$DATA_DIR"/$PROBLEM/training$TRAINING_SIZE.txt
-
-echo "Root: $REPO_ROOT"
