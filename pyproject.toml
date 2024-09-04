@@ -18,6 +18,7 @@ dependencies = [
     "polars>=1.6.0",
     "matplotlib>=3.9.2",
     "altair>=5.4.1",
+    "jupyterlab>=4.2.5",
 ]
 
 
