@@ -7,8 +7,4 @@ project/project/
 .bloop
 .bsp
 metals.sbt
-**/pdptw-arena/
-**/pdptw-ucb-arena/
-**/pdptw-epsilon-arena/
-**/csp-ucb-arena/
-**/csp-epsilon-arena/
+**/*arena/
