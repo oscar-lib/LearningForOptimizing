@@ -17,15 +17,12 @@ error() {
     exit 1
 }
 
-#BANDIT="ucb"
-#BANDIT="epsilongreedy"
-
 # Path to the Learning for Optimizing executable (this path is relative to the execution directory `execDir` specified in the scenario).
 # EXE="~/bin/acotsp"
 EXE="../xp/run_one_instance_tuning.sh"
 
 # Fixed parameters that should be always passed to Learning for Optimizing.
-# The time to be used is always 10 seconds, and we want only one run: --bandit ${BANDIT}
+# The time to be used is always 10 seconds
 FIXED_PARAMS=" --timeout 10 --verbosity 0 -p pdptw"
 
 CONFIG_ID="$1"
