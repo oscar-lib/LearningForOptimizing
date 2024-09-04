@@ -2,7 +2,7 @@
 # supposed to be called at the root of the project
 
 # ------ parameters for the run -------
-declare -a BanditType=("qlearning", )
+declare -a BanditType=("epsilongreedy", "ucb", "qlearning", "bestslopefirst", "random")
 timeout=300 # timeout in seconds
 nRuns=20   # number of time an instance is run (to take randomness into account)
 nParallel=10  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
@@ -26,7 +26,7 @@ sbt assembly
 echo "compilation done"
 echo "running experiments on $nParallel core(s)"
 # creates the file so that the header is present
-echo "instance,bandit,timeout,unroutedNodes,nVehicles,travelLength,objective" > $outFilename
+echo "instance,bandit,timeout,unroutedNodes,nVehicles,travelLength,objective,integralPrimalGap" > $outFilename
 
 for (( i=1; i<=$nRuns; i++ ))  # one line per solver
 do

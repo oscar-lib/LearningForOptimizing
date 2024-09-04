@@ -53,7 +53,7 @@ object Main extends App {
     efficiencyWeight: Double = 0.2,
     moveFoundWeight: Double = 0.4,
     epsilon: Double = 0.7,
-      confidence: Double = 1
+    confidence: Double = 1
   ) extends Config
 
   private case class SolveAllConfig(
@@ -110,7 +110,9 @@ object Main extends App {
 //              "    - bandit         : the modified bandit algorithm\n" +
               "    - epsilongreedy  : an implementation of the epsilon greedy\n" +
               "    - random         : choose neighborhoods at random\n" +
-              "    - bestslopefirst : the default method"
+              "    - bestslopefirst : the default method\n" +
+              "    - dqn            : use Deep Q-Learning to select the neighborhood\n" +
+              "    - ppo            : use Proximal Policy Optimization to select the neighborhood"
           )
           .action((x, c) =>
             c match {
@@ -201,7 +203,7 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(confidence = x)
-              case _                       => throw new Error("Unexpected Error")
+              case _                         => throw new Error("Unexpected Error")
             }
           ),
         opt[Long]("seed")
@@ -456,7 +458,7 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveAllConfig => conf.copy(confidence = x)
-              case _                       => throw new Error("Unexpected Error")
+              case _                    => throw new Error("Unexpected Error")
             }
           ),
         opt[Long]("seed")

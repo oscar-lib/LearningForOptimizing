@@ -1,3 +1,4 @@
+from typing import Literal
 import torch
 from dqn import DQN
 from logger import Logger
@@ -11,18 +12,11 @@ class Runner:
     def __init__(self, bridge: Bridge):
         self.bridge = bridge
 
-    def run(self, device: torch.device):
+    def run(self, device: torch.device, algo: Literal["dqn", "ppo"]):
         logger = Logger(wandb=False, csv=True)
         logger.info("Starting runner")
         try:
-            req = self.bridge.recv()
-            if req.type != MessageType.STATIC_DATA:
-                error = f"Expected message of type {MessageType.STATIC_DATA} from the client, got {req.type}"
-                logger.error(error)
-                self.bridge.send(Message.error(error).to_bytes())
-                return
-            problem = Problem.parse(req.body)
-            self.bridge.send(Message.ack().to_bytes())
+            problem = self._retrieve_problem_data(logger)
             agent = DQN.default(problem).to(device)
             env = OptimEnv(problem, self.bridge)
             t = 0
@@ -46,3 +40,19 @@ class Runner:
             pass
         logger.info("Stopping runner")
         print("End of the runner")
+
+    def _retrieve_problem_data(self, logger: Logger):
+        req = self.bridge.recv()
+        if req.type != MessageType.STATIC_DATA:
+            error = f"Expected message of type {MessageType.STATIC_DATA} from the client, got {req.type}"
+            logger.error(error)
+            self.bridge.send(Message.error(error).to_bytes())
+            raise Exception(error)
+        problem = Problem.parse(req.body)
+        self.bridge.send(Message.ack().to_bytes())
+        return problem
+
+    def _create_agent(self, problem: Problem, algo: Literal["dqn", "ppo"], device: torch.device):
+        if algo == "dqn":
+            return DQN.default(problem).to(device)
+        raise Exception(f"Unknown algorithm: {algo}")

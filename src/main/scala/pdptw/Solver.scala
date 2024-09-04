@@ -224,11 +224,25 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15
         )
-      case "qlearning" => {
-        new QLearningNeighborhoodSelector(
+      case "dqn" => {
+        new StatefulCombinator(
           neighList,
           this.oscarModel.lilimProblem(),
-          this.oscarModel.pdpProblem
+          this.oscarModel.pdpProblem,
+          algo = RLAlgorithm.DQN
+        ) onExhaustRestartAfter (
+          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+          0,
+          obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15
+        )
+      }
+      case "ppo" => {
+        new StatefulCombinator(
+          neighList,
+          this.oscarModel.lilimProblem(),
+          this.oscarModel.pdpProblem,
+          algo = RLAlgorithm.PPO
         ) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           0,
@@ -258,7 +272,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
 
-      case _ =>
+      case other =>
+        throw new IllegalArgumentException(s"Invalid bandit specified: $other")
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(neighList) onExhaustRestartAfter (simpleNeighborhoods.emptyMultiplesVehicle(
           pdptw.v / 10
@@ -305,8 +320,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     // println(recorder.primalGapOverTime(bestKnownSolution, timeout))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f")
-    if (search.isInstanceOf[QLearningNeighborhoodSelector]) {
-      search.asInstanceOf[QLearningNeighborhoodSelector].close()
+    if (search.isInstanceOf[StatefulCombinator]) {
+      search.asInstanceOf[StatefulCombinator].close()
     }
   }
 }

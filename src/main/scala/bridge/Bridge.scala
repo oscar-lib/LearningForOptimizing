@@ -18,6 +18,7 @@ import java.io.BufferedReader
 import java.io.FileReader
 import java.io.FileInputStream
 import java.io.FileOutputStream
+import combinator.RLAlgorithm
 
 class Bridge(protected val input: InputStream, protected val output: OutputStream) {
   implicit val depRw: ReadWriter[LiLimDepot]   = macroRW
@@ -111,7 +112,7 @@ class NamedPipeBridge(input: InputStream, output: OutputStream, process: Process
 
 object NamedPipeBridge {
 
-  def apply(): NamedPipeBridge = {
+  def apply(algo: RLAlgorithm.Value): NamedPipeBridge = {
     // Scala is responsible for creating the pipes.
     // Python is responsible for cleaning them up after the run.
     val id = System.nanoTime()
@@ -121,6 +122,7 @@ object NamedPipeBridge {
     new File("pipes").mkdirs();
     createFifo(pipeOut)
     createFifo(pipeIn)
+    println(s"$algo")
 
     val process =
       new ProcessBuilder(
@@ -133,7 +135,7 @@ object NamedPipeBridge {
         "-o",
         pipeIn,
         "-a",
-        "dqn",
+        s"$algo",
         "--device=gpu"
       ).start()
     val input  = new FileInputStream(new File(pipeIn))

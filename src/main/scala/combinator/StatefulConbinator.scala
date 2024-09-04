@@ -11,10 +11,19 @@ import bridge.NamedPipeBridge
 import oscar.cbls.core.objective.Objective
 import oscar.cbls.core.search.AcceptanceCriterion
 
-class QLearningNeighborhoodSelector(
+object RLAlgorithm extends Enumeration {
+
+  /** [bidirectional] Acknowledge message.
+    */
+  final val DQN = Value("dqn")
+  final val PPO = Value("ppo")
+}
+
+class StatefulCombinator(
   neighborhoods: List[Neighborhood],
   problem: LiLimProblem,
   vrp: VRP,
+  algo: RLAlgorithm.Value,
   seed: Int = 42
 ) extends BanditSelector(
       neighborhoods: List[Neighborhood],
@@ -27,7 +36,7 @@ class QLearningNeighborhoodSelector(
   private val nActions  = neighborhoods.length
   private val nVehicles = problem.vehicles.length
   // private val bridge    = SocketBridge(5555)
-  val bridge = NamedPipeBridge()
+  val bridge = NamedPipeBridge(this.algo)
   bridge.sendStaticProblemData(this.problem, this.nActions)
 
   private def getCurrentSearchState(): List[List[Int]] = {

@@ -39,7 +39,7 @@ def main(args: Args):
         device = torch.device("cpu")
 
     server = Runner(bridge)
-    server.run(device)
+    server.run(device, args.algorithm)
 
 
 if __name__ == "__main__":
