@@ -60,6 +60,7 @@ class ReplayMemory:
 
     def end_episode(self):
         self._dones[-1] = True
+        return
         # [:-3] to get milliseconds
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")[:-3]
         os.makedirs(f"experiences/{timestamp}/", exist_ok=True)

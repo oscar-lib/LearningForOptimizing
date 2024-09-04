@@ -19,6 +19,7 @@ uv.lock
 .env
 logs/
 .devcontainer
+nohup.out
 # Directory used for named pipes
 pipes/ 
 experiences/

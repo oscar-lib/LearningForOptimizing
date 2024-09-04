@@ -122,20 +122,15 @@ object NamedPipeBridge {
     new File("pipes").mkdirs();
     createFifo(pipeOut)
     createFifo(pipeIn)
-    println(s"$algo")
 
     val process =
       new ProcessBuilder(
         ".venv/bin/python",
         "src/python/main.py",
-        "-c",
-        "pipe",
-        "-i",
-        pipeOut,
-        "-o",
-        pipeIn,
-        "-a",
-        s"$algo",
+        "-c=pipe",
+        s"-i=$pipeOut",
+        s"-o=$pipeIn",
+        s"-a=$algo",
         "--device=gpu"
       ).start()
     val input  = new FileInputStream(new File(pipeIn))
