@@ -293,11 +293,14 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     }
     println(oscarModel.toString)
     println("bestObj=" + oscarModel.objectiveFunction.value)
-    // println(recorder)
+    //println(recorder)
     val instanceName = Paths.get(fileName).getFileName.toString
     val bestKnownSolution =
       recorder.getBestKnownSolution("bks/pdptw_bks.csv", instanceName).getOrElse(0.0)
-    // println(recorder.primalGapOverTime(bestKnownSolution, timeout))
+    //val gapOverTime = recorder.primalGapOverTime(bestKnownSolution, timeout)
+    //println(f"primalGapOverTime=" + gapOverTime.map(e => f"(t=${e._1}%.3f-v=${e._2}%.6f)").mkString("[", "-", "]"))
+    val realSolutionOverTime = recorder.realObjectiveTimeStamp
+    println(f"solOverTime=" + realSolutionOverTime.map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)").mkString("[", "-", "]"))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f")
   }

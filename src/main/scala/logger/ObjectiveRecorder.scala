@@ -23,12 +23,12 @@ class ObjectiveRecorder(objective: Objective, getRealObjective: Function[Long, O
 
   // objective improvements over time, where the objective is the one described in the oscar model
   // only absolute improvements are recorded (so the absolute best found solution)
-  private val oscarObjectiveTimeStamp: ArrayBuffer[(Double, Long)] =
+  val oscarObjectiveTimeStamp: ArrayBuffer[(Double, Long)] =
     new ArrayBuffer[(Double, Long)]()
 
   // objective improvements over time, where the objective is the real one of the problem
   // only absolute improvements are recorded (so the absolute best found solution)
-  private val realObjectiveTimeStamp: ArrayBuffer[(Double, Double)] =
+  val realObjectiveTimeStamp: ArrayBuffer[(Double, Double)] =
     new ArrayBuffer[(Double, Double)]()
 
   /** Notifies that a move has been performed, possibly recording the best objective value if the
@@ -145,7 +145,7 @@ class ObjectiveRecorder(objective: Objective, getRealObjective: Function[Long, O
 
   override def toString: String = {
     val timeStampString = oscarObjectiveTimeStamp
-      .map(e => f"(t=${e._1}%.3f-v=${e._2})")
+      .map(e => f"(t:${e._1}%.3f-v:${e._2})")
       .mkString("[", "-", "]")
     s"obj=$timeStampString"
   }
