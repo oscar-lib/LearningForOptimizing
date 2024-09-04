@@ -29,8 +29,12 @@ def main(args: Args):
         case other:
             raise Exception(f"Unknown communication method: {other}")
     if args.device == "gpu":
-        device_index = int(time() * 1000) % torch.cuda.device_count()
-        device = torch.device(f"cuda:{device_index}")
+        n_devices = torch.cuda.device_count()
+        if n_devices == 0:
+            device = torch.device("cpu")
+        else:
+            device_index = int(time() * 1000) % n_devices
+            device = torch.device(f"cuda:{device_index}")
     else:
         device = torch.device("cpu")
 

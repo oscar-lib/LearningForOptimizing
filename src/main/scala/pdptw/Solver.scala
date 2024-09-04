@@ -305,5 +305,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     // println(recorder.primalGapOverTime(bestKnownSolution, timeout))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f")
+    if (search.isInstanceOf[QLearningNeighborhoodSelector]) {
+      search.asInstanceOf[QLearningNeighborhoodSelector].close()
+    }
   }
 }

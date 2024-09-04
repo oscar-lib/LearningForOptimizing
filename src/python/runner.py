@@ -12,7 +12,7 @@ class Runner:
         self.bridge = bridge
 
     def run(self, device: torch.device):
-        logger = Logger(wandb=True, csv=True)
+        logger = Logger(wandb=False, csv=True)
         logger.info("Starting runner")
         try:
             req = self.bridge.recv()
@@ -45,3 +45,4 @@ class Runner:
         except KeyboardInterrupt:
             pass
         logger.info("Stopping runner")
+        print("End of the runner")

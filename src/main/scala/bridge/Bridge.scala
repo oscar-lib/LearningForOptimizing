@@ -96,16 +96,26 @@ object SocketBridge {
   }
 }
 
-class NamedPipeBridge(input: InputStream, output: OutputStream)
-    extends Bridge(input: InputStream, output: OutputStream) {}
+class NamedPipeBridge(input: InputStream, output: OutputStream, process: Process)
+    extends Bridge(input: InputStream, output: OutputStream) {
+  def close(): Unit = {
+    this.input.close()
+    this.output.close()
+    this.process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)
+    this.process.destroy();
+    if (!this.process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)) {
+      this.process.destroyForcibly();
+    }
+  }
+}
 
 object NamedPipeBridge {
 
   def apply(): NamedPipeBridge = {
     // Scala is responsible for creating the pipes.
     // Python is responsible for cleaning them up after the run.
-    // val id = System.nanoTime()
-    val id      = 0
+    val id = System.nanoTime()
+    // val id      = 0
     val pipeOut = s"pipes/s2p-$id"
     val pipeIn  = s"pipes/p2s-$id"
     new File("pipes").mkdirs();
@@ -123,12 +133,12 @@ object NamedPipeBridge {
         "-o",
         pipeIn,
         "-a",
-        "dqn"
-      )
-    // process.start()
+        "dqn",
+        "--device=gpu"
+      ).start()
     val input  = new FileInputStream(new File(pipeIn))
     val output = new FileOutputStream(new File(pipeOut))
-    new NamedPipeBridge(input, output)
+    new NamedPipeBridge(input, output, process)
   }
 
   def createFifo(path: String) = {

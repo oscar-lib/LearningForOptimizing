@@ -8,6 +8,8 @@ import pdptw.LiLimProblem
 import oscar.cbls.core.search.SearchResult
 import oscar.cbls.core.search.NoMoveFound
 import bridge.NamedPipeBridge
+import oscar.cbls.core.objective.Objective
+import oscar.cbls.core.search.AcceptanceCriterion
 
 class QLearningNeighborhoodSelector(
   neighborhoods: List[Neighborhood],
@@ -62,4 +64,9 @@ class QLearningNeighborhoodSelector(
     super.reset()
     this.bridge.sendEpisodeEnded()
   }
+
+  def close() = {
+    this.bridge.close()
+  }
+
 }

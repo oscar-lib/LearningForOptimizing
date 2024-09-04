@@ -2,9 +2,9 @@
 # supposed to be called at the root of the project
 
 # ------ parameters for the run -------
-declare -a BanditType=("ucbNew" "epsilonGreedyNew")
+declare -a BanditType=("qlearning", )
 timeout=300 # timeout in seconds
-nRuns=10   # number of time an instance is run (to take randomness into account)
+nRuns=20   # number of time an instance is run (to take randomness into account)
 nParallel=10  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
 run_script="./xp/pdptw_run_one_instance.sh"  # executable for running the experiments
 # path to the file where the instances to run are written

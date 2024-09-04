@@ -21,3 +21,4 @@ logs/
 .devcontainer
 # Directory used for named pipes
 pipes/ 
+experiences/

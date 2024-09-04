@@ -16,7 +16,8 @@ class Logger(AbstractLogger):
         if logdir is None:
             logdir = datetime.now().strftime("logs/%Y-%m-%d_%H-%M-%S")
         self.loggers = list[AbstractLogger]()
-        assert csv or wandb, "At least one logger must be provided."
+        if not (csv or wandb):
+            Logger.warning("No logger is provided.")
         super().__init__(logdir, quiet)
         if csv:
             if isinstance(csv, CSVLogger):

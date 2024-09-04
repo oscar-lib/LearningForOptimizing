@@ -15,7 +15,9 @@ class NamedPipeBridge(Bridge):
         return self.intput_stream.read(nbytes)
 
     def send(self, bytes):
-        self.output_stream.write(bytes)
+        bytes_written = self.output_stream.write(bytes)
+        if bytes_written == 0:
+            raise ConnectionResetError("Connection with remote closed")
         self.output_stream.flush()
 
     def __del__(self):
