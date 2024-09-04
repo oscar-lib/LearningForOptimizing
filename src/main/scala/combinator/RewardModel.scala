@@ -1,7 +1,8 @@
 package combinator
 
 import oscar.cbls.core.search.Neighborhood
-import scala.collection.mutable.Queue
+
+import scala.collection.mutable
 
 abstract class RewardModel {
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
@@ -15,8 +16,8 @@ class OriginalRewardModel(
   /** weight rewarding the slope */
   wSlope: Double = 0.4
 ) extends RewardModel {
-  protected var maxSlope             = 1.0 // stores (and updates) the maximum slope ever observed
-  protected var maxRunTimeNano: Long = 1   // max run time experienced by a neighborhood
+  protected var maxSlope           = 1.0 // stores (and updates) the maximum slope ever observed
+  private var maxRunTimeNano: Long = 1   // max run time experienced by a neighborhood
 
   /** Gives a reward in [0, 1] based on finding a move. 1 means that a move was found, 0 otherwise
     *
@@ -25,7 +26,7 @@ class OriginalRewardModel(
     * @return
     *   reward in [0, 1]
     */
-  def rewardFoundMove(runStat: NeighborhoodStats): Double = {
+  private def rewardFoundMove(runStat: NeighborhoodStats): Double = {
     if (runStat.foundMove) {
       1.0
     } else {
@@ -41,7 +42,7 @@ class OriginalRewardModel(
     * @return
     *   reward in [0, 1]
     */
-  def rewardExecutionTime(runStat: NeighborhoodStats): Double = {
+  private def rewardExecutionTime(runStat: NeighborhoodStats): Double = {
     val duration = runStat.timeNano
     1.0 - duration.toDouble / maxRunTimeNano
   }
@@ -83,7 +84,7 @@ abstract class NormalizedGain() extends RewardModel {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
     val gain     = profiler._lastCallGain
     this.update(gain)
-    return this.normalize(gain)
+    this.normalize(gain)
   }
 
   protected def update(gain: Long): Unit
@@ -91,7 +92,7 @@ abstract class NormalizedGain() extends RewardModel {
 }
 
 class NormalizedMaxGain() extends NormalizedGain {
-  var maxGain = Long.MinValue
+  protected var maxGain: Long = Long.MinValue
 
   protected def update(gain: Long): Unit = {
     if (gain > maxGain) {
@@ -105,8 +106,8 @@ class NormalizedMaxGain() extends NormalizedGain {
 }
 
 class NormalizedWindowedMaxGain(windowSize: Int) extends NormalizedMaxGain {
-  val window: Queue[Long] = Queue.empty
-  var maxIndex            = 0
+  private val window: mutable.Queue[Long] = mutable.Queue.empty
+  private var maxIndex                    = 0
 
   override protected def update(gain: Long): Unit = {
     window.enqueue(gain)
@@ -128,8 +129,8 @@ class NormalizedWindowedMaxGain(windowSize: Int) extends NormalizedMaxGain {
 }
 
 class NormalizedWindowedMeanGain(windowSize: Int) extends NormalizedGain {
-  val window: Queue[Long] = Queue.empty
-  var sum                 = 0L
+  private val window: mutable.Queue[Long] = mutable.Queue.empty
+  private var sum                         = 0L
 
   override protected def update(gain: Long): Unit = {
     window.enqueue(gain)
