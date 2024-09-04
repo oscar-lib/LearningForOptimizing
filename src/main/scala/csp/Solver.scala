@@ -99,19 +99,19 @@ case class Solver(cspModel: Model, in: SolverInput) {
         case _ =>
           banditNeighborhood
             .onExhaustRestartAfter(
-              restart1,
+              restart1.acceptAll(),
               5,
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5
             )
             .onExhaustRestartAfter(
-              restart2,
+              restart2.acceptAll(),
               5,
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5
             )
             .onExhaustRestartAfter(
-              restart3,
+              restart3.acceptAll(),
               5,
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5
