@@ -6,6 +6,24 @@ import oscar.cbls.core.search.{EasyNeighborhood, Move}
 import scala.util.Random
 
 object ShuffleNeighborhood {
+
+  /** Neighborhood that shuffles some values of the variables in the Array.
+    *
+    * This Neighborhood is very likely to worsen the solution so be sure to add an AcceptAll
+    * combinator with it.
+    *
+    * ### EVERY DAY I AM SHUFFLING ###
+    *
+    * @param vars
+    *   The array containing the CBLSIntVar whose values will be shuffled
+    * @param carIndexToConsider
+    *   A function returning the list of index of variable that the neighborhood is allowed to
+    *   shuffle.
+    * @param numberOfIdToShuffle
+    *   The maximum amount of id to shuffle
+    * @param name
+    *   The name of the Neighborhood
+    */
   def apply(
     vars: Array[CBLSIntVar],
     carIndexToConsider: () => Iterable[Int] = () => Iterable.empty,
@@ -16,6 +34,21 @@ object ShuffleNeighborhood {
   }
 }
 
+/** Neighborhood that shuffles some values of the variables in the Array.
+  *
+  * This Neighborhood is very likely to worsen the solution so be sure to add an AcceptAll
+  * combinator with it.
+  *
+  * @param vars
+  *   The array containing the CBLSIntVar whose values will be shuffled
+  * @param carIndexToConsider
+  *   A function returning the list of index of variable that the neighborhood is allowed to
+  *   shuffle.
+  * @param numberOfIdToShuffle
+  *   The maximum amount of id to shuffle
+  * @param name
+  *   The name of the Neighborhood
+  */
 class ShuffleNeighborhood(
   vars: Array[CBLSIntVar],
   carIndexToConsider: () => Iterable[Int],
@@ -57,6 +90,19 @@ class ShuffleNeighborhood(
   }
 }
 
+/** A move that applies a Shuffle move
+  *
+  * @param vars
+  *   The Array of variable containing the shuffled value
+  * @param shuffledCarIndices
+  *   The indices of the shuffled variables
+  * @param shuffledCarNewValues
+  *   The new values of the shuffled variables
+  * @param objAfter
+  *   The objective function after the shuffling
+  * @param name
+  *   The name of the move
+  */
 case class ShuffleMove(
   vars: Array[CBLSIntVar],
   shuffledCarIndices: Iterable[Int],
