@@ -8,3 +8,9 @@ project/project/
 .bloop
 .bsp
 metals.sbt
+
+uv.lock
+*.pyc
+.env
+.venv
+venv
