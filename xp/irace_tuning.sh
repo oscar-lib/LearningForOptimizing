@@ -1,6 +1,6 @@
 #run from anywhere, but do not move this file
 #example run: ./irace_tuning.sh pdptw ucb
-PROBLEM=$1 # pdptw, ucb
+PROBLEM=$1 # pdptw, csp
 ALGO=$2    # epsilongreedy, ucb
 TRAINING_SIZE=$3
 if [ $# -lt 3 ]; then
