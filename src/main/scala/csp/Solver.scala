@@ -14,11 +14,12 @@
 package csp
 
 import util.SolverInput
-
 import combinator._
+import logger.ObjectiveRecorder
 import oscar.cbls._
 import oscar.cbls.core.search.Neighborhood
 
+import java.nio.file.Paths
 import scala.concurrent.duration.Duration
 
 /** This class is responsible for the handling of the local search procedure for the given car
@@ -127,6 +128,9 @@ case class Solver(cspModel: Model, in: SolverInput) {
     if (display)
       search = search showObjectiveFunction obj
 
+    val recorder = new ObjectiveRecorder(cspModel.obj, _ => Some(cspModel.obj.value.toDouble))
+    search = search.afterMove(recorder.notifyMove())
+
     search.verbose = verbosity
     search.doAllMoves(_ => c.isTrue, obj = obj)
     if (verbosity > 1) {
@@ -141,5 +145,11 @@ case class Solver(cspModel: Model, in: SolverInput) {
       if (c.violation.value == 0) "Problem solved"
       else s"PROBLEM COULD NOT BE SOLVED: ${c.violation}"
     )
+    val instanceName = Paths.get(fileName).getFileName.toString
+    val bestKnownSolution =
+      recorder.getBestKnownSolution("bks/csp_bks.csv", instanceName).getOrElse(0.0)
+    // println(recorder.primalGapOverTime(bestKnownSolution, timeout))
+    val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
+    println(f"integralPrimalGap=$integralPrimalGap%.3f")
   }
 }
