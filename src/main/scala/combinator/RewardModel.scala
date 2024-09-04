@@ -4,8 +4,21 @@ import oscar.cbls.core.search.Neighborhood
 
 import scala.collection.mutable
 
-abstract class RewardModel {
+sealed abstract class RewardModel {
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
+
+  /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
+   * one
+   *
+   * @param runStat
+   *   statistics from a performed move
+   * @return
+   *   reward in [0, 1]
+   */
+  def slope(runStat: NeighborhoodStats): Double = {
+    val slope = runStat.slope
+    Math.abs(slope)
+  }
 }
 
 class OriginalRewardModel(
@@ -52,33 +65,17 @@ class OriginalRewardModel(
     this.maxRunTimeNano = Math.max(this.maxRunTimeNano, runStat.timeNano)
     this.wSol * rewardFoundMove(runStat) +
       this.wEff * rewardExecutionTime(runStat) +
-      this.wSlope * SlopeReward(runStat)
+      this.wSlope * slope(runStat)
   }
 }
 
 class SlopeReward extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
-    SlopeReward(runStat)
+    slope(runStat)
   }
 }
 
-object SlopeReward {
-
-  /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
-    * one
-    *
-    * @param runStat
-    *   statistics from a performed move
-    * @return
-    *   reward in [0, 1]
-    */
-  def apply(runStat: NeighborhoodStats): Double = {
-    val slope = runStat.slope
-    Math.abs(slope)
-  }
-}
-
-abstract class NormalizedGain extends RewardModel {
+sealed abstract class NormalizedGain extends RewardModel {
 
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
