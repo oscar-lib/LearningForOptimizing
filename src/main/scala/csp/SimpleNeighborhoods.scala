@@ -45,15 +45,15 @@ case class SimpleNeighborhoods(cspModel: Model) extends StandardNeighborhoods {
     indices: Option[() => Iterable[Int]] = None,
     numOfPositions: Option[Int] = None
   ): Neighborhood = {
-    shuffleNeighborhood(
+    ShuffleNeighborhood(
       carSeq,
       indices match {
         case Some(x) => x
-        case None    => null
+        case None    => () => Iterable.empty
       },
-      numberOfShuffledPositions = numOfPositions match {
-        case Some(x) => () => x
-        case None    => () => Int.MaxValue
+      numberOfIdToShuffle = numOfPositions match {
+        case Some(x) => x
+        case None    => Int.MaxValue
       },
       name = "Shuffle Cars"
     )
