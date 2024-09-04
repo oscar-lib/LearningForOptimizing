@@ -1,22 +1,20 @@
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Optional
-import numpy as np
-from torch_geometric.data import Data
 
 import torch
-
 from optimenv import Observation
 from policies import EpsilonGreedy
-
 from problem import Problem
-from replay_memory.prioritized_memory import PrioritizedMemory
 from qtarget_updater import HardUpdate
+from replay_memory.prioritized_memory import PrioritizedMemory
 from replay_memory.replay_memory import Batch, ReplayMemory
+
+from .algo import Algo
 
 
 @dataclass
-class DQN:
+class DQN(Algo):
     qnetwork: torch.nn.Module
     memory: ReplayMemory
     gamma: float
@@ -35,6 +33,7 @@ class DQN:
         double_qlearning: bool = False,
         device: Optional[torch.device] = None,
     ):
+        super().__init__()
         if device is None:
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.device = device

@@ -1,6 +1,6 @@
 from typing import Literal
 import torch
-from dqn import DQN
+from algos.dqn import DQN
 from logger import Logger
 from bridge.protocol.message import Message, MessageType
 from bridge import Bridge

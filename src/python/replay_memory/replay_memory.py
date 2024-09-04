@@ -37,7 +37,6 @@ class Batch:
 @dataclass
 class ReplayMemory:
     max_size: int
-    name: str
 
     def __init__(self, max_size: int):
         self._actions: Deque[int] = deque(maxlen=max_size)
@@ -119,6 +118,11 @@ class ReplayMemory:
 
     def clear(self):
         self._dones.clear()
+        self._obs.clear()
+        self._next_obs.clear()
+        self._actions.clear()
+        self._rewards.clear()
+        self.index_episode_start = 0
 
     @property
     def is_full(self):
