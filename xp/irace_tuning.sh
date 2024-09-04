@@ -1,5 +1,5 @@
 #run from anywhere, but do not move this file
-#example run: ./irace_ucb_pdptw_tuning.sh pdptw ucb
+#example run: ./irace_tuning.sh pdptw ucb
 PROBLEM=$1 # pdptw, ucb
 ALGO=$2    # epsilongreedy, ucb
 TRAINING_SIZE=$3
