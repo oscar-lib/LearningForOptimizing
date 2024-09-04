@@ -6,7 +6,7 @@
 ## value on the command line).
 
 ## File that contains the description of the parameters.
-parameterFile = "./parameters-epsilon.txt"
+parameterFile = "./parameters-epsilongreedy.txt"
 
 ## Directory where the programs will be run.
 execDir = "../csp-epsilon-arena"
@@ -21,7 +21,7 @@ maxExperiments = 800
 
 ## File that contains a set of initial configurations. If empty or NULL,
 ## all initial configurations are randomly generated.
-configurationsFile = "./defaults-epsilon.txt"
+configurationsFile = "./defaults-epsilongreedy.txt"
 
 ## File that contains a list of logical expressions that cannot be TRUE
 ## for any evaluated configuration. If empty or NULL, do not use forbidden
