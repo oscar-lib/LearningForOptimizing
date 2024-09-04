@@ -16,13 +16,19 @@ import util.SolverInput
 import oscar.cbls.core.search.Neighborhood
 
 class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput)
-    extends BanditSelector(neighborhoods, AfterEveryMove, learningRate = in.learningRate) {
+    extends BanditSelector(
+      neighborhoods,
+      AfterEveryMove,
+      learningRate = in.learningRate,
+      rewardModel = new OriginalRewardModel(
+        wSol = in.moveFoundWeight,
+        wEff = in.efficiencyWeight,
+        wSlope = in.slopeWeight
+      )
+    ) {
 
   private var t: Int = 0 // number of times the bandit was called to provide the next neighborhood
-  private val wSol   = in.moveFoundWeight  // weight rewarding a move being found
-  private val wEff   = in.efficiencyWeight // weight rewarding small execution time
-  private val wSlope = in.slopeWeight      // weight rewarding the slope
-  private val wConf  = in.confidence       // weight of the confidence width
+  private val wConf                      = in.confidence // weight of the confidence width
   private var neigh_idx_max: Vector[Int] = Vector.empty
 
   /** The method that provides a neighborhood.
@@ -52,14 +58,4 @@ class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput)
     Some(neighborhoods(neigh_idx))
   }
 
-  /** The method that computes a reward associated to a neighborhood.
-    *
-    * @return
-    *   Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
-    */
-  override def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
-    wSol * rewardFoundMove(runStat) +
-      wEff * rewardExecutionTime(runStat) +
-      wSlope * rewardSlope(runStat)
-  }
 }
