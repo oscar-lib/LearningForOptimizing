@@ -12,7 +12,7 @@ REPO_ROOT="$(dirname "$(dirname "$(realpath "$0")")")"
 IRACE_DIR=$REPO_ROOT/irace
 DATA_DIR=$REPO_ROOT/examples
 
-DATA_DIRECTORY=$ROOT/$PROBLEM-$ALGO-arena
+DATA_DIRECTORY=$ROOT$PROBLEM-$ALGO-arena
 SCENARIO=$IRACE_DIR/scenario-$PROBLEM-$ALGO.txt
 TARGET_RUNNER=$IRACE_DIR/target-runner-$PROBLEM
 
