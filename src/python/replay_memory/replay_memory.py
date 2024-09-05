@@ -21,6 +21,26 @@ class Batch:
     dones: torch.Tensor
     next_obs: Data
     next_available_actions: torch.Tensor
+    size: int
+
+    def __init__(
+        self,
+        obs: Data,
+        available_actions: torch.Tensor,
+        actions: torch.Tensor,
+        rewards: torch.Tensor,
+        dones: torch.Tensor,
+        next_obs: Data,
+        next_available_actions: torch.Tensor,
+    ):
+        self.obs = obs
+        self.available_actions = available_actions
+        self.actions = actions
+        self.rewards = rewards
+        self.dones = dones
+        self.next_obs = next_obs
+        self.next_available_actions = next_available_actions
+        self.size = len(rewards)
 
     def to(self, device: torch.device) -> "Batch":
         return Batch(
@@ -30,8 +50,11 @@ class Batch:
             rewards=self.rewards.to(device, non_blocking=True),
             dones=self.dones.to(device, non_blocking=True),
             next_obs=self.next_obs.to(device.index, non_blocking=True),
-            next_available_actions=self.next_available_actions.to(device),
+            next_available_actions=self.next_available_actions.to(device, non_blocking=True),
         )
+
+    def __len__(self):
+        return self.size
 
 
 @dataclass
@@ -92,9 +115,8 @@ class ReplayMemory:
             pickle.dump(next_obs, f)
         self.index_episode_start = len(self)
 
-    def sample(self, batch_size: int) -> Batch:
-        """Sample the memory to retrieve a `Batch`"""
-        indices = np.random.randint(0, len(self), batch_size)
+    def _get_batch(self, indices: np.ndarray) -> Batch:
+        batch_size = len(indices)
         obs = DataLoader([self._obs[i].graph for i in indices], batch_size=batch_size, shuffle=False)._get_iterator().__next__()
         next_obs = DataLoader([self._next_obs[i].graph for i in indices], batch_size=batch_size, shuffle=False)._get_iterator().__next__()
         actions = torch.tensor([self._actions[i] for i in indices], dtype=torch.long).unsqueeze(-1)
@@ -111,6 +133,16 @@ class ReplayMemory:
             next_obs=next_obs,
             next_available_actions=next_available_actions,
         )
+
+    def sample(self, batch_size: int) -> Batch:
+        """Randomly sample the memory to retrieve a `Batch`"""
+        indices = np.random.randint(0, len(self), batch_size)
+        return self._get_batch(indices)
+
+    def get_all(self):
+        """Return all items in the memory as a `Batch`"""
+        indices = np.arange(len(self))
+        return self._get_batch(indices)
 
     def can_sample(self, batch_size: int) -> bool:
         """Return whether the memory contains enough items to sample a batch of the given size"""

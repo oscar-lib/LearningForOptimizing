@@ -55,9 +55,10 @@ class Actor(torch.nn.Module):
             torch.nn.Linear(128, 64),
             torch.nn.LeakyReLU(0.1),
             torch.nn.Linear(64, problem.n_actions),
+            torch.nn.Softmax(dim=-1),
         )
 
-    def forward(self, data: Data):
+    def forward(self, data: Data) -> torch.Tensor:
         assert data.x is not None
         node_x = self.node_conv1.forward(data.x, data.edge_index)
         node_x = self.lrelu(node_x)
@@ -65,11 +66,6 @@ class Actor(torch.nn.Module):
         node_x = gnn.pool.global_max_pool(node_x, batch=data.batch)
         x = self.linear.forward(node_x)
         return x
-
-    def pi(self, state, softmax_dim=0):
-        n = self.forward(state)
-        prob = F.softmax(self.l3(n), dim=softmax_dim)
-        return prob
 
 
 class Critic(torch.nn.Module):
@@ -87,7 +83,7 @@ class Critic(torch.nn.Module):
             torch.nn.Linear(64, 1),
         )
 
-    def forward(self, data: Data):
+    def forward(self, data: Data) -> torch.Tensor:
         assert data.x is not None
         node_x = self.node_conv1.forward(data.x, data.edge_index)
         node_x = self.lrelu(node_x)

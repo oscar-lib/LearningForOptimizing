@@ -1,6 +1,6 @@
 from typing import Literal
 import torch
-from algos.dqn import DQN
+from algos import DQN, PPO, Algo
 from logger import Logger
 from bridge.protocol.message import Message, MessageType
 from bridge import Bridge
@@ -52,7 +52,10 @@ class Runner:
         self.bridge.send(Message.ack().to_bytes())
         return problem
 
-    def _create_agent(self, problem: Problem, algo: Literal["dqn", "ppo"], device: torch.device):
-        if algo == "dqn":
-            return DQN.default(problem).to(device)
+    def _create_agent(self, problem: Problem, algo: Literal["dqn", "ppo"], device: torch.device) -> Algo:
+        match algo:
+            case "dqn":
+                return DQN.default(problem).to(device)
+            case "ppo":
+                return PPO.default(problem).to(device)
         raise Exception(f"Unknown algorithm: {algo}")
