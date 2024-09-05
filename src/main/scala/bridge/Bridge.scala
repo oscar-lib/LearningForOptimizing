@@ -97,15 +97,22 @@ object SocketBridge {
   }
 }
 
-class NamedPipeBridge(input: InputStream, output: OutputStream, process: Process)
+class NamedPipeBridge(input: InputStream, output: OutputStream, process: Option[Process])
     extends Bridge(input: InputStream, output: OutputStream) {
   def close(): Unit = {
     this.input.close()
     this.output.close()
-    this.process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)
-    this.process.destroy();
-    if (!this.process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)) {
-      this.process.destroyForcibly();
+    if (this.process.isEmpty) {
+      return
+    }
+    process match {
+      case Some(p) => {
+        p.destroy()
+        if (!p.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)) {
+          p.destroyForcibly()
+        }
+      }
+      case None => {}
     }
   }
 }
@@ -113,17 +120,27 @@ class NamedPipeBridge(input: InputStream, output: OutputStream, process: Process
 object NamedPipeBridge {
 
   def apply(algo: RLAlgorithm.Value): NamedPipeBridge = {
+    val DEBUG = true
     // Scala is responsible for creating the pipes.
     // Python is responsible for cleaning them up after the run.
-    val id = System.nanoTime()
+    val id = if (DEBUG) { 0 }
+    else { System.nanoTime() }
     // val id      = 0
     val pipeOut = s"pipes/s2p-$id"
     val pipeIn  = s"pipes/p2s-$id"
     new File("pipes").mkdirs();
+    val pipe1 = new File(pipeOut)
+    val pipe2 = new File(pipeIn)
+    if (pipe1.exists()) {
+      pipe1.delete()
+    }
+    if (pipe2.exists()) {
+      pipe2.delete()
+    }
     createFifo(pipeOut)
     createFifo(pipeIn)
 
-    val process =
+    val builder =
       new ProcessBuilder(
         ".venv/bin/python",
         "src/python/main.py",
@@ -132,7 +149,9 @@ object NamedPipeBridge {
         s"-o=$pipeIn",
         s"-a=$algo",
         "--device=gpu"
-      ).start()
+      )
+    val process = if (DEBUG) { None }
+    else { Some(builder.start()) }
     val input  = new FileInputStream(new File(pipeIn))
     val output = new FileOutputStream(new File(pipeOut))
     new NamedPipeBridge(input, output, process)

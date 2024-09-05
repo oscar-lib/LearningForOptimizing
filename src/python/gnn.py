@@ -55,7 +55,6 @@ class Actor(torch.nn.Module):
             torch.nn.Linear(128, 64),
             torch.nn.LeakyReLU(0.1),
             torch.nn.Linear(64, problem.n_actions),
-            torch.nn.Softmax(dim=-1),
         )
 
     def forward(self, data: Data) -> torch.Tensor:

@@ -19,10 +19,8 @@ class Batch:
     rewards: torch.Tensor
     dones: torch.Tensor
     size: int
-    values: torch.Tensor
-    log_probs: torch.Tensor
 
-    def returns(self, gamma: float):
+    def normalized_returns(self, gamma: float):
         """(normalized) Monte Carlo estimate of the state values (returns)."""
         returns = []
         discounted_reward = 0
@@ -37,6 +35,16 @@ class Batch:
         returns = (returns - returns.mean()) / (returns.std() + 1e-7)
         return returns
 
+    def to(self, device: torch.device) -> "Batch":
+        return Batch(
+            obs=self.obs.to(device.index, non_blocking=True),
+            available_actions=self.available_actions.to(device),
+            actions=self.actions.to(device, non_blocking=True),
+            rewards=self.rewards.to(device, non_blocking=True),
+            dones=self.dones.to(device, non_blocking=True),
+            size=self.size,
+        )
+
     def tmp(self, gamma: float):
         result = torch.zeros_like(self.rewards, dtype=torch.float32)
         next_step_returns = self.rewards[-1]
@@ -46,24 +54,17 @@ class Batch:
             result[step] = next_step_returns
         return result
 
-    def advantages(self, returns: torch.Tensor):
-        return returns - self.values
-
 
 class RolloutBuffer:
     def __init__(self):
         self.actions = list[int]()
         self.obs = list[Observation]()
-        self.logprobs = list[float]()
         self.rewards = list[float]()
-        self.values = list[float]()
         self.dones = list[bool]()
 
-    def store_action(self, obs: Observation, action: int, action_logprob: float, value: float):
+    def store_action(self, obs: Observation, action: int):
         self.obs.append(obs)
         self.actions.append(action)
-        self.logprobs.append(action_logprob)
-        self.values.append(value)
         self.dones.append(False)
 
     def store_reward(self, reward: float, next_obs: Observation):
@@ -71,11 +72,11 @@ class RolloutBuffer:
 
     def end_episode(self):
         self.dones[-1] = True
+        self.rewards.append(0)
 
     def clear(self):
         self.actions = []
         self.obs = []
-        self.logprobs = []
         self.rewards = []
         self.values = []
         self.dones = []
@@ -86,7 +87,6 @@ class RolloutBuffer:
         actions = torch.tensor(self.actions, dtype=torch.long)
         rewards = torch.tensor(self.rewards, dtype=torch.float32)
         dones = torch.tensor(self.dones, dtype=torch.bool)
-        values = torch.tensor(self.values, dtype=torch.float32)
         available_actions = torch.from_numpy(np.array([obs.available_actions for obs in self.obs], dtype=bool))
         return Batch(
             obs=obs,
@@ -95,9 +95,10 @@ class RolloutBuffer:
             rewards=rewards,
             dones=dones,
             size=batch_size,
-            values=values,
-            log_probs=torch.tensor(self.logprobs, dtype=torch.float32),
         )
+
+    def __len__(self):
+        return len(self.actions)
 
 
 class PPO(Algo):
@@ -109,6 +110,7 @@ class PPO(Algo):
         gamma,
         K_epochs,
         eps_clip,
+        batch_size=32,
         device: torch.device | None = None,
         c1: float = 0.5,
         c2: float = 0.01,
@@ -119,6 +121,7 @@ class PPO(Algo):
         self.K_epochs = K_epochs
         self.c1 = c1
         self.c2 = c2
+        self.batch_size = batch_size
 
         if device is None:
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -142,50 +145,54 @@ class PPO(Algo):
             lr_actor=0.001,
             lr_critic=0.001,
             gamma=0.99,
-            K_epochs=4,
+            K_epochs=20,
             eps_clip=0.2,
         )
 
     def select_action(self, obs: Observation):
         with torch.no_grad():
-            obs.graph = obs.graph.to(self.device.index)
-            log_probs = self.actor.forward(obs.graph)
-            value = self.critic.forward(obs.graph)
-
+            obs.graph = obs.graph.to(self.device.index, non_blocking=True)
+            obs.available_actions = obs.available_actions.to(self.device, non_blocking=True)
+            logits = self.actor.forward(obs.graph).squeeze()
             # mask unavailable actions
-            log_probs[obs.available_actions == 0] = -torch.inf
-            dist = Categorical(log_probs)
-            action = dist.sample()
-            action_logprob = dist.log_prob(action).item()
-            action = int(action.item())
+            logits[~obs.available_actions] = -torch.inf
+            dist = Categorical(logits=logits)
+            action = int(dist.sample().item())
 
-        self.buffer.store_action(obs, action, action_logprob, value.item())
-        return action, log_probs.numpy(force=True)
+        self.buffer.store_action(obs, action)
+        return action, logits.numpy(force=True)
 
     def learn(self, time_step: int, obs: Observation, action: int, reward: float, next_obs: Observation) -> dict[str, float]:
         self.buffer.store_reward(reward, next_obs)
-        return {}
+        if len(self.buffer) < self.batch_size:
+            return {}
+        return self.update(next_obs)
 
     def notify_episode_end(self):
         self.buffer.end_episode()
 
-    def update(self):
-        batch = self.buffer.sample()
-        returns = batch.returns(self.gamma)
-        advantages = batch.advantages(returns)
+    def update(self, next_obs: Observation):
+        batch = self.buffer.sample().to(self.device)
+        # next_state_value = self.critic.forward(next_obs.graph).squeeze().item()
+        returns = batch.normalized_returns(self.gamma)
+        with torch.no_grad():
+            old_values = self.critic.forward(batch.obs).squeeze()
+            old_logits = self.actor.forward(batch.obs)
+            old_log_probs = Categorical(logits=old_logits).log_prob(batch.actions)
+            advantages = returns - old_values
+        total_loss = 0
         # Optimize policy for K epochs
         for _ in range(self.K_epochs):
             # Evaluating old actions and values
-            logprobs = self.actor.forward(batch.obs)
-            dist_entropy = Categorical(logits=logprobs).entropy()
-            state_values = self.critic.forward(batch.obs)
+            logits = self.actor.forward(batch.obs)
+            dist = Categorical(logits=logits)
 
-            # match state_values tensor dimensions with rewards tensor
-            state_values = torch.squeeze(state_values)
+            log_probs = dist.log_prob(batch.actions)
+            state_values = self.critic.forward(batch.obs).squeeze()
 
             # Finding the ratio (pi_theta / pi_theta__old)
-            ratios = torch.exp(logprobs - batch.log_probs)
-
+            ratios = torch.exp(log_probs - old_log_probs)
+            dist_entropy = dist.entropy()
             # Finding Surrogate Loss
             surr1 = ratios * advantages
             surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
@@ -193,15 +200,16 @@ class PPO(Algo):
             # final loss of clipped objective PPO
             actor_loss = -torch.min(surr1, surr2)
             critic_loss = self.mse_loss.forward(state_values, returns)
-            loss = actor_loss + self.c1 * critic_loss - self.c2 * dist_entropy
+            loss = torch.mean(actor_loss + self.c1 * critic_loss - self.c2 * dist_entropy)
 
             # take gradient step
             self.optimizer.zero_grad()
-            loss.mean().backward()
+            loss.backward()
             self.optimizer.step()
+            total_loss += loss.item()
 
-        # clear buffer
         self.buffer.clear()
+        return {"avg-loss": total_loss / self.K_epochs}
 
     def to(self, device: torch.device):
         self.actor.to(device, non_blocking=True)

@@ -3,6 +3,8 @@ import struct
 import numpy as np
 from dataclasses import dataclass
 
+import torch
+
 from bridge import Bridge
 from bridge.protocol.message import Message, MessageType
 from problem import Problem
@@ -16,7 +18,7 @@ class EpisodeEndException(Exception):
 @dataclass
 class Observation:
     graph: Data
-    available_actions: np.ndarray
+    available_actions: torch.Tensor
 
 
 class OptimEnv:
@@ -50,4 +52,4 @@ class OptimEnv:
         available_actions = data["available"]
         data = self.problem.build_agent_input(routes)
         # TODO: move build_agent_input to the environment
-        return Observation(graph=data, available_actions=np.array(available_actions, dtype=np.bool))
+        return Observation(graph=data, available_actions=torch.tensor(available_actions, dtype=torch.bool))

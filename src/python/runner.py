@@ -17,7 +17,7 @@ class Runner:
         logger.info("Starting runner")
         try:
             problem = self._retrieve_problem_data(logger)
-            agent = DQN.default(problem).to(device)
+            agent = self._create_agent(problem, algo, device)
             env = OptimEnv(problem, self.bridge)
             t = 0
             while True:
@@ -25,10 +25,10 @@ class Runner:
                 try:
                     while True:
                         t += 1
-                        action, qvalues = agent.select_action(obs)
+                        action, action_data = agent.select_action(obs)
                         next_obs, reward = env.step(action)
                         logs = agent.learn(t, obs, action, reward, next_obs)
-                        logs = logs | {"action": action, "reward": reward} | {f"q-{i}": q for i, q in enumerate(qvalues)}
+                        logs = logs | {"action": action, "reward": reward} | {f"action-{i}": x for i, x in enumerate(action_data)}
                         logger.log(logs, t)
                         obs = next_obs
                 except EpisodeEndException:
