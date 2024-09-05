@@ -8,5 +8,6 @@ launch_solver="java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.
 output=`$launch_solver --problem csp --input ${instance} --timeout ${timeout} --bandit ${bandit} --verbosity 0`
 # post process to extract only the relevant information
 objective=$(echo "$output" | grep 'bestObj' | awk -F'=' '{print $2}')
+integralPrimalGap=$(echo "$output" | grep 'integralPrimalGap' | awk -F'=' '{print $2}')
 # prints the relevant informations
-echo "$instance,$bandit,$timeout,$objective"
+echo "$instance,$bandit,$timeout,$objective,$integralPrimalGap"
