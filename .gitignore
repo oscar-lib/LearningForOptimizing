@@ -2,13 +2,12 @@ target/
 project/project/
 .bsp/
 .idea/
-
 .vscode
 .metals
 .bloop
 .bsp
 metals.sbt
-
+**/*arena/
 uv.lock
 *.pyc
 .env

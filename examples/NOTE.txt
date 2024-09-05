@@ -1,0 +1,8 @@
+NOTE on what to check before launching a tuning:
+- the irace files (scenario.txt, parameters.txt, target-runner) assume the tuning is launched from the root folder. Irace should work fine with relative paths, provided they are correct, but there is always the possibility that some executable or other file called from inside a script is located in a different place than expected
+- if that's ok for you, copy the irace files to the root folder
+- otherwise, remember to check all the paths
+- in any case, the first time you launch a tuning, some issues are to be expected, so make some tests before launching a full tuning. One thing to try is to manually execute the target-runner with the appropriate file paths
+- Fix the mistakes
+- Launch the tuning
+- Cross your fingers

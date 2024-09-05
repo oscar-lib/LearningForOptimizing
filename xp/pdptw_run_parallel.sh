@@ -3,9 +3,9 @@
 
 # ------ parameters for the run -------
 declare -a BanditType=("ucbNew" "epsilonGreedyNew")
-timeout=300 # timeout in seconds
-nRuns=10   # number of time an instance is run (to take randomness into account)
-nParallel=4  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
+timeout=10 # timeout in seconds
+nRuns=1   # number of time an instance is run (to take randomness into account)
+nParallel=1  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
 run_script="./xp/pdptw_run_one_instance.sh"  # executable for running the experiments
 # path to the file where the instances to run are written
 # each line in this file should be the full path to an instance to run
@@ -26,7 +26,7 @@ sbt assembly
 echo "compilation done"
 echo "running experiments on $nParallel core(s)"
 # creates the file so that the header is present
-echo "instance,bandit,timeout,unroutedNodes,nVehicles,travelLength,objective" > $outFilename
+echo "instance,bandit,timeout,unroutedNodes,nVehicles,travelLength,objective,solOverTime" > $outFilename
 
 for (( i=1; i<=$nRuns; i++ ))  # one line per solver
 do
