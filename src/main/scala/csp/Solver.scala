@@ -14,11 +14,12 @@
 package csp
 
 import util.SolverInput
-
 import combinator._
+import logger.ObjectiveRecorder
 import oscar.cbls._
 import oscar.cbls.core.search.Neighborhood
 
+import java.nio.file.Paths
 import scala.concurrent.duration.Duration
 
 /** This class is responsible for the handling of the local search procedure for the given car
@@ -41,7 +42,16 @@ case class Solver(cspModel: Model, in: SolverInput) {
     val withTimeout = timeout < Int.MaxValue
 
     val neighList: List[Neighborhood] =
-      List(sn.swapMostViolated() exhaust sn.wideningFlip(), sn.wideningFlip(), sn.swap())
+      List(
+        sn.wideningSwapMostViolated(),
+        sn.swapMostViolated(),
+        sn.wideningFlipMostViolated(),
+        sn.wideningSwap(),
+        sn.wideningFlip(),
+        sn.swap(),
+        sn.oneCarMove(),
+        sn.oneCarMoveMostViolated()
+      )
 
     val mostViolated = cspModel.mostViolatedCars
     val violated     = cspModel.violatedCars
@@ -90,19 +100,19 @@ case class Solver(cspModel: Model, in: SolverInput) {
         case _ =>
           banditNeighborhood
             .onExhaustRestartAfter(
-              restart1,
+              restart1.acceptAll(),
               5,
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5
             )
             .onExhaustRestartAfter(
-              restart2,
+              restart2.acceptAll(),
               5,
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5
             )
             .onExhaustRestartAfter(
-              restart3,
+              restart3.acceptAll(),
               5,
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5
@@ -118,6 +128,9 @@ case class Solver(cspModel: Model, in: SolverInput) {
     if (display)
       search = search showObjectiveFunction obj
 
+    val recorder = new ObjectiveRecorder(cspModel.obj, _ => Some(cspModel.obj.value.toDouble))
+    search = search.afterMove(recorder.notifyMove())
+
     search.verbose = verbosity
     search.doAllMoves(_ => c.isTrue, obj = obj)
     if (verbosity > 1) {
@@ -132,5 +145,11 @@ case class Solver(cspModel: Model, in: SolverInput) {
       if (c.violation.value == 0) "Problem solved"
       else s"PROBLEM COULD NOT BE SOLVED: ${c.violation}"
     )
+    val instanceName = Paths.get(fileName).getFileName.toString
+    val bestKnownSolution =
+      recorder.getBestKnownSolution("bks/csp_bks.csv", instanceName).getOrElse(0.0)
+    // println(recorder.primalGapOverTime(bestKnownSolution, timeout))
+    val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
+    println(f"integralPrimalGap=$integralPrimalGap%.3f")
   }
 }

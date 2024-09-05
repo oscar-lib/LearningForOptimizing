@@ -1,10 +1,24 @@
 package combinator
 
 import oscar.cbls.core.search.Neighborhood
-import scala.collection.mutable.Queue
 
-abstract class RewardModel {
+import scala.collection.mutable
+
+sealed abstract class RewardModel {
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
+
+  /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
+    * one
+    *
+    * @param runStat
+    *   statistics from a performed move
+    * @return
+    *   reward in [0, 1]
+    */
+  def slope(runStat: NeighborhoodStats): Double = {
+    val slope = runStat.slope
+    Math.abs(slope)
+  }
 }
 
 class OriginalRewardModel(
@@ -25,7 +39,7 @@ class OriginalRewardModel(
     * @return
     *   reward in [0, 1]
     */
-  def rewardFoundMove(runStat: NeighborhoodStats): Double = {
+  private def rewardFoundMove(runStat: NeighborhoodStats): Double = {
     if (runStat.foundMove) {
       1.0
     } else {
@@ -41,7 +55,7 @@ class OriginalRewardModel(
     * @return
     *   reward in [0, 1]
     */
-  def rewardExecutionTime(runStat: NeighborhoodStats): Double = {
+  private def rewardExecutionTime(runStat: NeighborhoodStats): Double = {
     val duration = runStat.timeNano
     1.0 - duration.toDouble / maxRunTimeNano
   }
@@ -51,52 +65,31 @@ class OriginalRewardModel(
     this.maxRunTimeNano = Math.max(this.maxRunTimeNano, runStat.timeNano)
     this.wSol * rewardFoundMove(runStat) +
       this.wEff * rewardExecutionTime(runStat) +
-      this.wSlope * SlopeReward(runStat)
+      this.wSlope * slope(runStat)
   }
 }
 
-class SlopeReward() extends RewardModel {
+class SlopeReward extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
-    SlopeReward(runStat)
+    slope(runStat)
   }
 }
 
-object SlopeReward {
-
-  /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
-    * one
-    *
-    * @param runStat
-    *   statistics from a performed move
-    * @return
-    *   reward in [0, 1]
-    */
-  def apply(runStat: NeighborhoodStats): Double = {
-    val slope = runStat.slope
-    Math.abs(slope)
-  }
-}
-
-abstract class NormalizedGain() extends RewardModel {
+sealed abstract class NormalizedGain extends RewardModel {
 
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
-    val gain = if (!runStat.foundMove) {
-      -1
-    } else {
-      profiler._lastCallGain
-    }
-
+    val gain     = profiler._lastCallGain
     this.update(gain)
-    return this.normalize(gain)
+    this.normalize(gain)
   }
 
   protected def update(gain: Long): Unit
   protected def normalize(gain: Long): Double
 }
 
-class NormalizedMaxGain() extends NormalizedGain {
-  var maxGain = Long.MinValue
+class NormalizedMaxGain extends NormalizedGain {
+  protected var maxGain: Long = Long.MinValue
 
   protected def update(gain: Long): Unit = {
     if (gain > maxGain) {
@@ -110,8 +103,8 @@ class NormalizedMaxGain() extends NormalizedGain {
 }
 
 class NormalizedWindowedMaxGain(windowSize: Int) extends NormalizedMaxGain {
-  val window: Queue[Long] = Queue.empty
-  var maxIndex            = 0
+  private val window: mutable.Queue[Long] = mutable.Queue.empty
+  private var maxIndex                    = 0
 
   override protected def update(gain: Long): Unit = {
     window.enqueue(gain)
@@ -133,8 +126,8 @@ class NormalizedWindowedMaxGain(windowSize: Int) extends NormalizedMaxGain {
 }
 
 class NormalizedWindowedMeanGain(windowSize: Int) extends NormalizedGain {
-  val window: Queue[Long] = Queue.empty
-  var sum                 = 0L
+  private val window: mutable.Queue[Long] = mutable.Queue.empty
+  private var sum                         = 0L
 
   override protected def update(gain: Long): Unit = {
     window.enqueue(gain)

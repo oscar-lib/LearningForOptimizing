@@ -20,14 +20,15 @@ class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput)
       neighborhoods,
       AfterEveryMove,
       learningRate = in.learningRate,
-      rewardModel = new OriginalRewardModel()
+      rewardModel = new OriginalRewardModel(
+        wSol = in.moveFoundWeight,
+        wEff = in.efficiencyWeight,
+        wSlope = in.slopeWeight
+      )
     ) {
 
   private var t: Int = 0 // number of times the bandit was called to provide the next neighborhood
-  private val wSol   = in.moveFoundWeight  // weight rewarding a move being found
-  private val wEff   = in.efficiencyWeight // weight rewarding small execution time
-  private val wSlope = in.slopeWeight      // weight rewarding the slope
-  private val wConf  = in.confidence       // weight of the confidence width
+  private val wConf                      = in.confidence // weight of the confidence width
   private var neigh_idx_max: Vector[Int] = Vector.empty
 
   /** The method that provides a neighborhood.

@@ -14,7 +14,6 @@
 package combinator
 
 import oscar.cbls.core.search.Neighborhood
-
 class BestSlopeFirstNew(neighborhoods: List[Neighborhood])
     extends BanditSelector(neighborhoods, AfterEveryMove, rewardModel = new SlopeReward()) {
 
