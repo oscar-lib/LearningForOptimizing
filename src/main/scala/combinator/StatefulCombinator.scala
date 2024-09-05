@@ -24,6 +24,7 @@ class StatefulCombinator(
   problem: LiLimProblem,
   vrp: VRP,
   algo: RLAlgorithm.Value,
+  debug: Boolean,
   seed: Int = 42
 ) extends BanditSelector(
       neighborhoods: List[Neighborhood],
@@ -36,7 +37,7 @@ class StatefulCombinator(
   private val nActions  = neighborhoods.length
   private val nVehicles = problem.vehicles.length
   // private val bridge    = SocketBridge(5555)
-  val bridge = NamedPipeBridge(this.algo)
+  val bridge = NamedPipeBridge(this.algo, this.debug)
   bridge.sendStaticProblemData(this.problem, this.nActions)
 
   private def getCurrentSearchState(): List[List[Int]] = {

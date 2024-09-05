@@ -229,6 +229,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           neighList,
           this.oscarModel.lilimProblem(),
           this.oscarModel.pdpProblem,
+          debug = in.debug,
           algo = RLAlgorithm.DQN
         ) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
@@ -242,6 +243,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           neighList,
           this.oscarModel.lilimProblem(),
           this.oscarModel.pdpProblem,
+          debug = in.debug,
           algo = RLAlgorithm.PPO
         ) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),

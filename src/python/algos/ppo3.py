@@ -87,7 +87,7 @@ class RolloutBuffer:
         actions = torch.tensor(self.actions, dtype=torch.long)
         rewards = torch.tensor(self.rewards, dtype=torch.float32)
         dones = torch.tensor(self.dones, dtype=torch.bool)
-        available_actions = torch.from_numpy(np.array([obs.available_actions for obs in self.obs], dtype=bool))
+        available_actions = torch.stack([obs.available_actions for obs in self.obs])
         return Batch(
             obs=obs,
             available_actions=available_actions,
@@ -174,7 +174,7 @@ class PPO(Algo):
     def update(self, next_obs: Observation):
         batch = self.buffer.sample().to(self.device)
         # next_state_value = self.critic.forward(next_obs.graph).squeeze().item()
-        returns = batch.normalized_returns(self.gamma)
+        returns = batch.normalized_returns(self.gamma).to(self.device)
         with torch.no_grad():
             old_values = self.critic.forward(batch.obs).squeeze()
             old_logits = self.actor.forward(batch.obs)
