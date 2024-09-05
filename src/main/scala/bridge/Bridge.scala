@@ -119,11 +119,10 @@ class NamedPipeBridge(input: InputStream, output: OutputStream, process: Option[
 
 object NamedPipeBridge {
 
-  def apply(algo: RLAlgorithm.Value): NamedPipeBridge = {
-    val DEBUG = true
+  def apply(algo: RLAlgorithm.Value, debug: Boolean): NamedPipeBridge = {
     // Scala is responsible for creating the pipes.
     // Python is responsible for cleaning them up after the run.
-    val id = if (DEBUG) { 0 }
+    val id = if (debug) { 0 }
     else { System.nanoTime() }
     // val id      = 0
     val pipeOut = s"pipes/s2p-$id"
@@ -140,18 +139,20 @@ object NamedPipeBridge {
     createFifo(pipeOut)
     createFifo(pipeIn)
 
-    val builder =
-      new ProcessBuilder(
-        ".venv/bin/python",
-        "src/python/main.py",
-        "-c=pipe",
-        s"-i=$pipeOut",
-        s"-o=$pipeIn",
-        s"-a=$algo",
-        "--device=gpu"
+    val process = if (!debug) {
+      Some(
+        new ProcessBuilder(
+          ".venv/bin/python",
+          "src/python/main.py",
+          "-c=pipe",
+          s"-i=$pipeOut",
+          s"-o=$pipeIn",
+          s"-a=$algo",
+          "--device=gpu"
+        ).start()
       )
-    val process = if (DEBUG) { None }
-    else { Some(builder.start()) }
+    } else None
+
     val input  = new FileInputStream(new File(pipeIn))
     val output = new FileOutputStream(new File(pipeOut))
     new NamedPipeBridge(input, output, process)

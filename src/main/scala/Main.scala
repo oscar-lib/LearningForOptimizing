@@ -38,7 +38,8 @@ object Main extends App {
     efficiencyWeight: Double = 0.2,
     moveFoundWeight: Double = 0.4,
     epsilon: Double = 0.7,
-    confidence: Double = 1
+    confidence: Double = 1,
+    debug: Boolean = false
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -211,6 +212,14 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(seed = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Unit]("debug")
+          .text("Set the debug mode")
+          .action((_, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(debug = true)
               case _                         => throw new Error("Unexpected Error")
             }
           )
@@ -506,7 +515,8 @@ object Main extends App {
             i.efficiencyWeight,
             i.moveFoundWeight,
             i.epsilon,
-            i.confidence
+            i.confidence,
+            i.debug
           )
           i.problem match {
             case "csp" =>
@@ -544,7 +554,8 @@ object Main extends App {
                   s.efficiencyWeight,
                   s.moveFoundWeight,
                   s.epsilon,
-                  s.confidence
+                  s.confidence,
+                  false
                 )
                 solveCSP(in)
               })
@@ -563,7 +574,8 @@ object Main extends App {
                   s.efficiencyWeight,
                   s.moveFoundWeight,
                   s.epsilon,
-                  s.confidence
+                  s.confidence,
+                  false
                 )
                 solvePDPTW(in)
               })
@@ -588,7 +600,8 @@ object Main extends App {
                   a.efficiencyWeight,
                   a.moveFoundWeight,
                   a.epsilon,
-                  a.confidence
+                  a.confidence,
+                  false
                 )
                 solveCSP(in)
               })
@@ -608,7 +621,8 @@ object Main extends App {
                   a.efficiencyWeight,
                   a.moveFoundWeight,
                   a.epsilon,
-                  a.confidence
+                  a.confidence,
+                  false
                 )
                 solvePDPTW(in)
               })
