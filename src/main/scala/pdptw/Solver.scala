@@ -302,6 +302,6 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     val realSolutionOverTime = recorder.realObjectiveTimeStamp
     println(f"solOverTime=" + realSolutionOverTime.map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)").mkString("[", "-", "]"))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
-    println(f"integralPrimalGap=$integralPrimalGap%.3f")
+    println(f"integralPrimalGap=$integralPrimalGap%.3f".replace(',','.'))
   }
 }
