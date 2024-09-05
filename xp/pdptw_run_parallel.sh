@@ -2,7 +2,7 @@
 # supposed to be called at the root of the project
 
 # ------ parameters for the run -------
-declare -a BanditType=("ucb" "epsilongreedy" "bestslopefirst" "random")
+declare -a BanditType=("ucb" "epsilongreedy")
 timeout=300 # timeout in seconds
 nRuns=20   # number of time an instance is run (to take randomness into account)
 nParallel=10  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
