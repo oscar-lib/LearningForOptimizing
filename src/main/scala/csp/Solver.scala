@@ -41,7 +41,16 @@ case class Solver(cspModel: Model, in: SolverInput) {
     val withTimeout = timeout < Int.MaxValue
 
     val neighList: List[Neighborhood] =
-      List(sn.swapMostViolated() exhaust sn.wideningFlip(), sn.wideningFlip(), sn.swap())
+      List(
+        sn.wideningSwapMostViolated(),
+        sn.swapMostViolated(),
+        sn.wideningFlipMostViolated(),
+        sn.wideningSwap(),
+        sn.wideningFlip(),
+        sn.swap(),
+        sn.oneCarMove(),
+        sn.oneCarMoveMostViolated()
+      )
 
     val mostViolated = cspModel.mostViolatedCars
     val violated     = cspModel.violatedCars
@@ -90,19 +99,19 @@ case class Solver(cspModel: Model, in: SolverInput) {
         case _ =>
           banditNeighborhood
             .onExhaustRestartAfter(
-              restart1,
+              restart1.acceptAll(),
               5,
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5
             )
             .onExhaustRestartAfter(
-              restart2,
+              restart2.acceptAll(),
               5,
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5
             )
             .onExhaustRestartAfter(
-              restart3,
+              restart3.acceptAll(),
               5,
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5

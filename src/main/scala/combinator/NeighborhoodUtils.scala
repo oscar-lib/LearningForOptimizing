@@ -45,6 +45,10 @@ object NeighborhoodUtils {
     */
   def slope(neighborhood: Neighborhood): Double = {
     val profiler = getProfiler(neighborhood)
+    return slope(profiler, neighborhood)
+  }
+
+  def slope(profiler: CommonProfilingData, neighborhood: Neighborhood): Double = {
     -(profiler.gain * 1000d) / Math.max(profiler.timeSpentMillis, 1)
   }
 

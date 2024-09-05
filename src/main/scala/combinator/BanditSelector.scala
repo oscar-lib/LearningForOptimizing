@@ -47,7 +47,8 @@ abstract class BanditSelector(
   neighborhoods: List[Neighborhood],
   learningScheme: LearningScheme = AfterEveryMove,
   seed: Int = 42,
-  learningRate: Double = 0.1
+  learningRate: Double = 0.1,
+  rewardModel: RewardModel = new OriginalRewardModel()
 ) extends NeighborhoodCombinator(neighborhoods: _*) {
 
   private val _profiler: SelectionProfiler = new SelectionProfiler(this, neighborhoods)
@@ -112,7 +113,9 @@ abstract class BanditSelector(
     *   neighborhood that has been called
     * @return
     */
-  def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
+  def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
+    this.rewardModel(runStat, neighborhood)
+  }
 
   /** Minimum value that can be set for the weight of a neighborhood. No neighborhood can have a
     * weight below this value
@@ -199,8 +202,6 @@ abstract class BanditSelector(
     neighborhoodStats: NeighborhoodStats,
     neighborhood: Neighborhood
   ): Unit = {
-    maxSlope = Math.max(maxSlope, Math.abs(neighborhoodStats.slope))
-    maxRunTimeNano = Math.max(maxRunTimeNano, neighborhoodStats.timeNano)
     val idx = neighborhoodIdx(neighborhood)
     stats(idx).append(neighborhoodStats)
   }
@@ -333,47 +334,6 @@ abstract class BanditSelector(
     }
   }
 
-  /** Gives a reward in [0, 1] based on finding a move. 1 means that a move was found, 0 otherwise
-    *
-    * @param runStat
-    *   statistics from a performed move
-    * @return
-    *   reward in [0, 1]
-    */
-  def rewardFoundMove(runStat: NeighborhoodStats): Double = {
-    if (runStat.foundMove) {
-      1.0
-    } else {
-      0.0
-    }
-  }
-
-  /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
-    * one
-    *
-    * @param runStat
-    *   statistics from a performed move
-    * @return
-    *   reward in [0, 1]
-    */
-  def rewardSlope(runStat: NeighborhoodStats): Double = {
-    val slope = runStat.slope
-    Math.abs(slope / maxSlope)
-  }
-
-  /** Gives a reward in [0, 1] based on the execution time. 0 means that the execution was the
-    * slowest observed, and near 1 values the fastest observed
-    *
-    * @param runStat
-    *   statistics from a performed move
-    * @return
-    *   reward in [0, 1]
-    */
-  def rewardExecutionTime(runStat: NeighborhoodStats): Double = {
-    val duration = runStat.timeNano
-    1.0 - duration.toDouble / maxRunTimeNano
-  }
-
   /** Update the weights of all neighborhoods registered
     */
   def updateWeights(): Unit = neighborhoods.foreach(updateWeight)
@@ -454,21 +414,20 @@ abstract class BanditSelector(
     @tailrec
     def doSearch(): SearchResult = {
       if (nTabu == neighborhoods.length) {
-        NoMoveFound
-      } else {
-        getNextNeighborhood match {
-          case None => NoMoveFound
-          case Some(n) =>
-            val idx = neighborhoodIdx(n)
-            lastSelectedIdx = idx
-            nSelected(idx) += 1
-            val candidateResult = n.getProfiledMove(obj, initialObj, acceptanceCriterion)
-            notifyMove(candidateResult, n)
-            candidateResult match {
-              case NoMoveFound  => doSearch()
-              case MoveFound(_) => candidateResult
-            }
-        }
+        return NoMoveFound
+      }
+      getNextNeighborhood match {
+        case None => NoMoveFound
+        case Some(n) =>
+          val idx = neighborhoodIdx(n)
+          lastSelectedIdx = idx
+          nSelected(idx) += 1
+          val candidateResult = n.getProfiledMove(obj, initialObj, acceptanceCriterion)
+          notifyMove(candidateResult, n)
+          candidateResult match {
+            case NoMoveFound  => doSearch()
+            case MoveFound(_) => candidateResult
+          }
       }
     }
 

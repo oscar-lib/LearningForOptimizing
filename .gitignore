@@ -8,3 +8,8 @@ project/project/
 .bsp
 metals.sbt
 **/*arena/
+uv.lock
+*.pyc
+.env
+.venv
+venv
