@@ -1,0 +1,12 @@
+### Parameter file for the Learning for Optimizing software
+# name             switch        type values               [conditions (using R syntax)]
+bandit             "--bandit "   c    (ucb)
+#
+# Shared parameters
+learningrate       "-lr "        r    (0.0, 1.0)
+movefoundweight    "-mfw "       r    (0.0, 1.0)
+efficiencyweight   "-ew "        r    (0.0, 1.0)
+slopeweight        "-sw "        r    (0.0, 1.0)
+#
+# UCB parameter
+confidence         "-c "         r    (0.2, 5.0)

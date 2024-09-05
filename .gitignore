@@ -2,7 +2,6 @@ target/
 project/project/
 .bsp/
 .idea/
-
 .vscode
 .metals
 .bloop
@@ -11,6 +10,7 @@ metals.sbt
 
 # Python specific
 .venv
+**/*arena/
 uv.lock
 *.pyc
 .ipynb_checkpoints

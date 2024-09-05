@@ -12,5 +12,7 @@ nVehicles=$(echo "$output" | grep 'Number of used vehicles' | awk -F': ' '{print
 travelLength=$(echo "$output" | grep 'Total route length' | awk -F': ' '{print $2}')
 objective=$(echo "$output" | grep 'bestObj' | awk -F'=' '{print $2}')
 integralPrimalGap=$(echo "$output" | grep 'integralPrimalGap' | awk -F'=' '{print $2}')
+solOverTime=$(echo "$output" | grep 'solOverTime' | awk -F'=' '{print $2}')
 # prints the relevant informations
-echo "$instance,$bandit,$timeout,$unroutedNodes,$nVehicles,$travelLength,$objective,$integralPrimalGap"
+echo "$instance,$bandit,$timeout,$unroutedNodes,$nVehicles,$travelLength,$objective,$integralPrimalGap,$solOverTime"
+
