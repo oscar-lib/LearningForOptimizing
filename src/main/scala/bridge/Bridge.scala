@@ -119,7 +119,15 @@ class NamedPipeBridge(input: InputStream, output: OutputStream, process: Option[
 
 object NamedPipeBridge {
 
-  def apply(algo: RLAlgorithm.Value, debug: Boolean): NamedPipeBridge = {
+  def apply(
+    algo: RLAlgorithm.Value,
+    debug: Boolean,
+    batchSize: Int,
+    epsilon: Double,
+    clipping: Option[Double],
+    lr: Double,
+    ddqn: Boolean
+  ): NamedPipeBridge = {
     // Scala is responsible for creating the pipes.
     // Python is responsible for cleaning them up after the run.
     val id = if (debug) { 0 }
@@ -148,9 +156,15 @@ object NamedPipeBridge {
           s"-i=$pipeOut",
           s"-o=$pipeIn",
           s"-a=$algo",
-          "--device=gpu"
+          "-d=cpu",
+          s"--epsilon=$epsilon",
+          s"--clip=${clipping.getOrElse(null)}",
+          s"--bs=$batchSize",
+          s"--ddqn=$ddqn",
+          s"--lr=$lr"
         ).start()
       )
+
     } else None
 
     val input  = new FileInputStream(new File(pipeIn))

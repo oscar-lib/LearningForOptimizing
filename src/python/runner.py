@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Literal, Optional
 import torch
 from algos import DQN, PPO, Algo
 from logger import Logger
@@ -6,18 +6,28 @@ from bridge.protocol.message import Message, MessageType
 from bridge import Bridge
 from optimenv import EpisodeEndException, OptimEnv
 from problem import Problem
+from replay_memory import ReplayMemory
+
+
+class Params:
+    lr: float
+    ddqn: bool
+    batch_size: int
+    clipping: Optional[float]
+    epsilon: float
 
 
 class Runner:
     def __init__(self, bridge: Bridge):
         self.bridge = bridge
 
-    def run(self, device: torch.device, algo: Literal["dqn", "ppo"]):
+    def run(self, device: torch.device, algo: Literal["dqn", "ppo"], args: Params):
+        print(args)
         logger = Logger(wandb=False, csv=True)
         logger.info("Starting runner")
         try:
             problem = self._retrieve_problem_data(logger)
-            agent = self._create_agent(problem, algo, device)
+            agent = self._create_agent(problem, algo, device, args)
             env = OptimEnv(problem, self.bridge)
             t = 0
             while True:
@@ -52,10 +62,20 @@ class Runner:
         self.bridge.send(Message.ack().to_bytes())
         return problem
 
-    def _create_agent(self, problem: Problem, algo: Literal["dqn", "ppo"], device: torch.device) -> Algo:
+    def _create_agent(self, problem: Problem, algo: Literal["dqn", "ppo"], device: torch.device, args: Params) -> Algo:
         match algo:
             case "dqn":
-                return DQN.default(problem).to(device)
+                from gnn import QNetGNN
+
+                return DQN(
+                    qnetwork=QNetGNN(problem),
+                    memory=ReplayMemory(1000),
+                    double_qlearning=args.ddqn,
+                    grad_norm_clipping=args.clipping,
+                    lr=args.lr,
+                    epsilon=args.epsilon,
+                    batch_size=args.batch_size,
+                )
             case "ppo":
                 return PPO.default(problem).to(device)
         raise Exception(f"Unknown algorithm: {algo}")

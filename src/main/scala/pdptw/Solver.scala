@@ -127,27 +127,6 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       }
     }
 
-//    var foundBetter = 0
-//    var foundWorse = 0
-//    for (i <- 0 until nbNeigh) {
-//      if (neighStats(i).nbFound > 0) {
-//        foundBetter = 1
-//      }
-//      if (neighStats(i).nbNotFound > 0) {
-//        foundWorse = 1
-//      }
-//    }
-//    var tr : Double = 0.0
-//    if (foundBetter == 1) tr = totalReward
-//    else if (foundWorse == 1) tr = -0.3 * totalReward
-//    for (i <- 0 until nbNeigh) {
-//      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
-//      if (neighStats(i).nbFound > 0 || neighStats(i).nbNotFound > 0) {
-//        res(i) = res(i) + tr
-//      }
-//    }
-//    println(s"reward: ${res.mkString(";")} (totalReward : $totalReward)")
-
     res
   }
 
@@ -184,39 +163,6 @@ case class Solver(oscarModel: Model, in: SolverInput) {
 //      simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
     )
     var search = in.bandit.toLowerCase() match {
-//      case "bandit" =>
-//        BanditCombinator(
-//          neighList,
-//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-//          if (withTimeout) Int.MaxValue else 15,
-//          obj,
-//          stats => rewardFunction(stats, neighList.length)
-//        ) saveBestAndRestoreOnExhaust obj
-//      case "banditaftermove" =>
-//        BanditCombinator(
-//          neighList,
-//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-//          if (withTimeout) Int.MaxValue else 15,
-//          obj,
-//          stats => rewardFunctionAfterMove(stats, neighList.length),
-//          afterMove = true
-//        ) saveBestAndRestoreOnExhaust obj
-//      case "banditrollingaverage" =>
-//        BanditCombinator(
-//          neighList,
-//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-//          if (withTimeout) Int.MaxValue else 15,
-//          obj,
-//          stats => rewardFunction(stats, neighList.length),
-//          rollingAverage = true
-//        ) saveBestAndRestoreOnExhaust obj
-//      case "epsilongreedy" =>
-//        new EpsilonGreedyBandit(neighList) onExhaustRestartAfter (
-//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-//          0,
-//          obj,
-//          minRestarts = if (withTimeout) Int.MaxValue else 15
-//        )
       case "epsilongreedy" =>
         new EpsilonGreedyBanditNew(neighList, in) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
@@ -229,6 +175,11 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           neighList,
           this.oscarModel.lilimProblem(),
           this.oscarModel.pdpProblem,
+          lr = in.learningRate,
+          batchSize = in.batchSize,
+          epsilon = in.epsilon,
+          clipping = in.clipping,
+          ddqn = in.ddqn,
           debug = in.debug,
           algo = RLAlgorithm.DQN
         ) onExhaustRestartAfter (
@@ -238,20 +189,20 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           minRestarts = if (withTimeout) Int.MaxValue else 15
         )
       }
-      case "ppo" => {
-        new StatefulCombinator(
-          neighList,
-          this.oscarModel.lilimProblem(),
-          this.oscarModel.pdpProblem,
-          debug = in.debug,
-          algo = RLAlgorithm.PPO
-        ) onExhaustRestartAfter (
-          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-          0,
-          obj,
-          minRestarts = if (withTimeout) Int.MaxValue else 15
-        )
-      }
+      // case "ppo" => {
+      //   new StatefulCombinator(
+      //     neighList,
+      //     this.oscarModel.lilimProblem(),
+      //     this.oscarModel.pdpProblem,
+      //     debug = in.debug,
+      //     algo = RLAlgorithm.PPO
+      //   ) onExhaustRestartAfter (
+      //     simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+      //     0,
+      //     obj,
+      //     minRestarts = if (withTimeout) Int.MaxValue else 15
+      //   )
+      // }
       case "ucb" =>
         new UCBNew(neighList, in) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),

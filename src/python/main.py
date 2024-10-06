@@ -14,9 +14,27 @@ class Args(tap.TypedArgs):
     output_pipe: Optional[str] = tap.arg("-o", help="Output pipe name")
     algorithm: Literal["dqn", "ppo"] = tap.arg("-a", help="Algorithm to use", default="dqn")
     device: Literal["gpu", "cpu"] = tap.arg("-d", help="Device to use", default="cpu")
+    epsilon: float = tap.arg("--epsilon", help="Epsilon value", type=float, default=0.1)
+    _clipping: str = tap.arg("--clip", help="Clipping value", default="")
+    batch_size: int = tap.arg("--bs", help="Batch size", default=32)
+    _ddqn: str = tap.arg("--ddqn", help="Use Double DQN", default="false")
+    lr: float = tap.arg("--lr", help="Learning rate", type=float, default=1e-4)
+
+    @property
+    def clipping(self) -> Optional[float]:
+        if self._clipping in ("None", "null"):
+            return None
+        if len(self._clipping) == 0:
+            return None
+        return float(self._clipping)
+
+    @property
+    def ddqn(self) -> bool:
+        return self._ddqn.lower() == "true"
 
 
 def main(args: Args):
+    print(args)
     match args.communication:
         case "socket":
             if args.port is None:
@@ -39,7 +57,7 @@ def main(args: Args):
         device = torch.device("cpu")
 
     server = Runner(bridge)
-    server.run(device, args.algorithm)
+    server.run(device, args.algorithm, args)
 
 
 if __name__ == "__main__":

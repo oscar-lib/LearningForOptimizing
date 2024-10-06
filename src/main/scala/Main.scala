@@ -39,7 +39,10 @@ object Main extends App {
     moveFoundWeight: Double = 0.4,
     epsilon: Double = 0.7,
     confidence: Double = 1,
-    debug: Boolean = false
+    debug: Boolean = false,
+    batchSize: Int = 32,
+    ddqn: Boolean = false,
+    clipping: Option[Double] = null
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -212,6 +215,35 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(seed = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Int]("batch_size")
+          .abbr("bs")
+          .text("Set the batch size for the DQN algorithm (default: 32)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(batchSize = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[String]("ddqn")
+          .text("Double q-learning")
+          .action((x, c) => {
+            var ddqn = false;
+            if (x == "true") {
+              ddqn = true;
+            }
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(ddqn = ddqn)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          }),
+        opt[Option[Double]]("clipping")
+          .text("Clipping for the PPO algorithm")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(clipping = x)
               case _                         => throw new Error("Unexpected Error")
             }
           ),
@@ -516,7 +548,10 @@ object Main extends App {
             i.moveFoundWeight,
             i.epsilon,
             i.confidence,
-            i.debug
+            i.debug,
+            i.batchSize,
+            i.ddqn,
+            i.clipping
           )
           i.problem match {
             case "csp" =>

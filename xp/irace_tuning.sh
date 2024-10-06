@@ -1,5 +1,6 @@
 #run from anywhere, but do not move this file
 #example run: ./irace_tuning.sh pdptw ucb
+export PATH="$(Rscript -e "cat(paste0(system.file(package='irace', 'bin', mustWork=TRUE), ':'))" 2> /dev/null)${PATH}"
 PROBLEM=$1 # pdptw, csp
 ALGO=$2    # epsilongreedy, ucb
 TRAINING_SIZE=$3
@@ -30,5 +31,5 @@ if [ ! -f "$CSV" ]; then
   cp "$REPO_ROOT"/bks/"$PROBLEM"_bks.csv "$CSV"
 fi
 
-sbt clean && sbt assembly
+# sbt clean && sbt assembly
 irace -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --parallel 4 --train-instances-file "$DATA_DIR"/$PROBLEM/training$TRAINING_SIZE.txt

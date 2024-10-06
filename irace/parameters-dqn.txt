@@ -1,0 +1,9 @@
+### Parameter file for the Learning for Optimizing software
+# name             switch        type values               [conditions (using R syntax)]
+bandit             "--bandit "   c    (dqn)
+#
+learningrate       "-lr "        c    (0.0001, 0.0005, 0.001, 0.005, 0.01)
+epsilon            "--epsilon "   c    (0.05, 0.1, 0.2)
+batch-size         "-bs "        c    (32, 64, 128)
+double-qlearning   "--ddqn "      c    (true, false)
+grad-norm-clipping "--clipping "  c    (None, 1, 5, 10)

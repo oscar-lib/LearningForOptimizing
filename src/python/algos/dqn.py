@@ -29,6 +29,7 @@ class DQN(Algo):
         gamma: float = 0.99,
         batch_size: int = 64,
         lr: float = 1e-4,
+        epsilon: float = 0.1,
         grad_norm_clipping: Optional[float] = None,
         double_qlearning: bool = False,
         device: Optional[torch.device] = None,
@@ -43,7 +44,7 @@ class DQN(Algo):
         self.gamma = gamma
         self.batch_size = batch_size
         self.double_qlearning = double_qlearning
-        self.policy = EpsilonGreedy.constant(0.1)
+        self.policy = EpsilonGreedy.constant(epsilon)
         self.lr = lr
         self.optimiser = torch.optim.Adam(self.qnetwork.parameters(), lr=lr)  # type: ignore
         # Parameters and optimiser

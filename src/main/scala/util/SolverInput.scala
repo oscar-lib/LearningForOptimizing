@@ -51,5 +51,8 @@ case class SolverInput(
   moveFoundWeight: Double,
   epsilon: Double,
   confidence: Double,
-  debug: Boolean
+  debug: Boolean,
+  batchSize: Int = 32,
+  ddqn: Boolean = false,
+  clipping: Option[Double] = null
 )
