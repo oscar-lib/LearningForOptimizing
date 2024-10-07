@@ -54,5 +54,5 @@ case class SolverInput(
   debug: Boolean,
   batchSize: Int = 32,
   ddqn: Boolean = false,
-  clipping: Option[Double] = null
+  clipping: Double = 0.0
 )

@@ -137,19 +137,13 @@ case class Solver(cspModel: Model, in: SolverInput) {
       search.profilingOnConsole()
       println(obj)
     }
-    println(cspModel)
 
-    println("car sequence:" + cspModel.carSequence.map(_.value).mkString(","))
-    println("bestObj=" + cspModel.obj.value)
-    println(
-      if (c.violation.value == 0) "Problem solved"
-      else s"PROBLEM COULD NOT BE SOLVED: ${c.violation}"
-    )
     val instanceName = Paths.get(fileName).getFileName.toString
     val bestKnownSolution =
       recorder.getBestKnownSolution("bks/csp_bks.csv", instanceName).getOrElse(0.0)
-    // println(recorder.primalGapOverTime(bestKnownSolution, timeout))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
-    println(f"integralPrimalGap=$integralPrimalGap%.3f")
+    // println(f"integralPrimalGap=$integralPrimalGap%.3f")
+    // println("bestObj=" + cspModel.obj.value)
+    println(cspModel.obj.value)
   }
 }

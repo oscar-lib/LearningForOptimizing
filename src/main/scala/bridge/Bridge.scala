@@ -124,7 +124,7 @@ object NamedPipeBridge {
     debug: Boolean,
     batchSize: Int,
     epsilon: Double,
-    clipping: Option[Double],
+    clipping: Double,
     lr: Double,
     ddqn: Boolean
   ): NamedPipeBridge = {
@@ -148,22 +148,22 @@ object NamedPipeBridge {
     createFifo(pipeIn)
 
     val process = if (!debug) {
-      Some(
-        new ProcessBuilder(
-          ".venv/bin/python",
-          "src/python/main.py",
-          "-c=pipe",
-          s"-i=$pipeOut",
-          s"-o=$pipeIn",
-          s"-a=$algo",
-          "-d=cpu",
-          s"--epsilon=$epsilon",
-          s"--clip=${clipping.getOrElse(null)}",
-          s"--bs=$batchSize",
-          s"--ddqn=$ddqn",
-          s"--lr=$lr"
-        ).start()
-      )
+      val pb = new ProcessBuilder(
+        "/workspaces/LearningForOptimizing/.venv/bin/python",
+        "/workspaces/LearningForOptimizing/src/python/main.py",
+        "-c=pipe",
+        s"-i=$pipeOut",
+        s"-o=$pipeIn",
+        s"-a=$algo",
+        "--device=gpu",
+        f"--epsilon=$epsilon%.4f",
+        f"--clipping=$clipping%.4f",
+        s"--batch-size=$batchSize",
+        s"--ddqn=$ddqn",
+        f"--lr=$lr%.4f"
+      );
+      // println(String.join(" ", pb.command()))
+      Some(pb.start())
 
     } else None
 

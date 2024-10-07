@@ -27,7 +27,7 @@ class StatefulCombinator(
   debug: Boolean,
   ddqn: Boolean,
   lr: Double,
-  clipping: Option[Double],
+  clipping: Double,
   epsilon: Double,
   batchSize: Int,
   seed: Int = 42

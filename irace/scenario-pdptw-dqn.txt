@@ -6,10 +6,10 @@
 ## value on the command line).
 
 ## File that contains the description of the parameters.
-parameterFile = "./parameters-epsilongreedy.txt"
+parameterFile = "./parameters-dqn.txt"
 
 ## Directory where the programs will be run.
-execDir = "../pdptw-epsilongreedy-arena"
+execDir = "../pdptw-dqn-arena"
 
 ## Directory where tuning instances are located, either absolute path or
 ## relative to current directory.
@@ -21,12 +21,7 @@ maxExperiments = 800
 
 ## File that contains a set of initial configurations. If empty or NULL,
 ## all initial configurations are randomly generated.
-configurationsFile = "./defaults-epsilongreedy.txt"
-
-## File that contains a list of logical expressions that cannot be TRUE
-## for any evaluated configuration. If empty or NULL, do not use forbidden
-## expressions.
-#forbiddenFile = "forbidden.txt"
+configurationsFile = "./defaults-dqn.txt"
 
 ## Indicates the number of decimal places to be considered for the
 ## real parameters.
@@ -35,6 +30,10 @@ digits = 4
 ## A value of 0 silences all debug messages. Higher values provide
 ## more verbose debug messages.
 # debugLevel = 0
+
+## Number of calls to targetRunner to execute in parallel. Values 0 or 1 mean
+## no parallelization.
+parallel = 1
 
 ## END of scenario file
 ############################################################################

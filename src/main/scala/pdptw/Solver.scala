@@ -79,10 +79,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
   )
 
   def rewardFunction(neighStats: Array[NeighborhoodStatistics], nbNeigh: Int): Array[Double] = {
-    // println("Compute Reward")
-    // println(neighStats.mkString(";"))
-    val objValue = obj.value
-    // println(s"$objValue $bestKnown")
+    val objValue       = obj.value
     val totalReward    = 0.5 + (bestKnown - objValue).toDouble / (2 * bestKnown)
     val totalRewardSig = 1 / (1 + Math.exp(-5 * (totalReward - 0.5)))
     val totalGain      = neighStats.map(_.totalGain).sum
@@ -95,8 +92,6 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       bestKnown = objValue
     for (i <- 0 until nbNeigh)
       res(i) = res(i) / totalRes
-    // println(s"reward: ${res.mkString(";")} (totalReward : $totalReward - $totalRewardSig)")
-
     res
   }
 
@@ -104,22 +99,13 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     neighStats: Array[NeighborhoodStatistics],
     nbNeigh: Int
   ): Array[Double] = {
-//    println("Compute Reward")
-//    println(neighStats.mkString(";"))
-    val objValue = obj.value
-//    println(s"$objValue $bestKnown")
+    val objValue    = obj.value
     val totalReward = 1
-//    if (objValue < bestKnown) {
-//      totalReward = 1
-//    } else {
-//      totalReward = -1
-//    }
 
     if (objValue < bestKnown)
       bestKnown = objValue
     val res = Array.fill(nbNeigh)(0.0)
     for (i <- 0 until nbNeigh) {
-//      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
       if (neighStats(i).nbFound > 0) {
         res(i) = res(i) + totalReward
       } else if (neighStats(i).nbNotFound > 0) {
@@ -259,29 +245,28 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     search.doAllMoves(obj = obj)
     if (displaySolution) demoDisplay.drawRoutes(force = true)
 
-    if (verbosity > 1) {
-      search.profilingOnConsole()
-      println(pdptw.toString())
-      println(obj)
-    }
-    println(oscarModel.toString)
-    println("bestObj=" + oscarModel.objectiveFunction.value)
-    // println(recorder)
     val instanceName = Paths.get(fileName).getFileName.toString
     val bestKnownSolution =
       recorder.getBestKnownSolution("bks/pdptw_bks.csv", instanceName).getOrElse(0.0)
     // val gapOverTime = recorder.primalGapOverTime(bestKnownSolution, timeout)
     // println(f"primalGapOverTime=" + gapOverTime.map(e => f"(t=${e._1}%.3f-v=${e._2}%.6f)").mkString("[", "-", "]"))
-    val realSolutionOverTime = recorder.realObjectiveTimeStamp
-    println(
-      f"solOverTime=" + realSolutionOverTime
-        .map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)")
-        .mkString("[", "-", "]")
-    )
-    val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
-    println(f"integralPrimalGap=$integralPrimalGap%.3f")
+    if (verbosity > 1) {
+      search.profilingOnConsole()
+      println(pdptw.toString())
+      println(obj)
+      println(oscarModel.toString)
+      val realSolutionOverTime = recorder.realObjectiveTimeStamp
+      println(
+        f"solOverTime=" + realSolutionOverTime
+          .map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)")
+          .mkString("[", "-", "]")
+      )
+    }
     if (search.isInstanceOf[StatefulCombinator]) {
       search.asInstanceOf[StatefulCombinator].close()
     }
+    val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
+    println(f"integralPrimalGap=$integralPrimalGap%.3f")
+    println("bestObj=" + oscarModel.objectiveFunction.value)
   }
 }

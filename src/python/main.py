@@ -1,7 +1,6 @@
 from typing import Literal, Optional
-
+import os
 import torch
-from time import time
 from runner import Runner
 import typed_argparse as tap
 from bridge import SocketBridge, NamedPipeBridge
@@ -13,20 +12,18 @@ class Args(tap.TypedArgs):
     input_pipe: Optional[str] = tap.arg("-i", help="Input pipe name")
     output_pipe: Optional[str] = tap.arg("-o", help="Output pipe name")
     algorithm: Literal["dqn", "ppo"] = tap.arg("-a", help="Algorithm to use", default="dqn")
-    device: Literal["gpu", "cpu"] = tap.arg("-d", help="Device to use", default="cpu")
+    device: Literal["gpu", "cpu"] = tap.arg("--device", help="Device to use", default="cpu")
     epsilon: float = tap.arg("--epsilon", help="Epsilon value", type=float, default=0.1)
-    _clipping: str = tap.arg("--clip", help="Clipping value", default="")
-    batch_size: int = tap.arg("--bs", help="Batch size", default=32)
+    _clipping: float = tap.arg("--clipping", help="Clipping value", default=0)
+    batch_size: int = tap.arg("--batch-size", help="Batch size", default=32)
     _ddqn: str = tap.arg("--ddqn", help="Use Double DQN", default="false")
     lr: float = tap.arg("--lr", help="Learning rate", type=float, default=1e-4)
 
     @property
     def clipping(self) -> Optional[float]:
-        if self._clipping in ("None", "null"):
+        if self._clipping == 0:
             return None
-        if len(self._clipping) == 0:
-            return None
-        return float(self._clipping)
+        return self._clipping
 
     @property
     def ddqn(self) -> bool:
@@ -34,7 +31,6 @@ class Args(tap.TypedArgs):
 
 
 def main(args: Args):
-    print(args)
     match args.communication:
         case "socket":
             if args.port is None:
@@ -51,7 +47,7 @@ def main(args: Args):
         if n_devices == 0:
             device = torch.device("cpu")
         else:
-            device_index = int(time() * 1000) % n_devices
+            device_index = os.getpid() % n_devices
             device = torch.device(f"cuda:{device_index}")
     else:
         device = torch.device("cpu")

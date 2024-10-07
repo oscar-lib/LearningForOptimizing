@@ -42,7 +42,7 @@ object Main extends App {
     debug: Boolean = false,
     batchSize: Int = 32,
     ddqn: Boolean = false,
-    clipping: Option[Double] = null
+    clipping: Double = 0
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -218,7 +218,7 @@ object Main extends App {
               case _                         => throw new Error("Unexpected Error")
             }
           ),
-        opt[Int]("batch_size")
+        opt[Int]("batchSize")
           .abbr("bs")
           .text("Set the batch size for the DQN algorithm (default: 32)")
           .action((x, c) =>
@@ -239,7 +239,7 @@ object Main extends App {
               case _                         => throw new Error("Unexpected Error")
             }
           }),
-        opt[Option[Double]]("clipping")
+        opt[Double]("clipping")
           .text("Clipping for the PPO algorithm")
           .action((x, c) =>
             c match {

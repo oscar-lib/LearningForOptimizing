@@ -70,7 +70,7 @@ class EpsilonGreedyBandit(l: List[Neighborhood])
       return None // all neighborhoods did not progress
     t += 1
     val epsilon_t: Double = epsilon * Math.sqrt(l.length.toDouble / t)
-    val prob_t: Double   = Random.nextDouble()
+    val prob_t: Double    = Random.nextDouble()
     var neighborhood_idx  = 0
     if (prob_t > epsilon_t) {
       neighborhood_idx =
@@ -89,7 +89,6 @@ class EpsilonGreedyBandit(l: List[Neighborhood])
     }
     lastSelectedIdx = neighborhood_idx
     nSelected(neighborhood_idx) += 1
-    // println("[" + weights.map(d => f"$d%.2f").mkString(" ") + "] choosing " + lastSelectedIdx + " (" + l(neighborhood_idx) + ")")
     Some(l(neighborhood_idx))
   }
 

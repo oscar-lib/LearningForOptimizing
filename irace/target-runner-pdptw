@@ -16,14 +16,13 @@ error() {
     echo "`TZ=UTC date`: $0: error: $@" >&2
     exit 1
 }
-
 # Path to the Learning for Optimizing executable (this path is relative to the execution directory `execDir` specified in the scenario).
 # EXE="~/bin/acotsp"
+#EXE='java -jar /workspaces/LearningForOptimizing/target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar'
 EXE="../xp/run_one_instance_tuning.sh"
 
 # Fixed parameters that should be always passed to Learning for Optimizing.
-# The time to be used is always 10 seconds
-FIXED_PARAMS=" --timeout 60 --verbosity 0 -p pdptw"
+FIXED_PARAMS=" --timeout 60 --verbosity 0 --problem pdptw "
 
 CONFIG_ID="$1"
 INSTANCE_ID="$2"
@@ -36,12 +35,10 @@ CONFIG_PARAMS=$*
 STDOUT=c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stdout
 STDERR=c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stderr
 
-if [ ! -x "${EXE}" ]; then
-    error "${EXE}: not found or not executable (pwd: $(pwd))"
-fi
 
 # Now we can call ACOTSP by building a command line with all parameters for it
-$EXE --input $INSTANCE ${FIXED_PARAMS} --seed $SEED ${CONFIG_PARAMS} 1> $STDOUT 2> $STDERR
+# echo "$EXE solveInstance ${FIXED_PARAMS} --input $INSTANCE  --seed $SEED ${CONFIG_PARAMS}"
+$EXE ${FIXED_PARAMS} --input $INSTANCE  --seed $SEED ${CONFIG_PARAMS} 1> $STDOUT 2> $STDERR
 
 # The output of the candidate $CONFIG_ID should be written in the file 
 # c${CONFIG_ID}.stdout (see target runner for ACOTSP).

@@ -22,12 +22,11 @@ class Runner:
         self.bridge = bridge
 
     def run(self, device: torch.device, algo: Literal["dqn", "ppo"], args: Params):
-        print(args)
         logger = Logger(wandb=False, csv=True)
         logger.info("Starting runner")
         try:
             problem = self._retrieve_problem_data(logger)
-            agent = self._create_agent(problem, algo, device, args)
+            agent = self._create_agent(problem, algo, args).to(device)
             env = OptimEnv(problem, self.bridge)
             t = 0
             while True:
@@ -49,7 +48,6 @@ class Runner:
         except KeyboardInterrupt:
             pass
         logger.info("Stopping runner")
-        print("End of the runner")
 
     def _retrieve_problem_data(self, logger: Logger):
         req = self.bridge.recv()
@@ -62,7 +60,7 @@ class Runner:
         self.bridge.send(Message.ack().to_bytes())
         return problem
 
-    def _create_agent(self, problem: Problem, algo: Literal["dqn", "ppo"], device: torch.device, args: Params) -> Algo:
+    def _create_agent(self, problem: Problem, algo: Literal["dqn", "ppo"], args: Params) -> Algo:
         match algo:
             case "dqn":
                 from gnn import QNetGNN
@@ -77,5 +75,5 @@ class Runner:
                     batch_size=args.batch_size,
                 )
             case "ppo":
-                return PPO.default(problem).to(device)
+                return PPO.default(problem)
         raise Exception(f"Unknown algorithm: {algo}")

@@ -70,7 +70,6 @@ class BestSlopeFirstLearningWay(l: List[Neighborhood])
       case MoveFound(_) =>
         val profilingData = NeighborhoodUtils.getProfiler(neighborhood)
         // Updating the slope of the neighborhood
-        println(profilingData.gain)
         neighborhoodSlope(currentNeighborhoodIndex) =
           -(profilingData.gain * 1000) / Math.max(profilingData.timeSpentMillis, 1)
         // Notifying the heap so that it updates the positions

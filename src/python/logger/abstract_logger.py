@@ -22,7 +22,6 @@ class AbstractLogger(ABC):
         level = os.environ.get("LOG_LEVEL", None)
         if level:
             level = level.upper()
-            print(f"Setting log level to {level}")
             logging.basicConfig(level=level, filename=os.path.join(logdir, "log.txt"), filemode="w")
         self.quiet = quiet
 
