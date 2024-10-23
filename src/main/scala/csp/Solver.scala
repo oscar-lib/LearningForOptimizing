@@ -133,17 +133,15 @@ case class Solver(cspModel: Model, in: SolverInput) {
 
     search.verbose = verbosity
     search.doAllMoves(_ => c.isTrue, obj = obj)
-    if (verbosity > 1) {
+    if (verbosity >= 1) {
       search.profilingOnConsole()
       println(obj)
+      val instanceName = Paths.get(fileName).getFileName.toString
+      val bestKnownSolution =
+        recorder.getBestKnownSolution("bks/csp_bks.csv", instanceName).getOrElse(0.0)
+      val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
+      println(f"integralPrimalGap=$integralPrimalGap%.3f")
     }
-
-    val instanceName = Paths.get(fileName).getFileName.toString
-    val bestKnownSolution =
-      recorder.getBestKnownSolution("bks/csp_bks.csv", instanceName).getOrElse(0.0)
-    val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
-    // println(f"integralPrimalGap=$integralPrimalGap%.3f")
-    // println("bestObj=" + cspModel.obj.value)
-    println(cspModel.obj.value)
+    println("bestObj=" + cspModel.obj.value)
   }
 }

@@ -31,6 +31,5 @@ if [ ! -f "$CSV" ]; then
   cp "$REPO_ROOT"/bks/"$PROBLEM"_bks.csv "$CSV"
 fi
 
-# sbt clean
-sbt assembly
-irace -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --parallel 6 --train-instances-file "$DATA_DIR"/$PROBLEM/training$TRAINING_SIZE.txt
+sbt clean && sbt assembly
+irace -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --parallel 20 --train-instances-file "$DATA_DIR"/$PROBLEM/training$TRAINING_SIZE.txt

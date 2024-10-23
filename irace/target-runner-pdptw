@@ -22,7 +22,7 @@ error() {
 EXE="../xp/run_one_instance_tuning.sh"
 
 # Fixed parameters that should be always passed to Learning for Optimizing.
-FIXED_PARAMS=" --timeout 60 --verbosity 0 --problem pdptw "
+FIXED_PARAMS=" --timeout 300 --verbosity 0 --problem pdptw "
 
 CONFIG_ID="$1"
 INSTANCE_ID="$2"

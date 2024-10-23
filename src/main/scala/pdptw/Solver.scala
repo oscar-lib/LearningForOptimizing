@@ -250,23 +250,30 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       recorder.getBestKnownSolution("bks/pdptw_bks.csv", instanceName).getOrElse(0.0)
     // val gapOverTime = recorder.primalGapOverTime(bestKnownSolution, timeout)
     // println(f"primalGapOverTime=" + gapOverTime.map(e => f"(t=${e._1}%.3f-v=${e._2}%.6f)").mkString("[", "-", "]"))
-    if (verbosity > 1) {
+    if (verbosity >= 1) {
       search.profilingOnConsole()
       println(pdptw.toString())
       println(obj)
       println(oscarModel.toString)
+      println(
+        "travelLength=",
+        oscarModel.routeLengthsInvariant
+          .map(_.value)
+          .sum
+      )
       val realSolutionOverTime = recorder.realObjectiveTimeStamp
       println(
         f"solOverTime=" + realSolutionOverTime
           .map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)")
           .mkString("[", "-", "]")
       )
+      println("bestObj=" + oscarModel.objectiveFunction.value)
+      val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
+      println(f"integralPrimalGap=$integralPrimalGap%.3f")
     }
+
     if (search.isInstanceOf[StatefulCombinator]) {
       search.asInstanceOf[StatefulCombinator].close()
     }
-    val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
-    println(f"integralPrimalGap=$integralPrimalGap%.3f")
-    println("bestObj=" + oscarModel.objectiveFunction.value)
   }
 }
