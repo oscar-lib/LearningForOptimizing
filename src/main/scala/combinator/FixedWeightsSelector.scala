@@ -27,4 +27,8 @@ class FixedWeightsSelector(neighborhoods: List[Neighborhood], weights: Array[Dou
    */
   override def updateWeight(neighborhood: Neighborhood): Unit = {}
 
+  def enforceWeightVector(weights: Array[Double]) : Unit = {
+    Array.copy(this.weights, 0, weights, 0, weights.length)
+  }
+
 }

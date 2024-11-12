@@ -1,7 +1,10 @@
 package combinator
 
+import oscar.cbls.core.computation.{Solution, Store}
+import oscar.cbls.core.distributed.{IndependentMove, IndependentSolution}
 import oscar.cbls.core.objective.Objective
-import oscar.cbls.core.search.{AcceptanceCriterion, LoadSolutionMove, MoveFound, Neighborhood, SearchResult}
+import oscar.cbls.core.search.{AcceptanceCriterion, IndependentLoadSolutionMove, LoadSolutionMove, Move, MoveFound, Neighborhood, NeighborhoodCombinator, NoMoveFound, SearchResult}
+import oscar.cbls.lib.search.combinators.{BasicSaveBest, RestoreBestOnExhaust}
 
 /** A selector that rewards teams of neighborhoods Each iteration attempts to replace the worst team
   * by a better one, following Nelder–Mead method See
@@ -10,8 +13,8 @@ import oscar.cbls.core.search.{AcceptanceCriterion, LoadSolutionMove, MoveFound,
 class NelderMeadDFOSelector(
   neighborhoods: List[Neighborhood],
   o: Objective,
-  iterPerNeighborhood: Int = 20
-) extends Neighborhood {
+  iterPerNeighborhood: Int = 5
+) extends NeighborhoodCombinator(neighborhoods: _*) {
 
   private val startingPoint                           = o.model.solution()
   private val startingPointObjective = o.value
@@ -25,7 +28,7 @@ class NelderMeadDFOSelector(
   private var currentCandidateWeight: Array[Double] = candidatesWeights(
     currentCandidateIdx
   ) // weight of the current candidate being evaluated
-  private var currentCandidate: FixedWeightsSelector = new FixedWeightsSelector(
+  private val currentCandidate: FixedWeightsSelector = new FixedWeightsSelector(
     neighborhoods,
     currentCandidateWeight
   ) // current candidate being evaluated
@@ -167,10 +170,15 @@ class NelderMeadDFOSelector(
             replaceWorstBy(currentCandidateWeight, currentPerformance)
           } else { // use the reflection instead
             replaceWorstBy(reflected, reflectedPerformance)
-          }
+          } // next iteration is a reflection
+          updateCentroidAndReflected()
+          replaceCurrentBy(reflected)
         case ContractionIn | ContractionOut =>
           if (currentPerformance < reflectedPerformance) { // replace by current candidate (contraction)
             replaceWorstBy(currentCandidateWeight, currentPerformance)
+            // next iteration is a reflection
+            updateCentroidAndReflected()
+            replaceCurrentBy(reflected)
           } else {
             shrink()
           }
@@ -187,7 +195,7 @@ class NelderMeadDFOSelector(
 
   private def replaceCurrentBy(weight: Array[Double]): Unit = {
     currentCandidateWeight = weight
-    currentCandidate = new FixedWeightsSelector(neighborhoods, weight)
+    currentCandidate.enforceWeightVector(currentCandidateWeight)
   }
 
   private def currentEvaluationFinished(): Boolean = {
@@ -207,7 +215,6 @@ class NelderMeadDFOSelector(
   }
 
   private def resetForNewCandidate(): SearchResult = {
-    //startingPoint.restoreDecisionVariables()
     t = 0 // restore timestamp
     currentPerformance = Long.MaxValue
     MoveFound(LoadSolutionMove(startingPoint, startingPointObjective, "DFO reset"))
@@ -222,8 +229,10 @@ class NelderMeadDFOSelector(
     initialObj: Long,
     acceptanceCriterion: AcceptanceCriterion
   ): SearchResult = {
+    val v = obj.value
+    println("t = " + t + " - phase = " + currentPhase + " idx = " + currentCandidateIdx)
     notifyGetMove()
-    println("t = " + t)
+    println(o.model.solution())
     if (currentEvaluationFinished()) { // evaluation phase finished for the current candidate
       updateCandidate()                // update the candidates list
       resetForNewCandidate()           // update timestamps and restore to starting point
@@ -234,4 +243,5 @@ class NelderMeadDFOSelector(
       getCurrentCandidate().getMove(obj, initialObj, acceptanceCriterion)
     }
   }
+
 }

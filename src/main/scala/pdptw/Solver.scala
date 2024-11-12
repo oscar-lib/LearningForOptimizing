@@ -249,11 +249,15 @@ case class Solver(oscarModel: Model, in: SolverInput) {
 //          .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
 //        minRestarts = if (withTimeout) Int.MaxValue else 15)
       case "random" =>
+        new RandomCombinator(neighList) saveBestAndRestoreOnExhaust obj
+        /*
         new RandomCombinator(neighList) onExhaustRestartAfter (simpleNeighborhoods
           .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
+
+         */
       case "dfo" =>
-        new NelderMeadDFOSelector(neighList, oscarModel.objectiveFunction) onExhaustRestartAfter (simpleNeighborhoods
+        new NelderMeadDFOSelector(neighList, obj) onExhaustRestartAfter (simpleNeighborhoods
           .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15)
       case _ =>
@@ -286,6 +290,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     if (withTimeout)
       search = search.weakTimeout(Duration(timeout, "second")) saveBestAndRestoreOnExhaust obj
     search.verbose = verbosity
+    println("initial objective value = " + obj.value)
     search.doAllMoves(obj = obj)
     if (displaySolution) demoDisplay.drawRoutes(force = true)
 
