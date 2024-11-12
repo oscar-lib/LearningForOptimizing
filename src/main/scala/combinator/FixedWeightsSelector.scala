@@ -8,7 +8,7 @@ import oscar.cbls.core.search.Neighborhood
  *   neighborhoods available for selection
  * @param weights weights to use for the neighborhoods
  */
-class FixedWeightsSelector(neighborhoods: List[Neighborhood], weights: List[Double])
+class FixedWeightsSelector(neighborhoods: List[Neighborhood], weights: Array[Double])
   extends BanditSelector(neighborhoods, AfterEveryMove, rewardModel = new SlopeReward()) {
 
   for (i <- neighborhoods.indices) {

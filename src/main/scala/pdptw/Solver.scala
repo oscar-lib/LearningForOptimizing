@@ -252,7 +252,10 @@ case class Solver(oscarModel: Model, in: SolverInput) {
         new RandomCombinator(neighList) onExhaustRestartAfter (simpleNeighborhoods
           .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
-
+      case "dfo" =>
+        new NelderMeadDFOSelector(neighList, oscarModel.objectiveFunction) onExhaustRestartAfter (simpleNeighborhoods
+          .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15)
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(neighList) onExhaustRestartAfter (simpleNeighborhoods.emptyMultiplesVehicle(
