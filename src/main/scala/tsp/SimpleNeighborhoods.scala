@@ -1,7 +1,15 @@
 package tsp
 
 import oscar.cbls.business.routing.model.VRP
-import oscar.cbls.business.routing.neighborhood.{InsertPointRoutedFirst, InsertPointUnroutedFirst, OnePointMove, RemovePoint, SegmentExchange, SegmentExchangeOnSegments, TwoOpt}
+import oscar.cbls.business.routing.neighborhood.{
+  InsertPointRoutedFirst,
+  InsertPointUnroutedFirst,
+  OnePointMove,
+  RemovePoint,
+  SegmentExchange,
+  SegmentExchangeOnSegments,
+  TwoOpt
+}
 import oscar.cbls.core.search.{Best, CompositeMove, First, Neighborhood, NoMoveNeighborhood}
 import oscar.cbls._
 import oscar.cbls.business.routing._
@@ -13,12 +21,14 @@ import scala.util.Random
 
 case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
 
-  val allNodes: List[Int] = (0 until tsp.n).toList
+  val allNodes: List[Int]            = (0 until tsp.n).toList
   val allNodesExceptDepot: List[Int] = (1 until tsp.n).toList
   val predecessorForNode: Map[Int, Iterable[Int]] =
     Array.tabulate(tsp.n)(node => node -> allNodes.filter((neighbor => neighbor != node))).toMap
   val successorForNode: Map[Int, Iterable[Int]] =
-    Array.tabulate(tsp.n)(node => node -> allNodesExceptDepot.filter((neighbor => neighbor != node))).toMap
+    Array
+      .tabulate(tsp.n)(node => node -> allNodesExceptDepot.filter((neighbor => neighbor != node)))
+      .toMap
   val unroutedNode: () => Iterable[Int] =
     () => tsp.unrouted()
 
@@ -62,31 +72,31 @@ case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
   }
 
   /** Generates a Neighborhood whose purpose is to move a routed node elsewhere in the route.
-   *
-   * It first iterate over the point to nodes to move and then iterate over the position. Let say we have
-   * the points (4,5,6,7) to move and the available position are after points (0,1,2,3,8,9,10)
-   * It'll take the first point, 4 and try to move it after 0 then after 1,2,3... If no solution
-   * where found it'll try with the point 5 then 6...
-   *
-   * @param k
-   *   The maximum number of position to test
-   * @param listOfPointsToInsert
-   *   A function returning the list of points to insert. Mainly used for one couple insert see
-   *   below.
-   * @param hotRestart
-   *   If the algorithm restarts where it finished last time. Lets say we insert 6. If true it will
-   *   try to insert 7 at the next round if false, it'll restart at 4.
-   * @param best
-   *   Test all the possible insertions and keep the best one. Take much more time.
-   * @return
-   *   The neighborhood that includes the above specifications
-   */
+    *
+    * It first iterate over the point to nodes to move and then iterate over the position. Let say
+    * we have the points (4,5,6,7) to move and the available position are after points
+    * (0,1,2,3,8,9,10) It'll take the first point, 4 and try to move it after 0 then after 1,2,3...
+    * If no solution where found it'll try with the point 5 then 6...
+    *
+    * @param k
+    *   The maximum number of position to test
+    * @param listOfPointsToInsert
+    *   A function returning the list of points to insert. Mainly used for one couple insert see
+    *   below.
+    * @param hotRestart
+    *   If the algorithm restarts where it finished last time. Lets say we insert 6. If true it will
+    *   try to insert 7 at the next round if false, it'll restart at 4.
+    * @param best
+    *   Test all the possible insertions and keep the best one. Take much more time.
+    * @return
+    *   The neighborhood that includes the above specifications
+    */
   def moveOneNode(
-                  k: Int,
-                  listOfPointsToInsert: () => Iterable[Int] = unroutedNode,
-                  hotRestart: Boolean = false,
-                  best: Boolean = false
-                ): OnePointMove = {
+    k: Int,
+    listOfPointsToInsert: () => Iterable[Int] = unroutedNode,
+    hotRestart: Boolean = false,
+    best: Boolean = false
+  ): OnePointMove = {
     OnePointMove(
       tsp.routed,
       relevantNewPredecessors = () =>
@@ -102,26 +112,26 @@ case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
   }
 
   /** Generates a Neighborhood performing a 2-opt in the route.
-   *
-   * @param k
-   *   The maximum number of position to test
-   * @param listOfPointsToInsert
-   *   A function returning the list of points to insert. Mainly used for one couple insert see
-   *   below.
-   * @param hotRestart
-   *   If the algorithm restarts where it finished last time. Lets say we insert 6. If true it will
-   *   try to insert 7 at the next round if false, it'll restart at 4.
-   * @param best
-   *   Test all the possible insertions and keep the best one. Take much more time.
-   * @return
-   *   The neighborhood that includes the above specifications
-   */
+    *
+    * @param k
+    *   The maximum number of position to test
+    * @param listOfPointsToInsert
+    *   A function returning the list of points to insert. Mainly used for one couple insert see
+    *   below.
+    * @param hotRestart
+    *   If the algorithm restarts where it finished last time. Lets say we insert 6. If true it will
+    *   try to insert 7 at the next round if false, it'll restart at 4.
+    * @param best
+    *   Test all the possible insertions and keep the best one. Take much more time.
+    * @return
+    *   The neighborhood that includes the above specifications
+    */
   def twoOpt(
-                   k: Int,
-                   listOfPointsToInsert: () => Iterable[Int] = unroutedNode,
-                   hotRestart: Boolean = false,
-                   best: Boolean = false
-                 ): TwoOpt = {
+    k: Int,
+    listOfPointsToInsert: () => Iterable[Int] = unroutedNode,
+    hotRestart: Boolean = false,
+    best: Boolean = false
+  ): TwoOpt = {
     TwoOpt(
       tsp.routed,
       relevantNewSuccessors = () =>
@@ -134,6 +144,17 @@ case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
       hotRestart = hotRestart,
       selectSegmentStartBehavior = if (best) Best() else First()
     )
+  }
+
+  /** Removes at most n routed nodes from the path
+    *
+    * @param n
+    *   The maximum number of nodes to remove
+    * @return
+    *   The neighborhood that includes the above specifications
+    */
+  def removeNode(n: Int): Neighborhood = {
+    Atomic(RemovePoint(tsp.routed, tsp), nbIt => nbIt >= Math.min(n, tsp.getRouteOfVehicle(0).size))
   }
 
 }

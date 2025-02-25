@@ -1,9 +1,10 @@
 package tsp
 
-import oscar.cbls.{setSum, CBLSIntVar, Objective, Store}
+import oscar.cbls.{CBLSIntVar, Objective, Store, setSum}
 import oscar.cbls.business.routing.invariants.global.RouteLength
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.core.objective.CascadingObjective
+import oscar.cbls.lib.invariant.set.SetSum
 
 object Model {
 
@@ -33,6 +34,9 @@ class Model(val problem: Problem) {
   // Invariant keeping the length of the tour
   val routeLengthInvariant: CBLSIntVar =
     RouteLength(tsp.routes, n, v, (from, to) => distanceMatrix(from)(to))(0)
+  // invariant keeping the number of unrouted nodes
+  val nUnroutedInvariant: SetSum = setSum(tsp.unrouted)
+
 
   lazy val objectiveFunction: Objective = generateObjectiveFunction(tsp: VRP)
 
@@ -42,7 +46,7 @@ class Model(val problem: Problem) {
     // Cascading : if the first strong constraint is violated, no need to continue
     // val intVal: IntValue = routeLengthInvariant
     val arrayLength = Array(routeLengthInvariant)
-    val obj = CascadingObjective(setSum(vrp.unrouted) * unroutedNodePenalty, routeLengthInvariant)
+    val obj = CascadingObjective(nUnroutedInvariant * unroutedNodePenalty, routeLengthInvariant)
     vrp.m.close()
     obj
   }
