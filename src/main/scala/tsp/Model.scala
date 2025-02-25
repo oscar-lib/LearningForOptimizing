@@ -4,6 +4,7 @@ import oscar.cbls.{CBLSIntVar, Objective, Store, setSum}
 import oscar.cbls.business.routing.invariants.global.RouteLength
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.core.objective.CascadingObjective
+import oscar.cbls.lib.invariant.numeric.Sum2
 import oscar.cbls.lib.invariant.set.SetSum
 
 object Model {
@@ -20,7 +21,7 @@ class Model(val problem: Problem) {
   private val v                          = 1;
   private val n: Int                     = 0 + problem.nCities
   lazy val tsp                        = new VRP(new Store(), n, v, debug = false)
-  private val oscarIdToTSPId: Array[Int] = Array.tabulate(n)(oscarId => oscarId)
+  private val oscarIdToTSPId: Array[Int] = Array.tabulate(n)(oscarId => Math.max(0, oscarId - v))
 
   lazy val distanceMatrix: Array[Array[Long]] =
     Array.tabulate(n)(from => {
@@ -44,9 +45,8 @@ class Model(val problem: Problem) {
     // To avoid empty route
     val unroutedNodePenalty = 1000000000
     // Cascading : if the first strong constraint is violated, no need to continue
-    // val intVal: IntValue = routeLengthInvariant
-    val arrayLength = Array(routeLengthInvariant)
-    val obj = CascadingObjective(nUnroutedInvariant * unroutedNodePenalty, routeLengthInvariant)
+    val obj = CascadingObjective(Sum2(nUnroutedInvariant * unroutedNodePenalty, routeLengthInvariant))
+    //val obj = CascadingObjective(nUnroutedInvariant * unroutedNodePenalty, routeLengthInvariant)
     vrp.m.close()
     obj
   }
@@ -56,10 +56,9 @@ class Model(val problem: Problem) {
     s"\n\nResult\n" +
       s"=======\n" +
       s"Unrouted nodes : ${tsp.unrouted.value.size}\n" +
-      s"Tour length : ${routeLengthInvariant.value.toDouble / problem.multiplierFactor}\n\n" +
+      s"Tour length : ${routeLengthInvariant.value.toDouble / problem.multiplierFactor}\n\t" +
       tsp
         .getRouteOfVehicle(0)
-        .drop(1)
         .map(x => {
           s"${x}"
         })

@@ -2,22 +2,13 @@ package tsp
 
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.business.routing.neighborhood.{
-  InsertPointRoutedFirst,
   InsertPointUnroutedFirst,
   OnePointMove,
   RemovePoint,
-  SegmentExchange,
-  SegmentExchangeOnSegments,
   TwoOpt
 }
-import oscar.cbls.core.search.{Best, CompositeMove, First, Neighborhood, NoMoveNeighborhood}
-import oscar.cbls._
-import oscar.cbls.business.routing._
+import oscar.cbls.core.search.{Best, First, Neighborhood}
 import oscar.cbls.lib.search.combinators.Atomic
-import oscar.cbls.lib.search.neighborhoods.{SwapMove, SwapsNeighborhood}
-
-import scala.collection.immutable.HashSet
-import scala.util.Random
 
 case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
 
@@ -60,10 +51,8 @@ case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
     InsertPointUnroutedFirst(
       tsp.unrouted,
       relevantPredecessor = () =>
-        node =>
-          tsp
-            .kFirst(k, predecessorForNode, _ => node => tsp.isRouted(node))(node)
-            .toList ::: tsp.vehicles.toList,
+        tsp
+          .kFirst(k, predecessorForNode, _ => node => tsp.isRouted(node)),
       vrp = tsp,
       neighborhoodName = s"insert_$k - ${if (best) "best" else "first"}",
       hotRestart = hotRestart,
@@ -105,7 +94,7 @@ case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
             .kFirst(k, predecessorForNode, _ => node => tsp.isRouted(node))(node)
             .toList ::: tsp.vehicles.toList,
       vrp = tsp,
-      neighborhoodName = s"insert_$k - ${if (best) "best" else "first"}",
+      neighborhoodName = s"move_$k - ${if (best) "best" else "first"}",
       hotRestart = hotRestart,
       selectPointToMoveBehavior = if (best) Best() else First()
     )
