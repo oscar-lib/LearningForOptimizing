@@ -4,6 +4,8 @@ import json
 import torch
 from torch_geometric.data import Data
 
+from .problem import Problem
+
 
 @dataclass
 class Node:
@@ -57,7 +59,7 @@ class Edge:
 
 
 @dataclass
-class PDPTW:
+class PDPTW(Problem[Data]):
     n_vehicles: int
     vehicle_capacity: int
     nodes: list[Node]
@@ -128,11 +130,12 @@ class PDPTW:
             delivery_ids=delivery_ids,
         )
 
-    def build_agent_input(self, routes: list[list[int]]) -> Data:
+    def build_agent_input(self, data: dict) -> Data:
         """
         Params:
           - `routes` contains, for each vehicle, the list of nodes (id) in the order it visits them.
         """
+        routes = data["routes"]
         edges = self._compute_edges(routes)
         edge_attrs = self._compute_edge_attributes(routes)
         nodes = self.node_data

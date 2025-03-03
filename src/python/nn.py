@@ -1,13 +1,12 @@
 import torch
 import torch_geometric.nn as gnn
-import torch.nn.functional as F
 from torch_geometric.data import Data
 
-from problem import Problem
+from problem import PDPTW, CSP
 
 
 class QNetGNN(torch.nn.Module):
-    def __init__(self, problem: Problem):
+    def __init__(self, problem: PDPTW):
         super().__init__()
         # Node convolutions
         self.OUT_NODE_FEATURES = 64
@@ -42,7 +41,7 @@ class QNetGNN(torch.nn.Module):
 
 
 class Actor(torch.nn.Module):
-    def __init__(self, problem: Problem, n_out_features: int = 64):
+    def __init__(self, problem: PDPTW, n_out_features: int = 64):
         super().__init__()
 
         self.node_conv1 = gnn.GCNConv(problem.n_node_features, 32)
@@ -68,7 +67,7 @@ class Actor(torch.nn.Module):
 
 
 class Critic(torch.nn.Module):
-    def __init__(self, problem: Problem, n_out_features: int = 64):
+    def __init__(self, problem: PDPTW, n_out_features: int = 64):
         super(Critic, self).__init__()
         self.node_conv1 = gnn.GCNConv(problem.n_node_features, 32)
         self.lrelu = torch.nn.LeakyReLU(0.1)
@@ -90,3 +89,9 @@ class Critic(torch.nn.Module):
         node_x = gnn.pool.global_max_pool(node_x, batch=data.batch)
         x = self.linear.forward(node_x)
         return x
+
+
+class MLP(torch.nn.Module):
+    def __init__(self, problem: CSP):
+        input_size = problem
+        self.nn = torch.nn.Sequential()

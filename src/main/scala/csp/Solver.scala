@@ -80,6 +80,19 @@ case class Solver(cspModel: Model, in: SolverInput) {
       case "epsilongreedy" =>
         new EpsilonGreedyBanditNew(neighList, in)
 
+      case "dqn" =>
+        new StatefulCombinator(
+          neighList,
+          Right(cspModel),
+          lr = in.learningRate,
+          batchSize = in.batchSize,
+          epsilon = in.epsilon,
+          clipping = in.clipping,
+          ddqn = in.ddqn,
+          debug = in.debug,
+          algo = RLAlgorithm.DQN
+        )
+
       case "ucb" =>
         new UCBNew(neighList, in)
 

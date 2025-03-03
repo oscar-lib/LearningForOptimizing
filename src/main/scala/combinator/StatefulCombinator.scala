@@ -4,12 +4,13 @@ import oscar.cbls.core.search.Neighborhood
 import bridge.SocketBridge
 import oscar.cbls.core.computation.Store
 import oscar.cbls.business.routing.model.VRP
-import pdptw.LiLimProblem
 import oscar.cbls.core.search.SearchResult
 import oscar.cbls.core.search.NoMoveFound
 import bridge.NamedPipeBridge
 import oscar.cbls.core.objective.Objective
 import oscar.cbls.core.search.AcceptanceCriterion
+import oscar.cbls.core.search.AcceptAll
+import oscar.cbls.core.search.StrictImprovement
 
 object RLAlgorithm extends Enumeration {
 
@@ -21,8 +22,7 @@ object RLAlgorithm extends Enumeration {
 
 class StatefulCombinator(
   neighborhoods: List[Neighborhood],
-  problem: LiLimProblem,
-  vrp: VRP,
+  model: Either[pdptw.Model, csp.Model],
   algo: RLAlgorithm.Value,
   debug: Boolean,
   ddqn: Boolean,
@@ -36,24 +36,34 @@ class StatefulCombinator(
       learningScheme = AfterEveryMove, // Not used
       seed: Int,                       // Not used
       learningRate = 0.0,              // Not used
-      rewardModel = new NormalizedLogGain()
+      rewardModel = new LogGain()
     ) {
 
-  private val nActions  = neighborhoods.length
-  private val nVehicles = problem.vehicles.length
+  private val nActions = neighborhoods.length
   // private val bridge    = SocketBridge(5555)
   val bridge = NamedPipeBridge(this.algo, this.debug, batchSize, epsilon, clipping, lr, ddqn)
-  bridge.sendStaticProblemData(this.problem, this.nActions)
+  model match {
+    case Left(value) => {
+      bridge.sendStaticProblemData(value.liLimProblem, this.nActions)
+    }
+    case Right(value) => {
+      bridge.sendStaticProblemData(value.instance, this.nActions)
+    }
+  }
 
   private def getCurrentSearchState(): List[List[Int]] = {
-    var routes: List[List[Int]] = List.empty
-    for (vehicle <- 0 until this.vrp.v) {
-      val routeOfV = this.vrp.getRouteOfVehicle(vehicle)
-      if (routeOfV.length > 1) {
-        routes = routes :+ routeOfV
-      }
+    this.model match {
+      case Left(value)  => value.getState()
+      case Right(value) => List()
     }
-    return routes
+  }
+
+  override def getMove(
+    obj: Objective,
+    initialObj: Long,
+    acceptanceCriterion: AcceptanceCriterion = StrictImprovement
+  ): SearchResult = {
+    super.getMove(obj, initialObj, AcceptAll)
   }
 
   private def getAvailableActions(): List[Int] = {
@@ -72,6 +82,9 @@ class StatefulCombinator(
     }
     val stats  = NeighborhoodStats(searchResult, neighborhood)
     val reward = this.rewardModel(stats, neighborhood)
+    if (reward < 0) {
+      println("Negative reward: " + reward);
+    }
     this.bridge.sendReward(reward)
   }
 

@@ -12,7 +12,7 @@ object MessageType extends Enumeration {
 
   /** [scala to python] Send the static problem data at startup. Expects an ACK in response.
     */
-  final val STATIC_DATA = Value(2)
+  final val STATIC_DATA_PDPTW = Value(2)
 
   /** [scala to python] Send the state and ask for an inference */
   final val INFERENCE_REQ = Value(3)
@@ -26,7 +26,8 @@ object MessageType extends Enumeration {
 
   /** [scala to python] Notifies the end of an episode (reset in the search)
     */
-  final val END_EPISODE = Value(6)
+  final val END_EPISODE     = Value(6)
+  final val STATIC_DATA_CSP = Value(7)
 
 }
 

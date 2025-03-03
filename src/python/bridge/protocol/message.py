@@ -7,11 +7,12 @@ import socket
 class MessageType(IntEnum):
     ACK = 0
     ERROR = 1
-    STATIC_DATA = 2
+    STATIC_DATA_PDPTW = 2
     ACTION_REQ = 3
     ACTION_RSP = 4
     REWARD = 5
     END_EPISODE = 6
+    STATIC_DATA_CSP = 7
 
 
 @dataclass

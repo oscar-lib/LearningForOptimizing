@@ -34,7 +34,7 @@ object Parser {
         val arr = lines.next().split("\\s").map(_.toInt)
         require(arr.length == 2 + nOptions, "Invalid file")
         val Array(id, nCarsInConf) = arr.take(2)
-        val optInConf              = arr.drop(2)
+        val optInConf              = arr.drop(2).map(item => if (item > 0) true else false)
         b += CarSeqConf(id, nCarsInConf, optInConf)
       }
       b.result()

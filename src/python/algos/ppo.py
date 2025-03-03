@@ -3,9 +3,9 @@ from typing import Optional
 
 import numpy as np
 import torch
-from gnn import Actor, Critic
+from nn import Actor, Critic
 from optimenv import Observation
-from problem import Problem
+from problem import PDPTW
 from replay_memory import ReplayMemory
 
 from ..replay_memory.replay_memory import Batch
@@ -15,7 +15,7 @@ from .algo import Algo
 class PPO(Algo):
     def __init__(
         self,
-        problem: Problem,
+        problem: PDPTW,
         gamma: float,
         batch_size: int,
         update_interval: int,

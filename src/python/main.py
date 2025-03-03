@@ -1,9 +1,9 @@
 from typing import Literal, Optional
 import os
 import torch
-from runner import Runner
+from runner import Runner, Params
 import typed_argparse as tap
-from bridge import SocketBridge, NamedPipeBridge
+from bridge import SocketBridge, NamedPipeBridge, Bridge
 
 
 class Args(tap.TypedArgs):
@@ -12,7 +12,7 @@ class Args(tap.TypedArgs):
     input_pipe: Optional[str] = tap.arg("-i", help="Input pipe name")
     output_pipe: Optional[str] = tap.arg("-o", help="Output pipe name")
     algorithm: Literal["dqn", "ppo"] = tap.arg("-a", help="Algorithm to use", default="dqn")
-    device: Literal["gpu", "cpu"] = tap.arg("--device", help="Device to use", default="cpu")
+    _device: Literal["gpu", "cpu"] = tap.arg("--device", help="Device to use", default="cpu")
     epsilon: float = tap.arg("--epsilon", help="Epsilon value", type=float, default=0.1)
     _clipping: float = tap.arg("--clipping", help="Clipping value", default=0)
     batch_size: int = tap.arg("--batch-size", help="Batch size", default=32)
@@ -29,31 +29,41 @@ class Args(tap.TypedArgs):
     def ddqn(self) -> bool:
         return self._ddqn.lower() == "true"
 
+    @property
+    def device(self) -> torch.device:
+        match self._device:
+            case "gpu":
+                n_devices = torch.cuda.device_count()
+                if n_devices == 0:
+                    device = torch.device("cpu")
+                else:
+                    device_index = os.getpid() % n_devices
+                    device = torch.device(f"cuda:{device_index}")
+            case _:
+                device = torch.device("cpu")
+        return device
+
+    @property
+    def bridge(self) -> Bridge:
+        match self.communication:
+            case "socket":
+                if self.port is None:
+                    raise Exception("Port is required for socket communication")
+                return SocketBridge(self.port)
+            case "pipe":
+                if self.input_pipe is None or self.output_pipe is None:
+                    raise Exception("Input and output pipes are required for pipe communication")
+                return NamedPipeBridge(self.input_pipe, self.output_pipe)
+            case other:
+                raise Exception(f"Unknown communication method: {other}")
+
+    def to_params(self):
+        return Params(lr=self.lr, ddqn=self.ddqn, batch_size=self.batch_size, clipping=self.clipping, epsilon=self.epsilon)
+
 
 def main(args: Args):
-    match args.communication:
-        case "socket":
-            if args.port is None:
-                raise Exception("Port is required for socket communication")
-            bridge = SocketBridge(args.port)
-        case "pipe":
-            if args.input_pipe is None or args.output_pipe is None:
-                raise Exception("Input and output pipes are required for pipe communication")
-            bridge = NamedPipeBridge(args.input_pipe, args.output_pipe)
-        case other:
-            raise Exception(f"Unknown communication method: {other}")
-    if args.device == "gpu":
-        n_devices = torch.cuda.device_count()
-        if n_devices == 0:
-            device = torch.device("cpu")
-        else:
-            device_index = os.getpid() % n_devices
-            device = torch.device(f"cuda:{device_index}")
-    else:
-        device = torch.device("cpu")
-
-    server = Runner(bridge)
-    server.run(device, args.algorithm, args)
+    runner = Runner(args.bridge)
+    runner.run(args.device, args.algorithm, args.to_params())
 
 
 if __name__ == "__main__":
