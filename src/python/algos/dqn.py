@@ -5,7 +5,7 @@ from typing import Optional
 import torch
 from optimenv import Observation
 from policies import EpsilonGreedy
-from problem import Problem
+from problem import PDPTW
 from qtarget_updater import HardUpdate
 from replay_memory.prioritized_memory import PrioritizedMemory
 from replay_memory.replay_memory import Batch, ReplayMemory
@@ -21,6 +21,7 @@ class DQN(Algo):
     batch_size: int
     grad_norm_clipping: Optional[float]
     lr: float
+    policy: EpsilonGreedy
 
     def __init__(
         self,
@@ -52,8 +53,8 @@ class DQN(Algo):
         self.target_updater = HardUpdate(update_period=100)
 
     @classmethod
-    def default(cls, problem: Problem):
-        from gnn import QNetGNN
+    def default(cls, problem: PDPTW):
+        from nn import QNetGNN
 
         return DQN(
             qnetwork=QNetGNN(problem),
@@ -65,7 +66,7 @@ class DQN(Algo):
     def select_action(self, obs: Observation):
         obs.graph = obs.graph.to(self.device.index, non_blocking=True)
         qvalues = self.compute_qvalues(obs).squeeze().numpy(force=True)
-        action = self.policy.get_action(qvalues, obs.available_actions)
+        action = self.policy.get_action(qvalues, obs.available_actions.numpy(force=True))
         return action, qvalues
 
     def compute_qvalues(self, state: Observation) -> torch.Tensor:

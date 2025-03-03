@@ -3,9 +3,9 @@ from dataclasses import dataclass
 import numpy as np
 from .algo import Algo
 import torch
-from gnn import Actor, Critic
+from nn import Actor, Critic
 from optimenv import Observation
-from problem import Problem
+from problem import PDPTW
 from torch.distributions import Categorical
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
@@ -104,7 +104,7 @@ class RolloutBuffer:
 class PPO(Algo):
     def __init__(
         self,
-        problem: Problem,
+        problem: PDPTW,
         lr_actor,
         lr_critic,
         gamma,
@@ -139,7 +139,7 @@ class PPO(Algo):
         self.mse_loss = torch.nn.MSELoss()
 
     @staticmethod
-    def default(problem: Problem):
+    def default(problem: PDPTW):
         return PPO(
             problem=problem,
             lr_actor=0.001,

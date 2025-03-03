@@ -1,6 +1,5 @@
 import json
 import struct
-import numpy as np
 from dataclasses import dataclass
 
 import torch
@@ -8,7 +7,6 @@ import torch
 from bridge import Bridge
 from bridge.protocol.message import Message, MessageType
 from problem import Problem
-from torch_geometric.data import Data
 
 
 class EpisodeEndException(Exception):
@@ -16,13 +14,13 @@ class EpisodeEndException(Exception):
 
 
 @dataclass
-class Observation:
-    graph: Data
+class Observation[T]:
+    graph: T
     available_actions: torch.Tensor
 
 
-class OptimEnv:
-    def __init__(self, problem: Problem, bridge: Bridge):
+class OptimEnv[T]:
+    def __init__(self, problem: Problem[T], bridge: Bridge):
         self.problem = problem
         self.bridge = bridge
         self.pending_msg = None
@@ -48,8 +46,6 @@ class OptimEnv:
         if req.type != MessageType.ACTION_REQ:
             raise ValueError(f"Expected message of type {MessageType.ACTION_REQ.name} from the client, got {req.type.name}")
         data = json.loads(req.body)
-        routes = data["routes"]
         available_actions = data["available"]
-        data = self.problem.build_agent_input(routes)
-        # TODO: move build_agent_input to the environment
+        data = self.problem.build_agent_input(data)
         return Observation(graph=data, available_actions=torch.tensor(available_actions, dtype=torch.bool))

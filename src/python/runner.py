@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Literal, Optional
 import torch
 from algos import DQN, PPO, Algo
@@ -5,10 +6,11 @@ from logger import Logger
 from bridge.protocol.message import Message, MessageType
 from bridge import Bridge
 from optimenv import EpisodeEndException, OptimEnv
-from problem import Problem
+from problem import PDPTW, CSP
 from replay_memory import ReplayMemory
 
 
+@dataclass
 class Params:
     lr: float
     ddqn: bool
@@ -51,22 +53,34 @@ class Runner:
 
     def _retrieve_problem_data(self, logger: Logger):
         req = self.bridge.recv()
-        if req.type != MessageType.STATIC_DATA:
-            error = f"Expected message of type {MessageType.STATIC_DATA} from the client, got {req.type}"
-            logger.error(error)
-            self.bridge.send(Message.error(error).to_bytes())
-            raise Exception(error)
-        problem = Problem.parse(req.body)
-        self.bridge.send(Message.ack().to_bytes())
-        return problem
+        match req.type:
+            case MessageType.STATIC_DATA_PDPTW:
+                problem = PDPTW.parse(req.body)
+                self.bridge.send(Message.ack().to_bytes())
+                return problem
+            case MessageType.STATIC_DATA_CSP:
+                problem = CSP.parse(req.body)
+                self.bridge.send(Message.ack().to_bytes())
+                return problem
+            case other:
+                error = f"Expected message of type {MessageType.STATIC_DATA_PDPTW} from the client, got {other}"
+                logger.error(error)
+                self.bridge.send(Message.error(error).to_bytes())
+                raise Exception(error)
 
-    def _create_agent(self, problem: Problem, algo: Literal["dqn", "ppo"], args: Params) -> Algo:
+    def _create_agent(self, problem: PDPTW | CSP, algo: Literal["dqn", "ppo"], args: Params) -> Algo:
         match algo:
             case "dqn":
-                from gnn import QNetGNN
+                match problem:
+                    case PDPTW():
+                        from nn import QNetGNN
+
+                        qnetwork = QNetGNN(problem)
+                    case CSP():
+                        raise NotImplementedError("CSP not yet supported")
 
                 return DQN(
-                    qnetwork=QNetGNN(problem),
+                    qnetwork=qnetwork,
                     memory=ReplayMemory(1000),
                     double_qlearning=args.ddqn,
                     grad_norm_clipping=args.clipping,
@@ -75,5 +89,6 @@ class Runner:
                     batch_size=args.batch_size,
                 )
             case "ppo":
+                assert isinstance(problem, PDPTW)
                 return PPO.default(problem)
         raise Exception(f"Unknown algorithm: {algo}")

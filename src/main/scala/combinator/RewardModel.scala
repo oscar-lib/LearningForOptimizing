@@ -143,16 +143,19 @@ class NormalizedWindowedMeanGain(windowSize: Int) extends NormalizedGain {
   }
 }
 
-/** Returns the log_10 of the gain of the last move if it has improved the solution and -0.1
-  * otherwise.
+/** Returns the log_10 of the gain of the last move. In the case of negative gains, returns
+  * -log_10(-gain) to have a consistent negative reward.
   */
-class NormalizedLogGain extends RewardModel {
+class LogGain extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
-    if (!runStat.foundMove || profiler._lastCallGain <= 0) {
-      -0.1
-    } else {
+    if (profiler._lastCallGain == 0) {
+      0
+    } else if (profiler._lastCallGain > 0) {
       math.log10(profiler._lastCallGain.toDouble)
+    } else {
+      // The new solution is worse
+      -math.log10(-profiler._lastCallGain.toDouble)
     }
   }
 }

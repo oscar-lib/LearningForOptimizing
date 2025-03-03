@@ -2,9 +2,9 @@ import os
 
 import numpy as np
 import torch
-from gnn import Actor, Critic
+from nn import Actor, Critic
 from optimenv import Observation
-from problem import Problem
+from problem import PDPTW
 from torch.distributions.categorical import Categorical
 
 
@@ -56,7 +56,7 @@ class PPOMemory:
 class PPO:
     def __init__(
         self,
-        problem: Problem,
+        problem: PDPTW,
         device: torch.device,
         c1: float = 0.5,
         c2: float = 0.01,
