@@ -9,7 +9,7 @@ object Parser {
   private val multiplierFactor = 1000
 
   /**
-   * Parses a TSP instance written in xml
+   * Parses a TSP instance written in xml, according to the TSPLib format
    * @param file file where the instance data is written
    * @return TSP instance corresponding to file
    */

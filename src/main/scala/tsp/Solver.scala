@@ -11,9 +11,10 @@ import scala.concurrent.duration.Duration
 
 case class Solver(oscarModel: Model, in: SolverInput) {
 
-  private val tsp: VRP       = oscarModel.tsp
-  private val obj: Objective = oscarModel.objectiveFunction
+  private val tsp: VRP       = oscarModel.tsp // problem to solve
+  private val obj: Objective = oscarModel.objectiveFunction // corresponding objective function
 
+  // neighborhoods suited for optimizing the problem
   private val simpleNeighborhoods = SimpleNeighborhoods(tsp, oscarModel)
 
   def solve(verbosity: Int, displaySolution: Boolean, fileName: String, timeout: Int): Unit = {
@@ -22,12 +23,14 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       System.err.println("display not implemented yet for TSP visualisation")
     }
 
+    // small list of neighborhoods usable for the problem
     val neighList = List(
       simpleNeighborhoods.insertNode(10),
       simpleNeighborhoods.moveOneNode(10),
       simpleNeighborhoods.twoOpt(10)
     )
 
+    // set the bandit according to the user input
     var search = in.bandit.toLowerCase() match {
       case "epsilongreedy" =>
         new EpsilonGreedyBanditNew(neighList, in) onExhaustRestartAfter (
@@ -64,13 +67,14 @@ case class Solver(oscarModel: Model, in: SolverInput) {
         minRestarts = if (withTimeout) Int.MaxValue else 15)
     }
 
+    // tracks the objective evolution over time
     val recorder = new ObjectiveRecorder(
       oscarModel.objectiveFunction,
       _ => {
         if (tsp.unrouted.value.nonEmpty)
           None // unrouted nodes, does not correspond to a real solution
         else   // all nodes are routed, returns the length of the tour
-          Some(
+          Some( // divide by multiplier factor to get back the original double values
             oscarModel.routeLengthInvariant.value.toDouble / oscarModel.problem.multiplierFactor
           )
       }
@@ -81,6 +85,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     search.verbose = verbosity
     search.doAllMoves(obj = obj)
 
+    // search finished, print solution reached
     if (verbosity > 1) {
       search.profilingOnConsole()
       println(tsp.toString())
@@ -88,6 +93,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     }
     println(oscarModel.toString)
     println("bestObj=" + oscarModel.objectiveFunction.value)
+    // retrieve the best known solution and compute the gap over time compared to it
     val instanceName = Paths.get(fileName).getFileName.toString.stripSuffix(".xml")
     val bestKnownSolution =
       recorder.getBestKnownSolution("bks/tsp_bks.csv", instanceName).getOrElse(0.0)

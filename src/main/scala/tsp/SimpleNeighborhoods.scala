@@ -13,9 +13,11 @@ import oscar.cbls.lib.search.combinators.Atomic
 case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
 
   val allNodes: List[Int]            = (0 until tsp.n).toList
-  val allNodesExceptDepot: List[Int] = (1 until tsp.n).toList
+  val allNodesExceptDepot: List[Int] = (1 until tsp.n).toList // does not count city 0
+  // predecessor candidates for a node: all nodes except the node itself
   val predecessorForNode: Map[Int, Iterable[Int]] =
     Array.tabulate(tsp.n)(node => node -> allNodes.filter((neighbor => neighbor != node))).toMap
+  // successor candidates for a node: all nodes except the node itself and the depot
   val successorForNode: Map[Int, Iterable[Int]] =
     Array
       .tabulate(tsp.n)(node => node -> allNodesExceptDepot.filter((neighbor => neighbor != node)))
