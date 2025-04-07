@@ -90,7 +90,8 @@ case class Solver(cspModel: Model, in: SolverInput) {
           clipping = in.clipping,
           ddqn = in.ddqn,
           debug = in.debug,
-          algo = RLAlgorithm.DQN
+          algo = RLAlgorithm.DQN,
+          device = in.device
         )
 
       case "ucb" =>

@@ -141,7 +141,8 @@ object NamedPipeBridge {
     epsilon: Double,
     clipping: Double,
     lr: Double,
-    ddqn: Boolean
+    ddqn: Boolean,
+    device: String
   ): NamedPipeBridge = {
     // Scala is responsible for creating the pipes.
     // Python is responsible for cleaning them up after the run.
@@ -164,22 +165,21 @@ object NamedPipeBridge {
 
     val process = if (!debug) {
       val pb = new ProcessBuilder(
-        "/workspaces/LearningForOptimizing/.venv/bin/python",
-        "/workspaces/LearningForOptimizing/src/python/main.py",
+        ".venv/bin/python",
+        "src/python/main.py",
         "-c=pipe",
         s"-i=$pipeOut",
         s"-o=$pipeIn",
         s"-a=$algo",
-        "--device=gpu",
+        s"--device=$device",
         f"--epsilon=$epsilon%.4f",
         f"--clipping=$clipping%.4f",
         s"--batch-size=$batchSize",
         s"--ddqn=$ddqn",
         f"--lr=$lr%.4f"
       );
-      // println(String.join(" ", pb.command()))
+      println(String.join(" ", pb.command()))
       Some(pb.start())
-
     } else None
 
     val input  = new FileInputStream(new File(pipeIn))

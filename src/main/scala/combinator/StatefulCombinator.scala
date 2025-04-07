@@ -29,6 +29,7 @@ class StatefulCombinator(
   lr: Double,
   clipping: Double,
   epsilon: Double,
+  device: String,
   batchSize: Int,
   seed: Int = 42
 ) extends BanditSelector(
@@ -41,7 +42,8 @@ class StatefulCombinator(
 
   private val nActions = neighborhoods.length
   // private val bridge    = SocketBridge(5555)
-  val bridge = NamedPipeBridge(this.algo, this.debug, batchSize, epsilon, clipping, lr, ddqn)
+  val bridge =
+    NamedPipeBridge(this.algo, this.debug, batchSize, epsilon, clipping, lr, ddqn, device)
   model match {
     case Left(value) => {
       bridge.sendStaticProblemData(value.liLimProblem, this.nActions)

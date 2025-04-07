@@ -54,5 +54,6 @@ case class SolverInput(
   debug: Boolean,
   batchSize: Int = 32,
   ddqn: Boolean = false,
-  clipping: Double = 0.0
+  clipping: Double = 0.0,
+  device: String = "cpu"
 )

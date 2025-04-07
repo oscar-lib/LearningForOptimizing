@@ -7,7 +7,6 @@ from optimenv import Observation
 from policies import EpsilonGreedy
 from problem import PDPTW
 from qtarget_updater import HardUpdate
-from replay_memory.prioritized_memory import PrioritizedMemory
 from replay_memory.replay_memory import Batch, ReplayMemory
 
 from .algo import Algo
@@ -82,8 +81,6 @@ class DQN(Algo):
             return {}
         logs, td_error = self.optimise_qnetwork()
         logs = logs | self.target_updater.update(time_step)
-        if isinstance(self.memory, PrioritizedMemory):
-            logs = logs | self.memory.update(td_error)
         return logs
 
     def _can_update(self):

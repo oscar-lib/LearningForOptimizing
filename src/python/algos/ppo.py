@@ -1,86 +1,218 @@
-import copy
-from typing import Optional
+from dataclasses import dataclass
 
 import numpy as np
+from .algo import Algo
 import torch
 from nn import Actor, Critic
 from optimenv import Observation
 from problem import PDPTW
-from replay_memory import ReplayMemory
+from torch.distributions import Categorical
+from torch_geometric.data import Data
+from torch_geometric.loader import DataLoader
 
-from ..replay_memory.replay_memory import Batch
-from .algo import Algo
+
+@dataclass
+class Batch:
+    obs: Data
+    available_actions: torch.Tensor
+    actions: torch.Tensor
+    rewards: torch.Tensor
+    dones: torch.Tensor
+    size: int
+
+    def normalized_returns(self, gamma: float):
+        """(normalized) Monte Carlo estimate of the state values (returns)."""
+        returns = []
+        discounted_reward = 0
+        for reward, is_terminal in zip(reversed(self.rewards), reversed(self.dones)):
+            if is_terminal:
+                discounted_reward = 0
+            discounted_reward = reward + (gamma * discounted_reward)
+            returns.insert(0, discounted_reward)
+
+        # Normalizing the returns
+        returns = torch.tensor(returns, dtype=torch.float32)
+        returns = (returns - returns.mean()) / (returns.std() + 1e-7)
+        return returns
+
+    def to(self, device: torch.device) -> "Batch":
+        return Batch(
+            obs=self.obs.to(device.index, non_blocking=True),
+            available_actions=self.available_actions.to(device),
+            actions=self.actions.to(device, non_blocking=True),
+            rewards=self.rewards.to(device, non_blocking=True),
+            dones=self.dones.to(device, non_blocking=True),
+            size=self.size,
+        )
+
+    def tmp(self, gamma: float):
+        result = torch.zeros_like(self.rewards, dtype=torch.float32)
+        next_step_returns = self.rewards[-1]
+        result[-1] = next_step_returns
+        for step in range(self.size - 2, -1, -1):
+            next_step_returns = self.rewards[step] + gamma * next_step_returns
+            result[step] = next_step_returns
+        return result
+
+
+class RolloutBuffer:
+    def __init__(self):
+        self.actions = list[int]()
+        self.obs = list[Observation]()
+        self.rewards = list[float]()
+        self.dones = list[bool]()
+
+    def store_action(self, obs: Observation, action: int):
+        self.obs.append(obs)
+        self.actions.append(action)
+        self.dones.append(False)
+
+    def store_reward(self, reward: float, next_obs: Observation):
+        self.rewards.append(reward)
+
+    def end_episode(self):
+        self.dones[-1] = True
+        self.rewards.append(0)
+
+    def clear(self):
+        self.actions = []
+        self.obs = []
+        self.rewards = []
+        self.values = []
+        self.dones = []
+
+    def sample(self):
+        batch_size = len(self.actions)
+        obs = DataLoader([obs.graph for obs in self.obs], batch_size=batch_size, shuffle=False)._get_iterator().__next__()
+        actions = torch.tensor(self.actions, dtype=torch.long)
+        rewards = torch.tensor(self.rewards, dtype=torch.float32)
+        dones = torch.tensor(self.dones, dtype=torch.bool)
+        available_actions = torch.stack([obs.available_actions for obs in self.obs])
+        return Batch(
+            obs=obs,
+            available_actions=available_actions,
+            actions=actions,
+            rewards=rewards,
+            dones=dones,
+            size=batch_size,
+        )
+
+    def __len__(self):
+        return len(self.actions)
 
 
 class PPO(Algo):
     def __init__(
         self,
         problem: PDPTW,
-        gamma: float,
-        batch_size: int,
-        update_interval: int,
-        n_epochs: int,
-        c1: float,
-        c2: float,
-        device: Optional[torch.device] = None,
-        logits_clip_low: float = -10,
-        logits_clip_high: float = 10,
+        lr_actor,
+        lr_critic,
+        gamma,
+        K_epochs,
+        eps_clip,
+        batch_size=32,
+        device: torch.device | None = None,
+        c1: float = 0.5,
+        c2: float = 0.01,
     ):
         super().__init__()
+        self.gamma = gamma
+        self.eps_clip = eps_clip
+        self.K_epochs = K_epochs
+        self.c1 = c1
+        self.c2 = c2
+        self.batch_size = batch_size
+
         if device is None:
             device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.device = device
-        self.gamma = gamma
-        self.batch_size = batch_size
-        self.update_interval = update_interval
-        self.n_epochs = n_epochs
-        self.c1 = c1
-        self.c2 = c2
-        self.gae_lambda = 0.95  # Standard value
 
-        self.actor = Actor(problem).to(self.device)
-        self.critic = Critic(problem).to(self.device)
-        self.memory = ReplayMemory(200)
+        self.buffer = RolloutBuffer()
+        self.actor = Actor(problem)
+        self.critic = Critic(problem)
+        self.optimizer = torch.optim.Adam(  # type: ignore
+            [
+                {"params": self.actor.parameters(), "lr": lr_actor},
+                {"params": self.critic.parameters(), "lr": lr_critic},
+            ]
+        )
+        self.mse_loss = torch.nn.MSELoss()
 
-        self.logits_clip_low = logits_clip_low
-        self.logits_clip_high = logits_clip_high
+    @staticmethod
+    def default(problem: PDPTW):
+        return PPO(
+            problem=problem,
+            lr_actor=0.001,
+            lr_critic=0.001,
+            gamma=0.99,
+            K_epochs=20,
+            eps_clip=0.2,
+        )
 
     def select_action(self, obs: Observation):
         with torch.no_grad():
-            obs_data = obs.graph.to(self.device.index, non_blocking=True)
-            logits = self.actor.pi(obs_data)
-            distribution = torch.distributions.Categorical(logits)
-            action = distribution.sample().item()
-            return int(action), logits.numpy(force=True)
+            obs.graph = obs.graph.to(self.device.index, non_blocking=True)
+            obs.available_actions = obs.available_actions.to(self.device, non_blocking=True)
+            logits = self.actor.forward(obs.graph).squeeze()
+            # mask unavailable actions
+            logits[~obs.available_actions] = -torch.inf
+            dist = Categorical(logits=logits)
+            action = int(dist.sample().item())
+
+        self.buffer.store_action(obs, action)
+        return action, logits.numpy(force=True)
 
     def learn(self, time_step: int, obs: Observation, action: int, reward: float, next_obs: Observation) -> dict[str, float]:
-        self.memory.add(obs, action, reward, next_obs)
-        if len(self.memory) < self.batch_size:
+        self.buffer.store_reward(reward, next_obs)
+        if len(self.buffer) < self.batch_size:
             return {}
-        batch = self.memory.get_all().to(self.device)
+        return self.update(next_obs)
 
-        advantages = self.compute_adv(batch)
+    def notify_episode_end(self):
+        self.buffer.end_episode()
 
-    def compute_adv(self, batch: Batch):
-        values = self.critic.value(batch.obs)
-        advantage = np.zeros(batch.size, dtype=np.float32)
-        for t in range(batch.size - 1):
-            discount = 1
-            a_t = 0
-            for k in range(t, batch.size - 1):
-                a_t += discount * (batch.rewards[k] + self.gamma * values[k + 1] * (1 - batch.dones) - values[k])
-                discount *= self.gamma * self.gae_lambda
-            advantage[t] = a_t
-        advantage = torch.from_numpy(advantage).to(self.device)
-        return advantage
+    def update(self, next_obs: Observation):
+        batch = self.buffer.sample().to(self.device)
+        # next_state_value = self.critic.forward(next_obs.graph).squeeze().item()
+        returns = batch.normalized_returns(self.gamma).to(self.device)
+        with torch.no_grad():
+            old_values = self.critic.forward(batch.obs).squeeze()
+            old_logits = self.actor.forward(batch.obs)
+            old_log_probs = Categorical(logits=old_logits).log_prob(batch.actions)
+            advantages = returns - old_values
+        total_loss = 0
+        # Optimize policy for K epochs
+        for _ in range(self.K_epochs):
+            # Evaluating old actions and values
+            logits = self.actor.forward(batch.obs)
+            dist = Categorical(logits=logits)
 
-    def actions_logits(self, obs: Observation):
-        obs.graph = obs.graph.to(self.device.index, non_blocking=True)
-        logits = self.actor.pi(obs.graph)
-        logits[torch.tensor(obs.available_actions) == 0] = -torch.inf  # mask unavailable actions
-        return logits
+            log_probs = dist.log_prob(batch.actions)
+            state_values = self.critic.forward(batch.obs).squeeze()
+
+            # Finding the ratio (pi_theta / pi_theta__old)
+            ratios = torch.exp(log_probs - old_log_probs)
+            dist_entropy = dist.entropy()
+            # Finding Surrogate Loss
+            surr1 = ratios * advantages
+            surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
+
+            # final loss of clipped objective PPO
+            actor_loss = -torch.min(surr1, surr2)
+            critic_loss = self.mse_loss.forward(state_values, returns)
+            loss = torch.mean(actor_loss + self.c1 * critic_loss - self.c2 * dist_entropy)
+
+            # take gradient step
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            total_loss += loss.item()
+
+        self.buffer.clear()
+        return {"avg-loss": total_loss / self.K_epochs}
 
     def to(self, device: torch.device):
-        self.actor = self.actor.to(device, non_blocking=True)
-        self.critic = self.critic.to(device, non_blocking=True)
+        self.actor.to(device, non_blocking=True)
+        self.critic.to(device, non_blocking=True)
         self.device = device
+        return self

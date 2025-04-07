@@ -92,7 +92,7 @@ class PDPTW(Problem[Data]):
         n_vehicles = len(data["vehicles"])
         vehicle_capacity = data["vehicles"][0]["capacity"]
         n_actions = data["nActions"]
-        delivery_ids = dict[int, int]()  # map each node to the coreesponding delivery ID
+        delivery_ids = dict[int, int]()  # map each node to the corresponding delivery ID
         for i, delivery in enumerate(data["demands"]):
             source = delivery["fromNodeId"]
             destination = delivery["toNodeId"]
@@ -135,18 +135,21 @@ class PDPTW(Problem[Data]):
         Params:
           - `routes` contains, for each vehicle, the list of nodes (id) in the order it visits them.
         """
-        routes = data["routes"]
+        routes = data["state"]
         edges = self._compute_edges(routes)
         edge_attrs = self._compute_edge_attributes(routes)
-        nodes = self.node_data
-        graph = Data(nodes, edges, edge_attr=edge_attrs)
+        graph = Data(self.node_data, edges, edge_attr=edge_attrs)
         graph.validate()
         return graph
 
     @staticmethod
     def _compute_edges(routes: list[list[int]]) -> torch.Tensor:
+        """
+        Compute the sources and the destinations of each edge in the graph.
+
+        For instance, if a vehicle route is [1, 10, 15], the sources will be [1, 10, 15] and the corresponding destinations will be [10, 15, 1].
+        """
         sources, destinations = [], []
-        # Le problème vient d'ici: il manque une edge !
         for vehicle_route in routes:
             vehicle_id = vehicle_route[0]
             sources.extend(vehicle_route)
