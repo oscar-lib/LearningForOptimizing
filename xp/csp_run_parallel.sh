@@ -26,7 +26,7 @@ sbt assembly
 echo "compilation done"
 echo "running experiments on $nParallel core(s)"
 # creates the file so that the header is present
-echo "instance,bandit,timeout,objective" > $outFilename
+echo "instance,bandit,timeout,objective,solOverTime" > $outFilename
 
 for (( i=1; i<=$nRuns; i++ ))  # one line per solver
 do

@@ -149,6 +149,8 @@ case class Solver(cspModel: Model, in: SolverInput) {
     val bestKnownSolution =
       recorder.getBestKnownSolution("bks/csp_bks.csv", instanceName).getOrElse(0.0)
     // println(recorder.primalGapOverTime(bestKnownSolution, timeout))
+    val realSolutionOverTime = recorder.realObjectiveTimeStamp
+    println(f"solOverTime=" + realSolutionOverTime.map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)").mkString("[", "-", "]"))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f")
   }
