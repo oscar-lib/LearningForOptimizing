@@ -2,7 +2,7 @@ package tsp
 
 import combinator.{EpsilonGreedyBanditNew, RandomCombinator, UCBNew}
 import logger.ObjectiveRecorder
-import oscar.cbls.{Objective, bestSlopeFirst}
+import oscar.cbls.{Objective, bestSlopeFirst, roundRobin}
 import oscar.cbls.business.routing.model.VRP
 import util.SolverInput
 
@@ -59,6 +59,12 @@ case class Solver(oscarModel: Model, in: SolverInput) {
         ),
         5, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case "roundrobin" =>
+        roundRobin(neighList.zip((0 to neighList.length).map(i => 1))) onExhaustRestartAfter (simpleNeighborhoods.removeNode(
+          Math.min(50, tsp.n / 5)
+        ),
+          5, obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15)
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(neighList) onExhaustRestartAfter (simpleNeighborhoods.removeNode(
@@ -94,7 +100,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     println(oscarModel.toString)
     println("bestObj=" + oscarModel.objectiveFunction.value)
     // retrieve the best known solution and compute the gap over time compared to it
-    val instanceName = Paths.get(fileName).getFileName.toString.stripSuffix(".xml")
+    val instanceName = Paths.get(fileName).getFileName.toString.stripSuffix(".xml").stripSuffix(".tsp")
     val bestKnownSolution =
       recorder.getBestKnownSolution("bks/tsp_bks.csv", instanceName).getOrElse(0.0)
     val realSolutionOverTime = recorder.realObjectiveTimeStamp

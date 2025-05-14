@@ -49,7 +49,7 @@ case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
     k: Int,
     hotRestart: Boolean = false,
     best: Boolean = false
-  ): InsertPointUnroutedFirst = {
+  ): Neighborhood = {
     InsertPointUnroutedFirst(
       tsp.unrouted,
       relevantPredecessor = () =>
@@ -60,6 +60,7 @@ case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
       hotRestart = hotRestart,
       selectInsertionPointBehavior = if (best) Best() else First()
     )
+      .name("insert-1-node")
   }
 
   /** Generates a Neighborhood whose purpose is to move a routed node elsewhere in the route.
@@ -87,7 +88,7 @@ case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
     listOfPointsToInsert: () => Iterable[Int] = unroutedNode,
     hotRestart: Boolean = false,
     best: Boolean = false
-  ): OnePointMove = {
+  ): Neighborhood = {
     OnePointMove(
       tsp.routed,
       relevantNewPredecessors = () =>
@@ -100,6 +101,7 @@ case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
       hotRestart = hotRestart,
       selectPointToMoveBehavior = if (best) Best() else First()
     )
+      .name("move-1-node")
   }
 
   /** Generates a Neighborhood performing a 2-opt in the route.
@@ -122,7 +124,7 @@ case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
     listOfPointsToInsert: () => Iterable[Int] = unroutedNode,
     hotRestart: Boolean = false,
     best: Boolean = false
-  ): TwoOpt = {
+  ): Neighborhood = {
     TwoOpt(
       tsp.routed,
       relevantNewSuccessors = () =>
@@ -135,6 +137,7 @@ case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
       hotRestart = hotRestart,
       selectSegmentStartBehavior = if (best) Best() else First()
     )
+      .name("2-opt")
   }
 
   /** Removes at most n routed nodes from the path
@@ -145,7 +148,9 @@ case class SimpleNeighborhoods(tsp: VRP, oscarModel: Model) {
     *   The neighborhood that includes the above specifications
     */
   def removeNode(n: Int): Neighborhood = {
-    Atomic(RemovePoint(tsp.routed, tsp), nbIt => nbIt >= Math.min(n, tsp.getRouteOfVehicle(0).size))
+    Atomic(RemovePoint(tsp.routed, tsp), nbIt => nbIt >= Math.min(n, 100))
+      .name("removePoints")
+      .acceptAll()
   }
 
 }
