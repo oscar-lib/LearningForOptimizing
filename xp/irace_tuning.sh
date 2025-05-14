@@ -1,3 +1,4 @@
+#!/bin/bash
 #run from anywhere, but do not move this file
 #example run: ./irace_tuning.sh pdptw ucb
 PROBLEM=$1 # pdptw, csp

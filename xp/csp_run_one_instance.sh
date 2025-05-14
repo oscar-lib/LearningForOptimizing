@@ -1,3 +1,4 @@
+#!/bin/bash
 # solves one CSP instance
 # usage: ./script [instance] [bandit] [timeout]
 # example: ./xp/csp_run_one_instance.sh examples/csp/csp_100/sas-documentation.txt epsilongreedy 1

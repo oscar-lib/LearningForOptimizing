@@ -1,3 +1,4 @@
+#!/bin/bash
 # run the experiments in parallel, using as many CPU cores as available
 # supposed to be called at the root of the project
 

@@ -1,3 +1,4 @@
+#!/bin/bash
 # solves one instance
 # usage: ./script [instance] [bandit] [timeout]
 # example: ./xp/run_one_instance.sh bench/LC1_2_1.txt epsilongreedy 1
