@@ -24,7 +24,7 @@ class Runner:
         self.bridge = bridge
 
     def run(self, device: torch.device, algo: Literal["dqn", "ppo"], args: Params):
-        logger = Logger(wandb=False, csv=True)
+        logger = Logger(csv=True)
         logger.info("Starting runner")
         try:
             problem = self._retrieve_problem_data(logger)

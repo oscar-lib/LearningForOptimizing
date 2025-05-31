@@ -9,10 +9,10 @@ class NamedPipeBridge(Bridge):
         self.input_filename = input_filename
         self.output_filename = output_filename
         self.output_stream = open(output_filename, "wb")
-        self.intput_stream = open(input_filename, "rb")
+        self.input_stream = open(input_filename, "rb")
 
     def read(self, nbytes: int) -> bytes:
-        return self.intput_stream.read(nbytes)
+        return self.input_stream.read(nbytes)
 
     def send(self, bytes):
         bytes_written = self.output_stream.write(bytes)
@@ -25,7 +25,7 @@ class NamedPipeBridge(Bridge):
 
     def close(self):
         try:
-            self.intput_stream.close()
+            self.input_stream.close()
         except AttributeError:
             pass
         try:

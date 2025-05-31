@@ -63,6 +63,7 @@ class Args(tap.TypedArgs):
 
 def main(args: Args):
     runner = Runner(args.bridge)
+    print(args)
     runner.run(args.device, args.algorithm, args.to_params())
 
 

@@ -148,6 +148,18 @@ object NamedPipeBridge {
   ): NamedPipeBridge = {
     // Scala is responsible for creating the pipes.
     // Python is responsible for cleaning them up after the run.
+    val cwd = Paths.get(".").toAbsolutePath
+    println(cwd.getParent())
+    println(cwd)
+    var prefix = "./";
+    if (
+      !(cwd.endsWith("LearningForOptimizing") ||
+        cwd.endsWith("LearningForOptimizing/") || cwd.endsWith("LearningForOptimizing/."))
+    ) {
+      prefix = "../";
+      println("Using relative path to python script: " + prefix)
+    }
+
     val id = if (debug) { 0 }
     else { System.nanoTime() }
     // val id      = 0
@@ -164,12 +176,25 @@ object NamedPipeBridge {
     }
     createFifo(pipeOut)
     createFifo(pipeIn)
+    try {
+      val p   = new ProcessBuilder("python", prefix + "src/python/test.py").start();
+      val ret = p.waitFor();
+      if (ret != 0) {
+        val error = p.getErrorStream().readAllBytes().map(_.toChar).mkString
+        throw new Exception(s"Failed to start python process, exit code: $ret. Error: $error")
+      }
+    } catch {
+      case e: java.io.IOException =>
+        throw new Exception(
+          "Failed to start python process. Make sure you have python installed and the script is in the correct path." +
+            s"Error: ${e.getMessage}"
+        )
+    }
 
-    println("CWD", Paths.get(".").toAbsolutePath)
     val process = if (!debug) {
       val pb = new ProcessBuilder(
         "python",
-        "../src/python/main.py",
+        prefix + "src/python/main.py",
         "-c=pipe",
         s"-i=$pipeOut",
         s"-o=$pipeIn",

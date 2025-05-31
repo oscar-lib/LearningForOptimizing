@@ -1,16 +1,17 @@
 #!/bin/bash
-# Submission script for Lucia
-#SBATCH --time=1-00:00:00 # days-hh:mm:ss
 #
-#SBATCH --ntasks=1
-#SBATCH --gres="gpu:4"
-#SBATCH --mem-per-cpu=1000 # megabytes
-#SBATCH --partition=gpu
+#SBATCH --job-name=pdptw-tuning
+#SBATCH --output=logs/out.txt
+#SBATCH --error=logs/err.txt
+#
+#SBATCH --time=24:00:00
+#SBATCH --cpus-per-task=40
+#SBATCH --mem-per-cpu=5G
 #
 #SBATCH --mail-user=yannick.molinghen@ulb.be
 #SBATCH --mail-type=ALL
-#
+#SBATCH --partition=batch
 #SBATCH --account=cooplrn
-
-module purge
-module load LIST_THE_MODULES_YOU_NEED_HERE 
+# source the configuration
+source /gpfs/projects/shared/p_ariac_cetic/setup.sh
+./irace_tuning.sh pdptw dqn all

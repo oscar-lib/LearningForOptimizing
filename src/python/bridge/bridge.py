@@ -3,6 +3,9 @@ from abc import ABC, abstractmethod
 
 
 class Bridge(ABC):
+    def __init__(self):
+        super().__init__()
+
     def recv(self) -> Message:
         header_bytes = self.read(Header.SIZE)
         if len(header_bytes) == 0:

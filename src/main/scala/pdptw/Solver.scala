@@ -268,12 +268,12 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           .mkString("[", "-", "]")
       )
       println("bestObj=" + oscarModel.objectiveFunction.value)
-      val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
-      println(f"integralPrimalGap=$integralPrimalGap%.3f")
     }
 
     if (search.isInstanceOf[StatefulCombinator]) {
       search.asInstanceOf[StatefulCombinator].close()
     }
+    val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
+    println(f"$integralPrimalGap%.3f")
   }
 }
