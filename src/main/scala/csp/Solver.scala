@@ -91,7 +91,8 @@ case class Solver(cspModel: Model, in: SolverInput) {
           ddqn = in.ddqn,
           debug = in.debug,
           algo = RLAlgorithm.DQN,
-          device = in.device
+          device = in.device,
+          objective = obj
         )
 
       case "ucb" =>

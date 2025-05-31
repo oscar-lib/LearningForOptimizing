@@ -22,6 +22,7 @@ import java.net.Socket
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.file.Paths
+import java.nio.file.Path
 
 class Bridge(protected val input: InputStream, protected val output: OutputStream) {
   implicit val depRw: ReadWriter[LiLimDepot]   = macroRW
@@ -81,7 +82,6 @@ class Bridge(protected val input: InputStream, protected val output: OutputStrea
     val bytes = msg.toBytes()
     this.output.write(bytes)
   }
-
 }
 
 object Bridge {
@@ -136,6 +136,33 @@ class NamedPipeBridge(input: InputStream, output: OutputStream, process: Option[
 
 object NamedPipeBridge {
 
+  def findPythonPath(): Path = {
+    val possiblePaths = Array(
+      Paths.get("/gpfs/projects/shared/p_ariac_cetic/miniconda/envs/myr-env/bin/"),
+      Paths.get(".venv/bin/python"),
+      Paths.get(".env/bin/python"),
+      Paths.get("venv/bin/python"),
+      Paths.get("env/bin/python"),
+      Paths.get("python"),
+      Paths.get("python3")
+    )
+    possiblePaths.find(_.toFile.exists()).getOrElse {
+      throw new Exception("Python executable not found")
+    }
+  }
+
+  def findPythonSourcesDirectory(): Path = {
+    val possiblePaths = Array(
+      Paths.get("/gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing/src/python/"),
+      Paths.get("./src/python"),
+      Paths.get("../src/python")
+    )
+
+    possiblePaths.find(_.toFile.exists()).getOrElse {
+      throw new Exception("Python sources path not found")
+    }
+  }
+
   def apply(
     algo: RLAlgorithm.Value,
     debug: Boolean,
@@ -148,17 +175,9 @@ object NamedPipeBridge {
   ): NamedPipeBridge = {
     // Scala is responsible for creating the pipes.
     // Python is responsible for cleaning them up after the run.
-    val cwd = Paths.get(".").toAbsolutePath
-    println(cwd.getParent())
-    println(cwd)
-    var prefix = "./";
-    if (
-      !(cwd.endsWith("LearningForOptimizing") ||
-        cwd.endsWith("LearningForOptimizing/") || cwd.endsWith("LearningForOptimizing/."))
-    ) {
-      prefix = "../";
-      println("Using relative path to python script: " + prefix)
-    }
+
+    val pythonBinary       = this.findPythonPath()
+    val pythonSrcDirectory = this.findPythonSourcesDirectory()
 
     val id = if (debug) { 0 }
     else { System.nanoTime() }
@@ -177,7 +196,9 @@ object NamedPipeBridge {
     createFifo(pipeOut)
     createFifo(pipeIn)
     try {
-      val p   = new ProcessBuilder("python", prefix + "src/python/test.py").start();
+      val p =
+        new ProcessBuilder(pythonBinary.toString(), pythonSrcDirectory.resolve("test.py").toString)
+          .start();
       val ret = p.waitFor();
       if (ret != 0) {
         val error = p.getErrorStream().readAllBytes().map(_.toChar).mkString
@@ -193,8 +214,8 @@ object NamedPipeBridge {
 
     val process = if (!debug) {
       val pb = new ProcessBuilder(
-        "/gpfs/projects/shared/p_ariac_cetic/miniconda/envs/myr-env/bin/python",
-        "/gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing/src/python/main.py",
+        pythonBinary.toString(),
+        pythonSrcDirectory.resolve("main.py").toString,
         "--communication=pipe",
         s"-i=$pipeOut",
         s"-o=$pipeIn",
@@ -217,7 +238,9 @@ object NamedPipeBridge {
         if (!p.isAlive) {
           val msg = p.getErrorStream().readAllBytes().map(_.toChar).mkString
           println("Python process error output: " + msg)
-          throw new Exception("Python process did not start correctly. Check the logs. Error: " + msg)
+          throw new Exception(
+            "Python process did not start correctly. Check the logs. Error: " + msg
+          )
         }
         println("Python process is alive.")
       }

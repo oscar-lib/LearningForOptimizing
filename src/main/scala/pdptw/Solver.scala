@@ -167,7 +167,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           ddqn = in.ddqn,
           debug = in.debug,
           algo = RLAlgorithm.DQN,
-          device = in.device
+          device = in.device,
+          objective = oscarModel.objectiveFunction
         ) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           0,
@@ -274,7 +275,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       search.asInstanceOf[StatefulCombinator].close()
     }
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout) * 1000
-    val rounded = integralPrimalGap.toLong
+    val rounded           = integralPrimalGap.toLong
     println(rounded)
   }
 }

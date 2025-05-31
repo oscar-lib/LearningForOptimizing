@@ -31,6 +31,7 @@ class StatefulCombinator(
   epsilon: Double,
   device: String,
   batchSize: Int,
+  objective: Objective,
   seed: Int = 42
 ) extends BanditSelector(
       neighborhoods: List[Neighborhood],
@@ -40,10 +41,10 @@ class StatefulCombinator(
       rewardModel = new LogGain()
     ) {
 
-  private val nActions                = neighborhoods.length
-  private var prevValue: Option[Long] = None
+  private val nActions  = neighborhoods.length
+  private var prevValue = Long.MaxValue
   // private val bridge    = SocketBridge(5555)
-  val bridge =
+  private val bridge =
     NamedPipeBridge(this.algo, this.debug, batchSize, epsilon, clipping, lr, ddqn, device)
   model match {
     case Left(value) => {
@@ -66,7 +67,7 @@ class StatefulCombinator(
     initialObj: Long,
     acceptanceCriterion: AcceptanceCriterion = StrictImprovement
   ): SearchResult = {
-    super.getMove(obj, initialObj, AcceptAll)
+    super.getMove(obj, initialObj, acceptanceCriterion)
   }
 
   private def getAvailableActions(): List[Int] = {
@@ -83,15 +84,25 @@ class StatefulCombinator(
     if (searchResult == NoMoveFound) {
       setTabu(neighborhood)
     }
-    val diff   = searchResult.objective
-    val stats  = NeighborhoodStats(searchResult, neighborhood)
-    val reward = this.rewardModel(stats, neighborhood)
+    val value = this.objective.value
+    val delta = this.prevValue - value
+    val reward = if (delta == 0) {
+      0
+    } else if (delta > 0) {
+      math.log10(delta.toDouble).toDouble
+    } else {
+      -math.log10(-delta.toDouble).toDouble
+    }
     this.bridge.sendReward(reward)
+    this.prevValue = value
+    // val stats   = NeighborhoodStats(searchResult, neighborhood)
+    // val reward2 = this.rewardModel(stats, neighborhood)
+    // this.bridge.sendReward(reward)
   }
 
   override def reset(): Unit = {
     super.reset()
-    this.prevValue = None
+    this.prevValue = Long.MaxValue
     this.bridge.sendEpisodeEnded()
   }
 
