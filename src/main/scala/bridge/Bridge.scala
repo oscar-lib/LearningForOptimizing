@@ -193,9 +193,9 @@ object NamedPipeBridge {
 
     val process = if (!debug) {
       val pb = new ProcessBuilder(
-        "python",
-        prefix + "src/python/main.py",
-        "-c=pipe",
+        "/gpfs/projects/shared/p_ariac_cetic/miniconda/envs/myr-env/bin/python",
+        "/gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing/src/python/main.py",
+        "--communication=pipe",
         s"-i=$pipeOut",
         s"-o=$pipeIn",
         s"-a=$algo",
@@ -209,6 +209,20 @@ object NamedPipeBridge {
       println(String.join(" ", pb.command()))
       Some(pb.start())
     } else None
+    println("Python process started with PID" + process.map(_.pid()).getOrElse("N/A"))
+    process match {
+      case Some(p) => {
+        println("Waiting 5 seconds for the process to start...")
+        p.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)
+        if (!p.isAlive) {
+          val msg = p.getErrorStream().readAllBytes().map(_.toChar).mkString
+          println("Python process error output: " + msg)
+          throw new Exception("Python process did not start correctly. Check the logs. Error: " + msg)
+        }
+        println("Python process is alive.")
+      }
+      case None => true // No process to wait for in debug mode
+    }
 
     val input  = new FileInputStream(new File(pipeIn))
     val output = new FileOutputStream(new File(pipeOut))

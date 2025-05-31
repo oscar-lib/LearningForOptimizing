@@ -40,7 +40,8 @@ class StatefulCombinator(
       rewardModel = new LogGain()
     ) {
 
-  private val nActions = neighborhoods.length
+  private val nActions                = neighborhoods.length
+  private var prevValue: Option[Long] = None
   // private val bridge    = SocketBridge(5555)
   val bridge =
     NamedPipeBridge(this.algo, this.debug, batchSize, epsilon, clipping, lr, ddqn, device)
@@ -82,6 +83,7 @@ class StatefulCombinator(
     if (searchResult == NoMoveFound) {
       setTabu(neighborhood)
     }
+    val diff   = searchResult.objective
     val stats  = NeighborhoodStats(searchResult, neighborhood)
     val reward = this.rewardModel(stats, neighborhood)
     this.bridge.sendReward(reward)
@@ -89,6 +91,7 @@ class StatefulCombinator(
 
   override def reset(): Unit = {
     super.reset()
+    this.prevValue = None
     this.bridge.sendEpisodeEnded()
   }
 

@@ -273,7 +273,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     if (search.isInstanceOf[StatefulCombinator]) {
       search.asInstanceOf[StatefulCombinator].close()
     }
-    val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
-    println(f"$integralPrimalGap%.3f")
+    val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout) * 1000
+    val rounded = integralPrimalGap.toLong
+    println(rounded)
   }
 }

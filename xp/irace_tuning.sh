@@ -9,8 +9,6 @@ TRAINING_SIZE=all # 100, 200, ..., all
 #   exit 2
 # fi
 
-. /gpfs/projects/shared/p_ariac_cetic/setup.sh
-
 REPO_ROOT="$(dirname "$(dirname "$(realpath "$0")")")"
 IRACE_DIR=$REPO_ROOT/irace
 DATA_DIR=$REPO_ROOT/examples
@@ -34,5 +32,5 @@ if [ ! -f "$CSV" ]; then
 fi
 
 # sbt clean
-sbt assembly
-irace -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --parallel 30 --train-instances-file "$DATA_DIR"/$PROBLEM/training$TRAINING_SIZE.txt
+# sbt assembly
+irace -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --parallel 1 --train-instances-file "$DATA_DIR"/$PROBLEM/training$TRAINING_SIZE.txt

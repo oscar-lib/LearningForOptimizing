@@ -4,6 +4,7 @@ import torch
 from runner import Runner, Params
 import typed_argparse as tap
 from bridge import SocketBridge, NamedPipeBridge, Bridge
+import logging
 
 
 class Args(tap.TypedArgs):
@@ -14,16 +15,25 @@ class Args(tap.TypedArgs):
     algorithm: Literal["dqn", "ppo"] = tap.arg("-a", help="Algorithm to use", default="dqn")
     _device: Literal["gpu", "cpu"] = tap.arg("--device", help="Device to use", default="cpu")
     epsilon: float = tap.arg("--epsilon", help="Epsilon value", type=float, default=0.1)
-    _clipping: float = tap.arg("--clipping", help="Clipping value", default=0)
+    _clipping: str | float = tap.arg("--clipping", help="Clipping value", default=0.0)
     batch_size: int = tap.arg("--batch-size", help="Batch size", default=32)
     _ddqn: str = tap.arg("--ddqn", help="Use Double DQN", default="false")
     lr: float = tap.arg("--lr", help="Learning rate", type=float, default=1e-4)
 
     @property
     def clipping(self) -> Optional[float]:
-        if self._clipping == 0:
+        match self._clipping:
+            case str():
+                clip = float(self._clipping)
+            case float():
+                clip = self._clipping
+            case _:
+                raise ValueError(f"Invalid clipping value: {self._clipping}")
+        if clip < 0:
+            raise ValueError(f"Clipping value must be non-negative, got {clip}")
+        if clip == 0:
             return None
-        return self._clipping
+        return clip
 
     @property
     def ddqn(self) -> bool:
@@ -62,10 +72,24 @@ class Args(tap.TypedArgs):
 
 
 def main(args: Args):
-    runner = Runner(args.bridge)
-    print(args)
-    runner.run(args.device, args.algorithm, args.to_params())
+    logging.info(f"Starting the runner with arguments {args}:")
+    try:
+        runner = Runner(args.bridge)
+        print(args)
+        runner.run(args.device, args.algorithm, args.to_params())
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
 
 
 if __name__ == "__main__":
-    tap.Parser(Args).bind(main).run()
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format="%(asctime)s - %(levelname)s - %(message)s",
+        handlers=[logging.StreamHandler(), logging.FileHandler("logs.log")],
+    )
+    try:
+        logging.info("Binding arguments")
+        tap.Parser(Args).bind(main).run()
+        logging.info("End of the program")
+    except Exception as e:
+        logging.error(f"Argument parsing error: {e}")
