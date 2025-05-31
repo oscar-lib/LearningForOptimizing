@@ -1,25 +1,27 @@
 package bridge
 
-import java.net.Socket
+import combinator.RLAlgorithm
+import csp.CarSeqConf
+import csp.CarSeqProblem
 import oscar.cbls.business.routing.model.VRP
-import upickle.default._
+import pdptw.LiLimCouple
+import pdptw.LiLimDepot
 import pdptw.LiLimNode
 import pdptw.LiLimProblem
-import pdptw.LiLimDepot
 import pdptw.LiLimVehicle
-import pdptw.LiLimCouple
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.io.InputStream
-import java.io.OutputStream
-import java.io.File
+import upickle.default._
+
 import java.io.BufferedReader
-import java.io.FileReader
+import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import combinator.RLAlgorithm
-import csp.CarSeqProblem
-import csp.CarSeqConf
+import java.io.FileReader
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.Socket
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.file.Paths
 
 class Bridge(protected val input: InputStream, protected val output: OutputStream) {
   implicit val depRw: ReadWriter[LiLimDepot]   = macroRW
@@ -163,10 +165,11 @@ object NamedPipeBridge {
     createFifo(pipeOut)
     createFifo(pipeIn)
 
+    println("CWD", Paths.get(".").toAbsolutePath)
     val process = if (!debug) {
       val pb = new ProcessBuilder(
-        ".venv/bin/python",
-        "src/python/main.py",
+        "python",
+        "../src/python/main.py",
         "-c=pipe",
         s"-i=$pipeOut",
         s"-o=$pipeIn",

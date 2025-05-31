@@ -84,9 +84,6 @@ class StatefulCombinator(
     }
     val stats  = NeighborhoodStats(searchResult, neighborhood)
     val reward = this.rewardModel(stats, neighborhood)
-    if (reward < 0) {
-      println("Negative reward: " + reward);
-    }
     this.bridge.sendReward(reward)
   }
 

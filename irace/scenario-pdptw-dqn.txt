@@ -25,7 +25,7 @@ configurationsFile = "./defaults-dqn.txt"
 
 ## Indicates the number of decimal places to be considered for the
 ## real parameters.
-digits = 4
+# digits = 4
 
 ## A value of 0 silences all debug messages. Higher values provide
 ## more verbose debug messages.
