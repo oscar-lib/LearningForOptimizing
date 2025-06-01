@@ -7,17 +7,18 @@ timeout=$3
 
 par_string=""
 
-#if [ "$bandit" = "ucb" ]; then
-#  par_string="-c 1.3439 -sw 0.9358 -ew 0.9836 -mfw 0.1684 -lr 0.9155"
-#elif [ "$bandit" = "epsilongreedy" ]; then
-#  par_string="-lr 0.5048 -mfw 0.3134 -ew 0.2538 -sw 0.6768 -e 0.0524"
-#elif [ "$bandit" = "dqn" ]; then
-#  par_string=" --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn true --clipping 5.0"
-#else
-#  echo "usage: ./script [instance] [bandit] [timeout]"
-#  echo "example: ./xp/pdptw_run_one_instance.sh examples/pdptw/pdptw_100/lc101.txt epsilongreedy 1"
-#  exit 1
-#fi
+if [ "$bandit" = "ucb" ]; then
+  par_string="-c 1.3439 -sw 0.9358 -ew 0.9836 -mfw 0.1684 -lr 0.9155"
+elif [ "$bandit" = "epsilongreedy" ]; then
+  par_string="-lr 0.5048 -mfw 0.3134 -ew 0.2538 -sw 0.6768 -e 0.0524"
+elif [ "$bandit" = "dqn" ]; then
+  par_string=" --bandit dqn --learningRate 0.0167 --epsilon 0.0644 --batchSize 117 --ddqn false --clipping 10.0"
+  #par_string=" --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn true --clipping 5.0" # Previous best parameters
+else
+  echo "usage: ./script [instance] [bandit] [timeout]"
+  echo "example: ./xp/pdptw_run_one_instance.sh examples/pdptw/pdptw_100/lc101.txt epsilongreedy 1"
+  exit 1
+fi
 
 
 launch_solver="java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"

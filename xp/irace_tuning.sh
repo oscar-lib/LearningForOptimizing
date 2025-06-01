@@ -9,6 +9,8 @@ TRAINING_SIZE=all # 100, 200, ..., all
 #   exit 2
 # fi
 
+. /gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing/setup.sh
+
 REPO_ROOT="$(dirname "$(dirname "$(realpath "$0")")")"
 IRACE_DIR=$REPO_ROOT/irace
 DATA_DIR=$REPO_ROOT/examples
@@ -33,4 +35,4 @@ fi
 
 # sbt clean
 # sbt assembly
-irace -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --parallel 1 --train-instances-file "$DATA_DIR"/$PROBLEM/training$TRAINING_SIZE.txt
+irace -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --parallel 20 --train-instances-file "$DATA_DIR"/$PROBLEM/training$TRAINING_SIZE.txt
