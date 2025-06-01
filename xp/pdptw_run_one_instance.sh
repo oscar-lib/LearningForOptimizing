@@ -12,7 +12,7 @@ if [ "$bandit" = "ucb" ]; then
 elif [ "$bandit" = "epsilongreedy" ]; then
   par_string="-lr 0.5048 -mfw 0.3134 -ew 0.2538 -sw 0.6768 -e 0.0524"
 elif [ "$bandit" = "dqn" ]; then
-  par_string=" --bandit dqn --learningRate 0.0167 --epsilon 0.0644 --batchSize 117 --ddqn false --clipping 10.0"
+  par_string=" --learningRate 0.0167 --epsilon 0.0644 --batchSize 117 --ddqn false --clipping 10.0"
   #par_string=" --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn true --clipping 5.0" # Previous best parameters
 else
   echo "usage: ./script [instance] [bandit] [timeout]"
