@@ -248,7 +248,12 @@ case class Solver(oscarModel: Model, in: SolverInput) {
 
     val instanceName = Paths.get(fileName).getFileName.toString
     val bestKnownSolution =
-      recorder.getBestKnownSolution("bks/pdptw_bks.csv", instanceName).getOrElse(0.0)
+      recorder
+        .getBestKnownSolution(
+          "/gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing/bks/pdptw_bks.csv",
+          instanceName
+        )
+        .getOrElse(0.0)
     // val gapOverTime = recorder.primalGapOverTime(bestKnownSolution, timeout)
     // println(f"primalGapOverTime=" + gapOverTime.map(e => f"(t=${e._1}%.3f-v=${e._2}%.6f)").mkString("[", "-", "]"))
     if (verbosity >= 1) {
@@ -275,7 +280,9 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       search.asInstanceOf[StatefulCombinator].close()
     }
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout) * 1000
-    val rounded           = integralPrimalGap.toLong
+    println(f"integralPrimalGap=${integralPrimalGap}")
+    val rounded = integralPrimalGap.toLong
+
     println(rounded)
   }
 }

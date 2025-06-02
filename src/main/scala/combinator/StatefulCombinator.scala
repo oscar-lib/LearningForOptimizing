@@ -48,10 +48,10 @@ class StatefulCombinator(
     NamedPipeBridge(this.algo, this.debug, batchSize, epsilon, clipping, lr, ddqn, device)
   model match {
     case Left(value) => {
-      bridge.sendStaticProblemData(value.liLimProblem, this.nActions)
+      // bridge.sendStaticProblemData(value.liLimProblem, this.nActions)
     }
     case Right(value) => {
-      bridge.sendStaticProblemData(value.instance, this.nActions)
+      // bridge.sendStaticProblemData(value.instance, this.nActions)
     }
   }
 
@@ -75,9 +75,16 @@ class StatefulCombinator(
   }
 
   override def getNextNeighborhood: Option[Neighborhood] = {
-    val state  = this.getCurrentSearchState()
-    val action = this.bridge.askAction(state, this.authorizedNeighborhood)
+    // Return a random action
+    val availableActions = this.getAvailableActions()
+    if (availableActions.isEmpty) {
+      return None
+    }
+    val action = availableActions(scala.util.Random.nextInt(availableActions.length))
     Some(this.neighborhoods(action))
+    // val state  = this.getCurrentSearchState()
+    // val action = this.bridge.askAction(state, this.authorizedNeighborhood)
+    // Some(this.neighborhoods(action))
   }
 
   override def notifyMove(searchResult: SearchResult, neighborhood: Neighborhood): Unit = {
@@ -93,7 +100,7 @@ class StatefulCombinator(
     } else {
       -math.log10(-delta.toDouble).toDouble
     }
-    this.bridge.sendReward(reward)
+    // this.bridge.sendReward(reward)
     this.prevValue = value
     // val stats   = NeighborhoodStats(searchResult, neighborhood)
     // val reward2 = this.rewardModel(stats, neighborhood)
@@ -103,7 +110,7 @@ class StatefulCombinator(
   override def reset(): Unit = {
     super.reset()
     this.prevValue = Long.MaxValue
-    this.bridge.sendEpisodeEnded()
+    // this.bridge.sendEpisodeEnded()
   }
 
   def close() = {

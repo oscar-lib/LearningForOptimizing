@@ -5,6 +5,10 @@ instance=$1
 bandit=$2
 timeout=$3
 
+PREFIX="/gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing"
+
+. ${PREFIX}/setup.sh
+
 par_string=""
 
 if [ "$bandit" = "ucb" ]; then
@@ -21,7 +25,7 @@ else
 fi
 
 
-launch_solver="java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
+launch_solver="java -jar ${PREFIX}/target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
 output=`$launch_solver --problem pdptw --input ${instance} --timeout ${timeout} --bandit ${bandit} --verbosity 1 ${par_string}`
 # post process to extract only the relevant information
 unroutedNodes=$(echo "$output" | grep 'Unrouted nodes' | awk -F': ' '{print $2}')

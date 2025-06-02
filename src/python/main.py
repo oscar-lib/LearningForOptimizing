@@ -13,7 +13,7 @@ class Args(tap.TypedArgs):
     input_pipe: Optional[str] = tap.arg("-i", help="Input pipe name")
     output_pipe: Optional[str] = tap.arg("-o", help="Output pipe name")
     algorithm: Literal["dqn", "ppo"] = tap.arg("-a", help="Algorithm to use", default="dqn")
-    _device: Literal["gpu", "cpu"] = tap.arg("--device", help="Device to use", default="cpu")
+    _device: Literal["gpu", "cpu"] = tap.arg("--device", help="Device to use", default="gpu")
     epsilon: float = tap.arg("--epsilon", help="Epsilon value", type=float, default=0.1)
     _clipping: str | float = tap.arg("--clipping", help="Clipping value", default=0.0)
     batch_size: int = tap.arg("--batch-size", help="Batch size", default=32)
@@ -41,9 +41,16 @@ class Args(tap.TypedArgs):
 
     @property
     def device(self) -> torch.device:
+        n_devices = torch.cuda.device_count()
+        logging.info(f"Number of available CUDA devices: {n_devices}")
+        if n_devices == 0:
+            return torch.device("cpu")
+        device_index = os.getpid() % n_devices
+        return torch.device(f"cuda:{device_index}")
         match self._device:
             case "gpu":
                 n_devices = torch.cuda.device_count()
+                logging.info(f"Number of available CUDA devices: {n_devices}")
                 if n_devices == 0:
                     device = torch.device("cpu")
                 else:

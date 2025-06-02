@@ -138,7 +138,7 @@ object NamedPipeBridge {
 
   def findPythonPath(): Path = {
     val possiblePaths = Array(
-      Paths.get("/gpfs/projects/shared/p_ariac_cetic/miniconda/envs/myr-env/bin/"),
+      Paths.get("/gpfs/projects/shared/p_ariac_cetic/miniconda/envs/myr-env/bin/python"),
       Paths.get(".venv/bin/python"),
       Paths.get(".env/bin/python"),
       Paths.get("venv/bin/python"),
@@ -220,7 +220,7 @@ object NamedPipeBridge {
         s"-i=$pipeOut",
         s"-o=$pipeIn",
         s"-a=$algo",
-        s"--device=$device",
+        s"--device=gpu",
         f"--epsilon=$epsilon%.4f",
         f"--clipping=$clipping%.4f",
         s"--batch-size=$batchSize",
