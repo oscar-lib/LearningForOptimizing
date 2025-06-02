@@ -40,5 +40,9 @@ INSTANCE=$(echo "$LINE" | cut -d',' -f1)
 BANDIT=$(echo "$LINE"    | cut -d',' -f2)
 
 # "srun" is recommended by Slurm, but effectively this is one process.
-# We'll append exactly one line of output to a shared CSV:
-srun "$RUN_SCRIPT" "$INSTANCE" "$BANDIT" "$TIMEOUT" >> "$OUTFILE"
+# We'll append exactly one line of output to a shared CSV, with a lock to prevent concurrent writes:
+( 
+  flock 200
+  srun "$RUN_SCRIPT" "$INSTANCE" "$BANDIT" "$TIMEOUT" > &200
+) 200>>"$OUTFILE"
+
