@@ -22,13 +22,7 @@ TIMEOUT=900  # Or get it from script env, or put it in the input file
 
 PROJECT_DIR="/gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing"
 INPUT_FILE="${PROJECT_DIR}/examples/lucia_input/input_lucia_csp.txt"
-OUTFILE="${PROJECT_DIR}/results/csp_results_${SLURM_ARRAY_JOB_ID}.csv" # name of the output file includes job id
 RUN_SCRIPT="${PROJECT_DIR}/xp/csp_run_one_instance.sh"
-
-# Write the CSV header once (only task 0 does it)
-if [ "$SLURM_ARRAY_TASK_ID" -eq 0 ] && [ ! -f "$OUTFILE" ]; then
-  echo "instance,bandit,timeout,objective,solOverTime" > "$OUTFILE"
-fi
 
 # Figure out which line from INPUT_FILE this task should run:
 LINE_NUM=$((SLURM_ARRAY_TASK_ID + 1))
@@ -40,7 +34,4 @@ BANDIT=$(echo "$LINE"    | cut -d',' -f2)
 
 # "srun" is recommended by Slurm, but effectively this is one process.
 # We'll append exactly one line of output to a shared CSV:
-(
-  flock 200
-  srun "$RUN_SCRIPT" "$INSTANCE" "$BANDIT" "$TIMEOUT" >&200
-) 200>>"$OUTFILE"
+srun "$RUN_SCRIPT" "$INSTANCE" "$BANDIT" "$TIMEOUT"
