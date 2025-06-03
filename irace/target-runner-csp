@@ -23,7 +23,7 @@ EXE="../xp/run_one_instance_tuning.sh"
 
 # Fixed parameters that should be always passed to Learning for Optimizing.
 # The time to be used is always 10 seconds
-FIXED_PARAMS=" --timeout 60 --verbosity 0 -p csp"
+FIXED_PARAMS=" --timeout 300 --verbosity 0 -p csp"
 
 CONFIG_ID="$1"
 INSTANCE_ID="$2"

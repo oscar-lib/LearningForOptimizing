@@ -1,13 +1,16 @@
 #!/bin/bash
 #run from anywhere, but do not move this file
 #example run: ./irace_tuning.sh pdptw ucb
-PROBLEM=$1 # pdptw, csp
-ALGO=$2    # epsilongreedy, ucb
-TRAINING_SIZE=$3
-if [ $# -lt 3 ]; then
-  echo 1>&2 "$0: not enough parameters: call script with <problem> <algorithm> <training_size>"
-  exit 2
-fi
+export PATH="$(Rscript -e "cat(paste0(system.file(package='irace', 'bin', mustWork=TRUE), ':'))" 2> /dev/null)${PATH}"
+PROBLEM=pdptw # pdptw, csp
+ALGO=dqn    # epsilongreedy, ucb
+TRAINING_SIZE=all # 100, 200, ..., all
+# if [ $# -lt 3 ]; then
+#   echo 1>&2 "$0: not enough parameters: call script with <problem> <algorithm> <training_size>"
+#   exit 2
+# fi
+
+. /gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing/setup.sh
 
 REPO_ROOT="$(dirname "$(dirname "$(realpath "$0")")")"
 IRACE_DIR=$REPO_ROOT/irace
@@ -31,5 +34,6 @@ if [ ! -f "$CSV" ]; then
   cp "$REPO_ROOT"/bks/"$PROBLEM"_bks.csv "$CSV"
 fi
 
-sbt clean && sbt assembly
-irace -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --parallel 4 --train-instances-file "$DATA_DIR"/$PROBLEM/training$TRAINING_SIZE.txt
+# sbt clean
+# sbt assembly
+irace -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --parallel 20 --train-instances-file "$DATA_DIR"/$PROBLEM/training$TRAINING_SIZE.txt

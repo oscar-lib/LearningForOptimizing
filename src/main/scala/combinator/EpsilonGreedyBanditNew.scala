@@ -24,7 +24,7 @@ class EpsilonGreedyBanditNew(l: List[Neighborhood], in: SolverInput)
       l,
       learningScheme = AfterEveryMove,
       learningRate = in.learningRate,
-      rewardModel = if (in.objChangeReward) {new LogObjChange()} else { new OriginalRewardModel(
+      rewardModel = if (in.objChangeReward) {new LogGain()} else { new OriginalRewardModel(
         wSol = in.moveFoundWeight,
         wEff = in.efficiencyWeight,
         wSlope = in.slopeWeight

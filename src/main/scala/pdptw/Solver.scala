@@ -79,10 +79,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
   )
 
   def rewardFunction(neighStats: Array[NeighborhoodStatistics], nbNeigh: Int): Array[Double] = {
-    // println("Compute Reward")
-    // println(neighStats.mkString(";"))
-    val objValue = obj.value
-    // println(s"$objValue $bestKnown")
+    val objValue       = obj.value
     val totalReward    = 0.5 + (bestKnown - objValue).toDouble / (2 * bestKnown)
     val totalRewardSig = 1 / (1 + Math.exp(-5 * (totalReward - 0.5)))
     val totalGain      = neighStats.map(_.totalGain).sum
@@ -95,8 +92,6 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       bestKnown = objValue
     for (i <- 0 until nbNeigh)
       res(i) = res(i) / totalRes
-    // println(s"reward: ${res.mkString(";")} (totalReward : $totalReward - $totalRewardSig)")
-
     res
   }
 
@@ -104,49 +99,19 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     neighStats: Array[NeighborhoodStatistics],
     nbNeigh: Int
   ): Array[Double] = {
-//    println("Compute Reward")
-//    println(neighStats.mkString(";"))
-    val objValue = obj.value
-//    println(s"$objValue $bestKnown")
+    val objValue    = obj.value
     val totalReward = 1
-//    if (objValue < bestKnown) {
-//      totalReward = 1
-//    } else {
-//      totalReward = -1
-//    }
 
     if (objValue < bestKnown)
       bestKnown = objValue
     val res = Array.fill(nbNeigh)(0.0)
     for (i <- 0 until nbNeigh) {
-//      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
       if (neighStats(i).nbFound > 0) {
         res(i) = res(i) + totalReward
       } else if (neighStats(i).nbNotFound > 0) {
         res(i) = res(i) - 0.4 * totalReward
       }
     }
-
-//    var foundBetter = 0
-//    var foundWorse = 0
-//    for (i <- 0 until nbNeigh) {
-//      if (neighStats(i).nbFound > 0) {
-//        foundBetter = 1
-//      }
-//      if (neighStats(i).nbNotFound > 0) {
-//        foundWorse = 1
-//      }
-//    }
-//    var tr : Double = 0.0
-//    if (foundBetter == 1) tr = totalReward
-//    else if (foundWorse == 1) tr = -0.3 * totalReward
-//    for (i <- 0 until nbNeigh) {
-//      println(s"neighbourhood outcome: $i ${neighStats(i).nbFound}")
-//      if (neighStats(i).nbFound > 0 || neighStats(i).nbNotFound > 0) {
-//        res(i) = res(i) + tr
-//      }
-//    }
-//    println(s"reward: ${res.mkString(";")} (totalReward : $totalReward)")
 
     res
   }
@@ -184,39 +149,6 @@ case class Solver(oscarModel: Model, in: SolverInput) {
 //      simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
     )
     var search = in.bandit.toLowerCase() match {
-//      case "bandit" =>
-//        BanditCombinator(
-//          neighList,
-//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-//          if (withTimeout) Int.MaxValue else 15,
-//          obj,
-//          stats => rewardFunction(stats, neighList.length)
-//        ) saveBestAndRestoreOnExhaust obj
-//      case "banditaftermove" =>
-//        BanditCombinator(
-//          neighList,
-//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-//          if (withTimeout) Int.MaxValue else 15,
-//          obj,
-//          stats => rewardFunctionAfterMove(stats, neighList.length),
-//          afterMove = true
-//        ) saveBestAndRestoreOnExhaust obj
-//      case "banditrollingaverage" =>
-//        BanditCombinator(
-//          neighList,
-//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-//          if (withTimeout) Int.MaxValue else 15,
-//          obj,
-//          stats => rewardFunction(stats, neighList.length),
-//          rollingAverage = true
-//        ) saveBestAndRestoreOnExhaust obj
-//      case "epsilongreedy" =>
-//        new EpsilonGreedyBandit(neighList) onExhaustRestartAfter (
-//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-//          0,
-//          obj,
-//          minRestarts = if (withTimeout) Int.MaxValue else 15
-//        )
       case "epsilongreedy" =>
         new EpsilonGreedyBanditNew(neighList, in) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
@@ -224,13 +156,40 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           obj,
           minRestarts = if (withTimeout) Int.MaxValue else 15
         )
-//      case "ucb1" =>
-//        new UCB1(neighList) onExhaustRestartAfter (
-//          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-//          0,
-//          obj,
-//          minRestarts = if (withTimeout) Int.MaxValue else 15
-//        )
+      case "dqn" => {
+        new StatefulCombinator(
+          neighList,
+          Left(this.oscarModel),
+          lr = in.learningRate,
+          batchSize = in.batchSize,
+          epsilon = in.epsilon,
+          clipping = in.clipping,
+          ddqn = in.ddqn,
+          debug = in.debug,
+          algo = RLAlgorithm.DQN,
+          device = in.device,
+          objective = oscarModel.objectiveFunction
+        ) onExhaustRestartAfter (
+          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+          0,
+          obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15
+        )
+      }
+      // case "ppo" => {
+      //   new StatefulCombinator(
+      //     neighList,
+      //     this.oscarModel.lilimProblem(),
+      //     this.oscarModel.pdpProblem,
+      //     debug = in.debug,
+      //     algo = RLAlgorithm.PPO
+      //   ) onExhaustRestartAfter (
+      //     simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+      //     0,
+      //     obj,
+      //     minRestarts = if (withTimeout) Int.MaxValue else 15
+      //   )
+      // }
       case "ucb" =>
         new UCBNew(neighList, in) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
@@ -253,7 +212,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
 
-      case _ =>
+      case other =>
+        throw new IllegalArgumentException(s"Invalid bandit specified: $other")
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(neighList) onExhaustRestartAfter (simpleNeighborhoods.emptyMultiplesVehicle(
           pdptw.v / 10
@@ -286,24 +246,32 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     search.doAllMoves(obj = obj)
     if (displaySolution) demoDisplay.drawRoutes(force = true)
 
-    if (verbosity > 1) {
+    val instanceName = Paths.get(fileName).getFileName.toString
+    // val gapOverTime = recorder.primalGapOverTime(bestKnownSolution, timeout)
+    // println(f"primalGapOverTime=" + gapOverTime.map(e => f"(t=${e._1}%.3f-v=${e._2}%.6f)").mkString("[", "-", "]"))
+    if (verbosity >= 1) {
       search.profilingOnConsole()
       println(pdptw.toString())
       println(obj)
     }
     println(oscarModel.toString)
     println("bestObj=" + oscarModel.objectiveFunction.value)
-    //println(recorder)
-    val instanceName = Paths.get(fileName).getFileName.toString
+    // println(recorder)
     val realSolutionOverTime = recorder.realObjectiveTimeStamp
-    println(f"solOverTime=" + realSolutionOverTime.map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)").mkString("[", "-", "]"))
+    println(
+      f"solOverTime=" + realSolutionOverTime
+        .map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)")
+        .mkString("[", "-", "]")
+    )
     val currentDirectory = System.getProperty("user.dir")
-    val rootDir = currentDirectory.split("LearningForOptimizing")(0)
+    val rootDir          = currentDirectory.split("LearningForOptimizing")(0)
     val bestKnownSolution =
-      recorder.getBestKnownSolution(rootDir + "/LearningForOptimizing/bks/pdptw_bks.csv", instanceName).getOrElse(0.0)
-    //val gapOverTime = recorder.primalGapOverTime(bestKnownSolution, timeout)
-    //println(f"primalGapOverTime=" + gapOverTime.map(e => f"(t=${e._1}%.3f-v=${e._2}%.6f)").mkString("[", "-", "]"))
+      recorder
+        .getBestKnownSolution(rootDir + "/LearningForOptimizing/bks/pdptw_bks.csv", instanceName)
+        .getOrElse(0.0)
+    // val gapOverTime = recorder.primalGapOverTime(bestKnownSolution, timeout)
+    // println(f"primalGapOverTime=" + gapOverTime.map(e => f"(t=${e._1}%.3f-v=${e._2}%.6f)").mkString("[", "-", "]"))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
-    println(f"integralPrimalGap=$integralPrimalGap%.3f".replace(',','.'))
+    println(f"integralPrimalGap=$integralPrimalGap%.3f".replace(',', '.'))
   }
 }

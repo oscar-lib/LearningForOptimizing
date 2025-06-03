@@ -34,6 +34,8 @@ object Model {
 class Model(val liLimProblem: LiLimProblem) {
 
   //////////// VRP ////////////
+  /** Number of vehicles
+    */
   private val v: Int       = liLimProblem.vehicles.length
   private val n: Int       = v + liLimProblem.nodes.length
   lazy val pdpProblem: VRP = new VRP(new Store(), n, v, debug = false)
@@ -172,6 +174,23 @@ class Model(val liLimProblem: LiLimProblem) {
     )
     vrp.m.close()
     obj
+  }
+
+  def lilimProblem(): LiLimProblem = {
+    return this.liLimProblem
+  }
+
+  /** Compute the state (that can be used for stateful RL or Contextual Bandits).
+    */
+  def getState(): List[List[Int]] = {
+    var routes: List[List[Int]] = List.empty
+    for (vehicle <- 0 until this.pdpProblem.v) {
+      val routeOfV = this.pdpProblem.getRouteOfVehicle(vehicle)
+      if (routeOfV.length > 1) {
+        routes = routes :+ routeOfV
+      }
+    }
+    return routes
   }
 
   override def toString: String = {

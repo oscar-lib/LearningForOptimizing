@@ -20,7 +20,7 @@ class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput)
       neighborhoods,
       AfterEveryMove,
       learningRate = in.learningRate,
-      rewardModel = if (in.objChangeReward) {new LogObjChange()} else { new OriginalRewardModel(
+      rewardModel = if (in.objChangeReward) {new LogGain()} else { new OriginalRewardModel(
         wSol = in.moveFoundWeight,
         wEff = in.efficiencyWeight,
         wSlope = in.slopeWeight
@@ -38,12 +38,15 @@ class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput)
     */
   override def getNextNeighborhood: Option[Neighborhood] = {
     t += 1
+    if (t < neighborhoods.length) { // play each neighborhood once for initialization
+      return Some(neighborhoods(t - 1))
+    }
     var maxUcb: Double = Double.MinValue
     neigh_idx_max = Vector.empty
 
     authorizedNeighborhoodIterator().foreach(idx => {
       val ucbIdx =
-        if (nSelected(idx) == 0) Double.MinValue
+        if (nSelected(idx) == 0) Double.MinValue // should not happen due to initialization above
         else
           weights(idx) / nSelected(idx) + wConf * math.sqrt(2 * math.log(t) / nSelected(idx))
       if (ucbIdx == maxUcb) {

@@ -1,0 +1,160 @@
+2025-06-02 11:58:53,125 - INFO - Binding arguments
+2025-06-02 11:58:53,125 - INFO - Binding arguments
+2025-06-02 11:58:53,125 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,127 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,125 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,128 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063758697616', output_pipe='pipes/p2s-1809063758697616', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,127 - INFO - Binding arguments
+2025-06-02 11:58:53,125 - INFO - Binding arguments
+2025-06-02 11:58:53,128 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064080318110', output_pipe='pipes/p2s-1809064080318110', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,125 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,127 - INFO - Binding arguments
+2025-06-02 11:58:53,129 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063888917239', output_pipe='pipes/p2s-1809063888917239', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,129 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064061650200', output_pipe='pipes/p2s-1809064061650200', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,129 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063814621388', output_pipe='pipes/p2s-1809063814621388', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,130 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063961596865', output_pipe='pipes/p2s-1809063961596865', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,131 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,131 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063961225552', output_pipe='pipes/p2s-1809063961225552', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,132 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064074871020', output_pipe='pipes/p2s-1809064074871020', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,131 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,125 - INFO - Binding arguments
+2025-06-02 11:58:53,129 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,131 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063945329091', output_pipe='pipes/p2s-1809063945329091', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,133 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,134 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063961834057', output_pipe='pipes/p2s-1809063961834057', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,131 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064006327659', output_pipe='pipes/p2s-1809064006327659', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,131 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063961509442', output_pipe='pipes/p2s-1809063961509442', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,132 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064189259363', output_pipe='pipes/p2s-1809064189259363', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,133 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063843182211', output_pipe='pipes/p2s-1809063843182211', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,133 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063873056184', output_pipe='pipes/p2s-1809063873056184', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,132 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064038026596', output_pipe='pipes/p2s-1809064038026596', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,127 - INFO - Binding arguments
+2025-06-02 11:58:53,125 - INFO - Binding arguments
+2025-06-02 11:58:53,140 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063714418104', output_pipe='pipes/p2s-1809063714418104', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,129 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,131 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063941444235', output_pipe='pipes/p2s-1809063941444235', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,142 - INFO - Starting runner
+2025-06-02 11:58:53,140 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,130 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063876227209', output_pipe='pipes/p2s-1809063876227209', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,132 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064152244060', output_pipe='pipes/p2s-1809064152244060', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,141 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,132 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063931271571', output_pipe='pipes/p2s-1809063931271571', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,131 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063916645329', output_pipe='pipes/p2s-1809063916645329', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,131 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063738137106', output_pipe='pipes/p2s-1809063738137106', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,131 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063690697709', output_pipe='pipes/p2s-1809063690697709', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,143 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063996522109', output_pipe='pipes/p2s-1809063996522109', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,131 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063958940991', output_pipe='pipes/p2s-1809063958940991', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,148 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,139 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064192355659', output_pipe='pipes/p2s-1809064192355659', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,143 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064012184133', output_pipe='pipes/p2s-1809064012184133', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,139 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,133 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063848609084', output_pipe='pipes/p2s-1809063848609084', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,131 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,137 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,131 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064031181408', output_pipe='pipes/p2s-1809064031181408', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,139 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,143 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,147 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,134 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,139 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,138 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063907664317', output_pipe='pipes/p2s-1809063907664317', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,133 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064069930494', output_pipe='pipes/p2s-1809064069930494', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,134 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063922527360', output_pipe='pipes/p2s-1809063922527360', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,137 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,140 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,138 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063992133543', output_pipe='pipes/p2s-1809063992133543', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,144 - INFO - Starting runner
+2025-06-02 11:58:53,144 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,141 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064007544018', output_pipe='pipes/p2s-1809064007544018', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,148 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,144 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,142 - INFO - Starting runner
+2025-06-02 11:58:53,142 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064140594521', output_pipe='pipes/p2s-1809064140594521', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,140 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809063933017688', output_pipe='pipes/p2s-1809063933017688', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,143 - INFO - Starting runner
+2025-06-02 11:58:53,142 - INFO - Starting runner
+2025-06-02 11:58:53,146 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,141 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064031233565', output_pipe='pipes/p2s-1809064031233565', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,131 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,154 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,143 - INFO - Starting runner
+2025-06-02 11:58:53,143 - INFO - Starting runner
+2025-06-02 11:58:53,151 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,145 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,145 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064058233427', output_pipe='pipes/p2s-1809064058233427', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,148 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,126 - INFO - Binding arguments
+2025-06-02 11:58:53,140 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,154 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,152 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,149 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,150 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,151 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,156 - INFO - Starting runner
+2025-06-02 11:58:53,154 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,156 - INFO - Starting runner
+2025-06-02 11:58:53,148 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,156 - INFO - Starting runner
+2025-06-02 11:58:53,156 - INFO - Starting runner
+2025-06-02 11:58:53,151 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,155 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,156 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,158 - INFO - Starting runner
+2025-06-02 11:58:53,159 - INFO - Starting runner
+2025-06-02 11:58:53,159 - INFO - Starting the runner with arguments Args(communication='pipe', port=None, input_pipe='pipes/s2p-1809064090771208', output_pipe='pipes/p2s-1809064090771208', algorithm='dqn', _device='gpu', epsilon=0.0644, _clipping='10.0000', batch_size=117, _ddqn='false', lr=0.0167):
+2025-06-02 11:58:53,160 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,160 - INFO - Starting runner
+2025-06-02 11:58:53,160 - INFO - Number of available CUDA devices: 0
+2025-06-02 11:58:53,162 - INFO - Starting runner
+2025-06-02 11:58:53,162 - INFO - Starting runner
+2025-06-02 11:58:53,163 - INFO - Starting runner
+2025-06-02 11:58:53,163 - INFO - Starting runner
+2025-06-02 11:58:53,163 - INFO - Starting runner
+2025-06-02 11:58:53,163 - INFO - Starting runner
+2025-06-02 11:58:53,163 - INFO - Starting runner
+2025-06-02 11:58:53,163 - INFO - Starting runner
+2025-06-02 11:58:53,163 - INFO - Starting runner
+2025-06-02 11:58:53,163 - INFO - Starting runner
+2025-06-02 11:58:53,165 - INFO - Starting runner
+2025-06-02 11:58:53,165 - INFO - Starting runner
+2025-06-02 11:58:53,165 - INFO - Starting runner
+2025-06-02 11:58:53,166 - INFO - Starting runner
+2025-06-02 11:58:53,166 - INFO - Starting runner
+2025-06-02 11:58:53,166 - INFO - Starting runner
+2025-06-02 11:58:53,166 - INFO - Starting runner
+2025-06-02 11:58:53,166 - INFO - Starting runner
+2025-06-02 11:58:53,166 - INFO - Starting runner
+2025-06-02 11:58:53,166 - INFO - Starting runner
+2025-06-02 11:58:53,166 - INFO - Starting runner
+2025-06-02 11:58:53,166 - INFO - Starting runner
+2025-06-02 11:58:53,166 - INFO - Starting runner
+2025-06-02 11:58:53,166 - INFO - Starting runner
+2025-06-02 11:58:53,166 - INFO - Starting runner
+2025-06-02 11:58:53,168 - INFO - Starting runner

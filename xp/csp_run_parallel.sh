@@ -3,14 +3,14 @@
 # supposed to be called at the root of the project
 
 # ------ parameters for the run -------
-declare -a BanditType=("ucbNew" "epsilonGreedyNew")
+declare -a BanditType=("ucb" "epsilongreedy" "bestslopefirst" "random")
 timeout=300  # timeout in seconds
-nRuns=10   # number of time an instance is run (to take randomness into account)
-nParallel=4  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
+nRuns=20   # number of time an instance is run (to take randomness into account)
+nParallel=15  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
 run_script="./xp/csp_run_one_instance.sh"  # executable for running the experiments
 # path to the file where the instances to run are written
 # each line in this file should be the full path to an instance to run
-instances="examples/csp/test_instances.txt"
+instances="examples/csp/testingall.txt"
 
 myDate=`printf '%(%Y-%m-%d_%H_%M_%S)T\n' -1`
 commitId=`git rev-parse --short HEAD`
@@ -22,7 +22,7 @@ rm -f $inputFile  # erase previous data file
 
 # compile the project
 echo "compiling..."
-sbt clean
+#sbt clean
 sbt assembly
 echo "compilation done"
 echo "running experiments on $nParallel core(s)"

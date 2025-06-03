@@ -7,10 +7,21 @@ project/project/
 .bloop
 .bsp
 metals.sbt
+
+# Python specific
+.venv
 **/*arena/
 uv.lock
 *.pyc
+.ipynb_checkpoints
+
+# Others
 .env
-.venv
-venv
+logs/
+.devcontainer
+nohup.out
+# Directory used for named pipes
+pipes/ 
+experiences/
+
 logs

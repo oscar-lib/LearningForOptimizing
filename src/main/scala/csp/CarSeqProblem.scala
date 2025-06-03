@@ -13,14 +13,18 @@
 
 package csp
 
+import org.apache.xpath.operations.Bool
+
 /** This class represents an instance of the car sequencing problem (CSP).
   *
   * The CSP is concerned with finding a feasible production ordering of the given set of cars. Each
   * car belongs to a configuration, and each configuration is defined by a subset of the available
-  * options (e.g. as air conditioning). For each option, two positive integers are provided: a
-  * subsequence length and the maximum number of cars using that option that can be produced in any
-  * subsequence of that length. An ordering is feasible if this subsequence constraint is satisfied
-  * for all options.
+  * options (e.g. as air conditioning). For each option, two positive integers are provided:
+  *   - a subsequence length
+  *   - the maximum number of cars using that option that can be produced in any subsequence of that
+  *     length.
+  *
+  * An ordering is feasible if this subsequence constraint is satisfied for all options.
   *
   * @param nCars
   *   total number of cars
@@ -69,10 +73,10 @@ case class CarSeqProblem(
 /** Class defining a configuration for a CSP instance.
   *
   * @param id
-  *   identification number
+  *   Identification number
   * @param nCarsWithConf
-  *   total number of cars with this configuration
+  *   Total number of cars with this configuration
   * @param optInConf
-  *   0-1 array defining which options belong to this configuration
+  *   Array defining which options belong to this configuration, i.e. the "recipe" of the car.
   */
-case class CarSeqConf(id: Int, nCarsWithConf: Int, optInConf: Array[Int])
+case class CarSeqConf(id: Int, nCarsWithConf: Int, optInConf: Array[Boolean])

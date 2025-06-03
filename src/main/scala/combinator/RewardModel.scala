@@ -64,11 +64,11 @@ class OriginalRewardModel(
   }
 
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
+    this.maxSlope = Math.max(this.maxSlope, runStat.slope)
     this.maxRunTimeNano = Math.max(this.maxRunTimeNano, runStat.timeNano)
-    val v = this.wSol * rewardFoundMove(runStat) +
+    this.wSol * rewardFoundMove(runStat) +
       this.wEff * rewardExecutionTime(runStat) +
       this.wSlope * slopeReward(runStat)
-    v
   }
 }
 
@@ -176,18 +176,20 @@ class NormalizedWindowedMeanGain(windowSize: Int) extends NormalizedGain {
   }
 }
 
-class LogObjChange extends NormalizedGain {
 
-  override protected def update(gain: Long): Unit = {
-
-  }
-
-  override protected def normalize(gain: Long): Double = {
-    if (gain == 0) {
+/** Returns the log_10 of the gain of the last move. In the case of negative gains, returns
+ * -log_10(-gain) to have a consistent negative reward.
+ */
+class LogGain extends RewardModel {
+  override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
+    val profiler = NeighborhoodUtils.getProfiler(neighborhood)
+    if (profiler._lastCallGain == 0) {
       0
+    } else if (profiler._lastCallGain > 0) {
+      math.log10(profiler._lastCallGain.toDouble)
     } else {
-      Math.log10(gain)
+      // The new solution is worse
+      -math.log10(-profiler._lastCallGain.toDouble)
     }
   }
-
 }

@@ -48,7 +48,7 @@ abstract class BanditSelector(
   learningScheme: LearningScheme = AfterEveryMove,
   seed: Int = 42,
   learningRate: Double = 0.1,
-  rewardModel: RewardModel = new OriginalRewardModel()
+  protected val rewardModel: RewardModel = new OriginalRewardModel()
 ) extends NeighborhoodCombinator(neighborhoods: _*) {
 
   private val _profiler: SelectionProfiler = new SelectionProfiler(this, neighborhoods)
@@ -59,7 +59,8 @@ abstract class BanditSelector(
   override def profiler: SelectionProfiler = _profiler
 
   // number of neighborhoods marked as tabu
-  protected var nTabu = 0
+  protected var nTabu      = 0
+  protected val nNeighbors = neighborhoods.length
 
   // false if a neighborhood is marked as tabu
   protected val authorizedNeighborhood: Array[Boolean] = Array.fill(neighborhoods.length)(true)
@@ -88,9 +89,6 @@ abstract class BanditSelector(
   for (i <- neighborhoods.indices) {
     neighborhoodIdx += (neighborhoods(i) -> i)
   }
-
-  protected var maxSlope             = 1.0 // stores (and updates) the maximum slope ever observed
-  protected var maxRunTimeNano: Long = 1   // max run time experienced by a neighborhood
 
   // TODO next steps to slightly speeds the selection:
   //  1. use sparse-set to maintain the neighborhoods that are not marked as tabu
@@ -251,7 +249,7 @@ abstract class BanditSelector(
 
   /** Reset the list of tabu neighborhoods and update the sum of weights for valid neighborhoods
     */
-  private def resetTabu(): Unit = {
+  protected def resetTabu(): Unit = {
     if (nTabu != 0) {
       for (idx <- authorizedNeighborhood.indices) {
         if (isTabu(idx)) {
@@ -411,9 +409,10 @@ abstract class BanditSelector(
     acceptanceCriterion: AcceptanceCriterion
   ): SearchResult = {
 
+    // Inner function to enable tailrec optimization without making `getMove` final.
     @tailrec
     def doSearch(): SearchResult = {
-      if (nTabu == neighborhoods.length) {
+      if (nTabu == this.nNeighbors) {
         return NoMoveFound
       }
       getNextNeighborhood match {

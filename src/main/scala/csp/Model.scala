@@ -29,7 +29,7 @@ object Model {
 
 class Model(val instance: CarSeqProblem) {
 
-  private val s = new Store()
+  private val store = new Store()
 
   private val carArray: Array[Int] = {
     val b   = Array.newBuilder[Int]
@@ -42,17 +42,17 @@ class Model(val instance: CarSeqProblem) {
   }
 
   val carSequence: Array[CBLSIntVar] = Array.tabulate(instance.nCars)(i => {
-    CBLSIntVar(s, carArray(i), 0 until instance.nConf, s"car configuration at position $i")
+    CBLSIntVar(store, carArray(i), 0 until instance.nConf, s"car configuration at position $i")
   })
 
-  val constraintSystem = ConstraintSystem(s)
+  val constraintSystem = ConstraintSystem(store)
 
   for (opt <- 0 until instance.nOptions) {
 
     val configurationsWithOption: Array[Boolean] = {
       val arr = Array.fill[Boolean](instance.nConf)(false)
       for (c <- instance.configs) {
-        if (c.optInConf(opt) == 1) arr(c.id) = true
+        if (c.optInConf(opt)) arr(c.id) = true
       }
       arr
     }
@@ -75,5 +75,9 @@ class Model(val instance: CarSeqProblem) {
 
   val obj: Objective = constraintSystem.violation
 
-  s.close()
+  store.close()
+
+  def getState(): List[Int] = {
+    carSequence.map(_.value.intValue()).toList
+  }
 }
