@@ -83,7 +83,7 @@ case class Solver(cspModel: Model, in: SolverInput) {
       case "dqn" =>
         new StatefulCombinator(
           neighList,
-          Right(cspModel),
+          cspModel,
           lr = in.learningRate,
           batchSize = in.batchSize,
           epsilon = in.epsilon,

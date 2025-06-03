@@ -24,6 +24,32 @@ import oscar.cbls.business.routing.vehicleOfNodes
 import oscar.cbls.core.objective.CascadingObjective
 import oscar.cbls.lib.constraint.EQ
 import oscar.cbls.lib.invariant.seq.Precedence
+import bridge.MessageType
+import bridge.SerializableModel
+
+import combinator.RLAlgorithm
+import csp.CarSeqConf
+import csp.CarSeqProblem
+import oscar.cbls.business.routing.model.VRP
+import pdptw.LiLimCouple
+import pdptw.LiLimDepot
+import pdptw.LiLimNode
+import pdptw.LiLimProblem
+import pdptw.LiLimVehicle
+import upickle.default._
+
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.FileReader
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.Socket
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.file.Paths
+import java.nio.file.Path
 
 object Model {
   def apply(liLimProblem: LiLimProblem): Model = {
@@ -31,7 +57,13 @@ object Model {
   }
 }
 
-class Model(val liLimProblem: LiLimProblem) {
+class Model(val liLimProblem: LiLimProblem) extends SerializableModel {
+  implicit val depRw: ReadWriter[LiLimDepot]   = macroRW
+  implicit val vehRw: ReadWriter[LiLimVehicle] = macroRW
+  implicit val nodRw: ReadWriter[LiLimNode]    = macroRW
+  implicit val couRw: ReadWriter[LiLimCouple]  = macroRW
+  implicit val pbRw: ReadWriter[LiLimProblem]  = macroRW
+  implicit val modelRw: ReadWriter[Model]      = macroRW
 
   //////////// VRP ////////////
   /** Number of vehicles
@@ -182,7 +214,7 @@ class Model(val liLimProblem: LiLimProblem) {
 
   /** Compute the state (that can be used for stateful RL or Contextual Bandits).
     */
-  def getState(): List[List[Int]] = {
+  override def getJSONState(): String = {
     var routes: List[List[Int]] = List.empty
     for (vehicle <- 0 until this.pdpProblem.v) {
       val routeOfV = this.pdpProblem.getRouteOfVehicle(vehicle)
@@ -190,8 +222,15 @@ class Model(val liLimProblem: LiLimProblem) {
         routes = routes :+ routeOfV
       }
     }
-    return routes
+    return upickle.default.write(routes)
   }
+
+  override def getJSONStaticProblemData(): String = {
+    // s"""{"vehicles":${liLimProblem.vehicles},"nodes":${liLimProblem.nodes}}"""
+    write(this)
+  }
+
+  override def getProblemCode(): MessageType.Value = MessageType.STATIC_DATA_PDPTW
 
   override def toString: String = {
     case class PointData(coupleId: Int, routingId: Int, problemId: Int, prefix: String)

@@ -80,7 +80,6 @@ class Runner:
                         from nn import CNN
 
                         qnetwork = CNN(problem)
-
                 return DQN(
                     qnetwork=qnetwork,
                     memory=ReplayMemory(1000),

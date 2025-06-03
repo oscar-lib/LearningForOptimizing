@@ -159,7 +159,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       case "dqn" => {
         new StatefulCombinator(
           neighList,
-          Left(this.oscarModel),
+          this.oscarModel,
           lr = in.learningRate,
           batchSize = in.batchSize,
           epsilon = in.epsilon,

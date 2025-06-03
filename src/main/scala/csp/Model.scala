@@ -16,6 +16,31 @@ package csp
 import oscar.cbls._
 
 import scala.util.Random
+import bridge.SerializableModel
+
+import csp.CarSeqConf
+import csp.CarSeqProblem
+import oscar.cbls.business.routing.model.VRP
+import pdptw.LiLimCouple
+import pdptw.LiLimDepot
+import pdptw.LiLimNode
+import pdptw.LiLimProblem
+import pdptw.LiLimVehicle
+import upickle.default._
+
+import java.io.BufferedReader
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileOutputStream
+import java.io.FileReader
+import java.io.InputStream
+import java.io.OutputStream
+import java.net.Socket
+import java.nio.ByteBuffer
+import java.nio.ByteOrder
+import java.nio.file.Paths
+import java.nio.file.Path
+import bridge.MessageType
 
 /** This object takes care of converting an instance of a car sequencing problem into a model in the
   * OscaR framework. Notably, the objective function under consideration is the number of violated
@@ -27,7 +52,12 @@ object Model {
   }
 }
 
-class Model(val instance: CarSeqProblem) {
+import upickle.default.{macroRW, ReadWriter, Writer}
+
+class Model(val instance: CarSeqProblem) extends SerializableModel {
+  implicit val csconfRw: ReadWriter[CarSeqConf] = macroRW
+  implicit val csRw: ReadWriter[CarSeqProblem]  = macroRW
+  implicit val modelWriter: Writer[Model]       = macroRW
 
   private val store = new Store()
 
@@ -77,7 +107,14 @@ class Model(val instance: CarSeqProblem) {
 
   store.close()
 
-  def getState(): List[Int] = {
-    carSequence.map(_.value.intValue()).toList
+  def getJSONStaticProblemData(): String = {
+    write(this)
   }
+
+  def getJSONState(): String = {
+    val s = carSequence.map(_.value.intValue()).toList
+    write(s)
+  }
+
+  def getProblemCode(): MessageType.Value = MessageType.STATIC_DATA_CSP
 }

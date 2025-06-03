@@ -11,6 +11,7 @@ import oscar.cbls.core.objective.Objective
 import oscar.cbls.core.search.AcceptanceCriterion
 import oscar.cbls.core.search.AcceptAll
 import oscar.cbls.core.search.StrictImprovement
+import bridge.SerializableModel
 
 object RLAlgorithm extends Enumeration {
 
@@ -22,7 +23,7 @@ object RLAlgorithm extends Enumeration {
 
 class StatefulCombinator(
   neighborhoods: List[Neighborhood],
-  model: Either[pdptw.Model, csp.Model],
+  model: SerializableModel,
   algo: RLAlgorithm.Value,
   debug: Boolean,
   ddqn: Boolean,
@@ -46,21 +47,7 @@ class StatefulCombinator(
   // private val bridge    = SocketBridge(5555)
   private val bridge =
     NamedPipeBridge(this.algo, this.debug, batchSize, epsilon, clipping, lr, ddqn, device)
-  model match {
-    case Left(value) => {
-      bridge.sendStaticProblemData(value.liLimProblem, this.nActions)
-    }
-    case Right(value) => {
-      bridge.sendStaticProblemData(value.instance, this.nActions)
-    }
-  }
-
-  private def getCurrentSearchState(): List[List[Int]] = {
-    this.model match {
-      case Left(value)  => value.getState()
-      case Right(value) => List()
-    }
-  }
+  bridge.sendStaticProblemData(model, this.nActions)
 
   override def getMove(
     obj: Objective,
@@ -80,16 +67,13 @@ class StatefulCombinator(
     if (availableActions.isEmpty) {
       return None
     }
-    // val action = availableActions(scala.util.Random.nextInt(availableActions.length))
-    // Some(this.neighborhoods(action))
-    val state  = this.getCurrentSearchState()
-    val action = this.bridge.askAction(state, this.authorizedNeighborhood)
+    val action = this.bridge.askAction(this.model, this.authorizedNeighborhood)
     Some(this.neighborhoods(action))
   }
 
   override def notifyMove(searchResult: SearchResult, neighborhood: Neighborhood): Unit = {
     if (searchResult == NoMoveFound) {
-      setTabu(neighborhood)
+      this.setTabu(neighborhood)
     }
     // val value = this.objective.value
     // val delta = this.prevValue - value

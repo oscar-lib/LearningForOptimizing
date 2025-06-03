@@ -20,14 +20,23 @@ class Option:
 @dataclass
 class CarConfig:
     id: int
-    amount_to_make: int
-    options: list[Option]
+    n_to_make: int
+    options: torch.Tensor
+
+    def __init__(self, id: int, n_to_make: int, options: list[bool]):
+        self.id = id
+        self.options = torch.tensor(options, dtype=torch.float32)
+        self.n_to_make = n_to_make
+
+    def has_option(self, option_id: int):
+        return self.options[option_id] == 1
 
 
 @dataclass
 class CSP(Problem[torch.Tensor]):
     options: list[Option]
     cars: list[CarConfig]
+    n_cars: int
     n_actions: int
     cars_data: torch.Tensor
     """
@@ -40,49 +49,50 @@ class CSP(Problem[torch.Tensor]):
 
     def __init__(self, n_actions: int, options: list[Option], cars: list[CarConfig]):
         super().__init__()
-        self.machines = options
+        self.options = options
         self.cars = cars
         self.n_actions = n_actions
-        cars_data = []
-        for car in cars:
-            car_data = [0] * len(options)
-            for i, option in enumerate(car.options):
-                if option:
-                    car_data[i] = 1
-            cars_data += [car_data] * car.amount_to_make  # One line per car to make
-        options_data = [[option.max_seq, option.seq_len] for option in options]
-        self.cars_data = torch.tensor(cars_data, dtype=torch.float32)
-        self.options_data = torch.tensor(options_data, dtype=torch.float32)
+        self.cars_data = torch.stack([c.options for c in cars])
+        self.options_data = torch.tensor([[option.max_seq, option.seq_len] for option in options], dtype=torch.float32)
+        self.n_cars = sum(car.n_to_make for car in cars)
 
     @staticmethod
     def parse(bdata: bytes) -> "CSP":
         data = json.loads(bdata)
-        max_sequences = data["maxCarsWithOptInSeq"]
-        seq_lengths = data["optSeqLen"]
+        problem = data["problem"]["instance"]
+        n_actions = data["nActions"]
+        max_sequences = problem["maxCarsWithOptInSeq"]
+        seq_lengths = problem["optSeqLen"]
 
         options = list[Option]()
         for i, (max_seq, seq_len) in enumerate(zip(max_sequences, seq_lengths)):
             options.append(Option(i, max_seq, seq_len))
 
-        recipes = data["configs"]
+        recipes = problem["configs"]
         cars = list[CarConfig]()
         for recipe in recipes:
-            required_options = [options[i] for i, has_option in enumerate(recipe["optInConf"]) if has_option]
-            cars.append(CarConfig(recipe["id"], recipe["nCarsWithConf"], required_options))
-        res = CSP(data["nActions"], options, cars)
+            cars.append(CarConfig(recipe["id"], recipe["nCarsWithConf"], recipe["optInConf"]))
+        res = CSP(n_actions, options, cars)
         print(res)
         return res
 
     def build_agent_input(self, data: dict) -> torch.Tensor:
-        raise NotImplementedError()
+        """
+        The current state of the problem is represented by the sequence of options to make.
+        """
+        sequence = data["state"]
+        busy_options = torch.zeros(self.n_options, self.n_cars, dtype=torch.float32)
+        for car_num in sequence:
+            busy_options[:, car_num] = self.cars_data[car_num]
+        return busy_options
 
     @property
-    def n_cars(self) -> int:
+    def n_car_configs(self) -> int:
         return len(self.cars)
 
     @property
     def n_options(self) -> int:
-        return len(self.machines)
+        return len(self.options)
 
     @property
     def instance_shape(self):

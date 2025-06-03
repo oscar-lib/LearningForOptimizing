@@ -25,18 +25,12 @@ import java.nio.file.Paths
 import java.nio.file.Path
 
 class Bridge(protected val input: InputStream, protected val output: OutputStream) {
-  implicit val depRw: ReadWriter[LiLimDepot]   = macroRW
-  implicit val vehRw: ReadWriter[LiLimVehicle] = macroRW
-  implicit val nodRw: ReadWriter[LiLimNode]    = macroRW
-  implicit val couRw: ReadWriter[LiLimCouple]  = macroRW
-  implicit val pbRw: ReadWriter[LiLimProblem]  = macroRW
 
-  implicit val csconfRw: ReadWriter[CarSeqConf] = macroRW
-  implicit val csRw: ReadWriter[CarSeqProblem]  = macroRW
-
-  def sendStaticProblemData(problem: LiLimProblem, nActions: Int): Unit = {
-    val json = write(problem).dropRight(1) + s",\"nActions\":$nActions}"
-    val msg  = Message.create(MessageType.STATIC_DATA_PDPTW, json.getBytes())
+  def sendStaticProblemData(problem: SerializableModel, nActions: Int): Unit = {
+    val data = problem.getJSONStaticProblemData()
+    val json = s"""{"problem":$data,"nActions":$nActions}"""
+    println(json)
+    val msg = Message.create(problem.getProblemCode(), json.getBytes());
     this.output.write(msg.toBytes())
     val resp = Message.recv(this.input)
     if (resp.msgType() != MessageType.ACK) {
@@ -45,23 +39,11 @@ class Bridge(protected val input: InputStream, protected val output: OutputStrea
     }
   }
 
-  def sendStaticProblemData(problem: CarSeqProblem, nActions: Int): Unit = {
-    val json = write(problem).dropRight(1) + s",\"nActions\":$nActions}";
-    val msg  = Message.create(MessageType.STATIC_DATA_CSP, json.getBytes())
-    this.output.write(msg.toBytes())
-    val resp = Message.recv(this.input)
-    if (resp.msgType() != MessageType.ACK) {
-      println(resp.header(), resp.body())
-      throw new Exception("Failed to send static problem data")
-    }
-  }
-
-  def askAction(state: List[List[Int]], availabeActions: Array[Boolean]): Int = {
-    val jsonState  = upickle.default.write(state)
+  def askAction(problem: SerializableModel, availabeActions: Array[Boolean]): Int = {
+    val jsonState  = problem.getJSONState()
     val jsonAvail  = upickle.default.write(availabeActions)
     val jsonString = s"""{"state":$jsonState,"available":$jsonAvail}"""
     val message    = Message.create(MessageType.INFERENCE_REQ, jsonString.getBytes())
-    val start      = System.currentTimeMillis()
     this.output.write(message.toBytes())
     val response = Message.recv(this.input)
     if (response.msgType() != MessageType.INFERENCE_RSP) {

@@ -1,5 +1,6 @@
 from typing import Literal, Optional
 import os
+import traceback
 import torch
 from runner import Runner, Params
 import typed_argparse as tap
@@ -74,6 +75,8 @@ def main(args: Args):
         runner.run(args.device, args.algorithm, args.to_params())
     except Exception as e:
         logging.error(f"An error occurred: {e}")
+        logging.error(traceback.format_exc())
+        traceback.print_exc()
 
 
 if __name__ == "__main__":
