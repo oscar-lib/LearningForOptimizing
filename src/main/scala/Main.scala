@@ -38,6 +38,7 @@ object Main extends App {
     efficiencyWeight: Double = 0.2,
     moveFoundWeight: Double = 0.4,
     epsilon: Double = 0.7,
+    objChangeReward: Boolean = false,
     confidence: Double = 1
   ) extends Config
 
@@ -183,6 +184,15 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(moveFoundWeight = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Boolean]("objChangeReward")
+          .abbr("r2")
+          .text("Set the reward to be the log difference of objective values")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(objChangeReward = x)
               case _                         => throw new Error("Unexpected Error")
             }
           ),
@@ -504,6 +514,7 @@ object Main extends App {
             i.efficiencyWeight,
             i.moveFoundWeight,
             i.epsilon,
+            i.objChangeReward,
             i.confidence
           )
           i.problem match {
@@ -542,6 +553,7 @@ object Main extends App {
                   s.efficiencyWeight,
                   s.moveFoundWeight,
                   s.epsilon,
+                  objChangeReward = false,
                   s.confidence
                 )
                 solveCSP(in)
@@ -561,6 +573,7 @@ object Main extends App {
                   s.efficiencyWeight,
                   s.moveFoundWeight,
                   s.epsilon,
+                  objChangeReward = false,
                   s.confidence
                 )
                 solvePDPTW(in)
@@ -586,6 +599,7 @@ object Main extends App {
                   a.efficiencyWeight,
                   a.moveFoundWeight,
                   a.epsilon,
+                  objChangeReward = false,
                   a.confidence
                 )
                 solveCSP(in)
@@ -606,6 +620,7 @@ object Main extends App {
                   a.efficiencyWeight,
                   a.moveFoundWeight,
                   a.epsilon,
+                  objChangeReward = false,
                   a.confidence
                 )
                 solvePDPTW(in)

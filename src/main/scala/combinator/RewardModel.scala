@@ -5,6 +5,8 @@ import oscar.cbls.core.search.Neighborhood
 import scala.collection.mutable
 
 sealed abstract class RewardModel {
+  protected var maxSlope: Double           = 1.0 // stores (and updates) the maximum slope ever observed
+
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
 
   /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
@@ -15,21 +17,22 @@ sealed abstract class RewardModel {
    * @return
    *   reward in [0, 1]
    */
-  def slope(runStat: NeighborhoodStats): Double = {
-    val slope = runStat.slope
-    Math.abs(slope)
+  protected def slopeReward(runStat: NeighborhoodStats): Double = {
+    val slope = Math.abs(runStat.slope)
+    this.maxSlope = Math.max(this.maxSlope, slope)
+    slope / maxSlope
+    //slope
   }
 }
 
 class OriginalRewardModel(
   /** weight rewarding a move being found */
   wSol: Double = 0.4,
-  /* *weight rewarding small execution time */
+  /** weight rewarding small execution time */
   wEff: Double = 0.2,
   /** weight rewarding the slope */
   wSlope: Double = 0.4
-) extends RewardModel {
-  protected var maxSlope           = 1.0 // stores (and updates) the maximum slope ever observed
+) extends NormalizedWindowedSlope(30) {
   private var maxRunTimeNano: Long = 1   // max run time experienced by a neighborhood
 
   /** Gives a reward in [0, 1] based on finding a move. 1 means that a move was found, 0 otherwise
@@ -61,17 +64,47 @@ class OriginalRewardModel(
   }
 
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
-    this.maxSlope = Math.max(this.maxSlope, runStat.slope)
     this.maxRunTimeNano = Math.max(this.maxRunTimeNano, runStat.timeNano)
-    this.wSol * rewardFoundMove(runStat) +
+    val v = this.wSol * rewardFoundMove(runStat) +
       this.wEff * rewardExecutionTime(runStat) +
-      this.wSlope * slope(runStat)
+      this.wSlope * slopeReward(runStat)
+    v
   }
 }
 
 class SlopeReward extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
-    slope(runStat)
+    slopeReward(runStat)
+  }
+}
+
+/**
+ * Slope reward, normalized by the maximum slope over the last X iterations
+ *
+ * @param windowSize number of past slopes retained for computing the maximum slope
+ */
+class NormalizedWindowedSlope(windowSize: Int) extends RewardModel {
+  private val window: mutable.Queue[Double] = mutable.Queue.empty
+
+  override def slopeReward(runStat: NeighborhoodStats): Double = {
+    val slope = Math.abs(runStat.slope)
+    window.enqueue(slope)
+    maxSlope = Math.max(maxSlope, slope)
+    if (window.size > windowSize) {
+      val oldestSlope = window.dequeue()
+      if (oldestSlope == maxSlope) {
+        maxSlope = window.max
+      }
+    }
+    if (maxSlope == 0) {
+      0
+    } else {
+      slope / maxSlope;
+    }
+  }
+
+  override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
+    slopeReward(runStat)
   }
 }
 
@@ -141,4 +174,20 @@ class NormalizedWindowedMeanGain(windowSize: Int) extends NormalizedGain {
   override protected def normalize(gain: Long): Double = {
     gain.toDouble / (this.sum.toDouble / window.size)
   }
+}
+
+class LogObjChange extends NormalizedGain {
+
+  override protected def update(gain: Long): Unit = {
+
+  }
+
+  override protected def normalize(gain: Long): Double = {
+    if (gain == 0) {
+      0
+    } else {
+      Math.log10(gain)
+    }
+  }
+
 }

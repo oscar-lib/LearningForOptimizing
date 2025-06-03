@@ -24,11 +24,11 @@ class EpsilonGreedyBanditNew(l: List[Neighborhood], in: SolverInput)
       l,
       learningScheme = AfterEveryMove,
       learningRate = in.learningRate,
-      rewardModel = new OriginalRewardModel(
+      rewardModel = if (in.objChangeReward) {new LogObjChange()} else { new OriginalRewardModel(
         wSol = in.moveFoundWeight,
         wEff = in.efficiencyWeight,
         wSlope = in.slopeWeight
-      )
+      )}
     ) {
 
   private var t: Int  = 0 // number of times the bandit was called to provide the next neighborhood
@@ -45,8 +45,8 @@ class EpsilonGreedyBanditNew(l: List[Neighborhood], in: SolverInput)
     val prob_t: Double    = Random.nextDouble()
     if (prob_t > epsilon_t) { // gives the best neighborhood
       getBestNeighborhood
-    } else { // return based on the weights as probability
-      getNeighborhoodWithProbability
+    } else { // return a neighborhood chosen randomly
+      getRandomNeighborhood
     }
   }
 }

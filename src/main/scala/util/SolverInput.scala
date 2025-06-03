@@ -50,5 +50,6 @@ case class SolverInput(
   efficiencyWeight: Double,
   moveFoundWeight: Double,
   epsilon: Double,
+  objChangeReward: Boolean,
   confidence: Double
 )
