@@ -50,5 +50,10 @@ case class SolverInput(
   efficiencyWeight: Double,
   moveFoundWeight: Double,
   epsilon: Double,
-  confidence: Double
+  confidence: Double,
+  debug: Boolean,
+  batchSize: Int = 32,
+  ddqn: Boolean = false,
+  clipping: Double = 0.0,
+  device: String = "cpu"
 )

@@ -1,0 +1,355 @@
+[info] welcome to sbt 1.9.3 (Ubuntu Java 21.0.4)
+[info] loading settings for project learningforoptimizing-build-build-build from metals.sbt ...
+[info] loading project definition from /workspaces/LearningForOptimizing/project/project/project
+[info] loading settings for project learningforoptimizing-build-build from metals.sbt ...
+[info] loading project definition from /workspaces/LearningForOptimizing/project/project
+[success] Generated .bloop/learningforoptimizing-build-build.json
+[success] Total time: 3 s, completed Oct 16, 2024, 3:44:18 PM
+[info] loading settings for project learningforoptimizing-build from metals.sbt,plugins.sbt ...
+[info] loading project definition from /workspaces/LearningForOptimizing/project
+[success] Generated .bloop/learningforoptimizing-build.json
+[success] Total time: 1 s, completed Oct 16, 2024, 3:44:19 PM
+[info] loading settings for project learningforoptimizing from build.sbt ...
+[info] set current project to learningforoptimizing (in build file:/workspaces/LearningForOptimizing/)
+[success] Total time: 1 s, completed Oct 16, 2024, 3:44:21 PM
+[info] welcome to sbt 1.9.3 (Ubuntu Java 21.0.4)
+[info] loading settings for project learningforoptimizing-build-build-build from metals.sbt ...
+[info] loading project definition from /workspaces/LearningForOptimizing/project/project/project
+[info] loading settings for project learningforoptimizing-build-build from metals.sbt ...
+[info] loading project definition from /workspaces/LearningForOptimizing/project/project
+[success] Generated .bloop/learningforoptimizing-build-build.json
+[success] Total time: 3 s, completed Oct 16, 2024, 3:44:29 PM
+[info] loading settings for project learningforoptimizing-build from metals.sbt,plugins.sbt ...
+[info] loading project definition from /workspaces/LearningForOptimizing/project
+[success] Generated .bloop/learningforoptimizing-build.json
+[success] Total time: 1 s, completed Oct 16, 2024, 3:44:30 PM
+[info] loading settings for project learningforoptimizing from build.sbt ...
+[info] set current project to learningforoptimizing (in build file:/workspaces/LearningForOptimizing/)
+[info] compiling 35 Scala sources to /workspaces/LearningForOptimizing/target/scala-2.13/classes ...
+[info] done compiling
+[info] Strategy 'discard' was applied to 55 files (Run the task at debug level to see details)
+[info] Strategy 'first' was applied to 210 files (Run the task at debug level to see details)
+[success] Total time: 21 s, completed Oct 16, 2024, 3:44:52 PM
+During startup - Warning messages:
+1: Setting LC_CTYPE failed, using "C" 
+2: Setting LC_COLLATE failed, using "C" 
+3: Setting LC_TIME failed, using "C" 
+4: Setting LC_MESSAGES failed, using "C" 
+5: Setting LC_MONETARY failed, using "C" 
+6: Setting LC_PAPER failed, using "C" 
+7: Setting LC_MEASUREMENT failed, using "C" 
+#------------------------------------------------------------------------------
+# irace: An implementation in R of (Elitist) Iterated Racing
+# Version: 3.5.6863679
+# Copyright (C) 2010-2020
+# Manuel Lopez-Ibanez     <manuel.lopez-ibanez@manchester.ac.uk>
+# Jeremie Dubois-Lacoste  
+# Leslie Perez Caceres    <leslie.perez.caceres@ulb.ac.be>
+#
+# This is free software, and you are welcome to redistribute it under certain
+# conditions.  See the GNU General Public License for details. There is NO
+# WARRANTY; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#
+# irace builds upon previous code from the race package:
+#     race: Racing methods for the selection of the best
+#     Copyright (C) 2003 Mauro Birattari
+#------------------------------------------------------------------------------
+# installed at: /home/yamoling/R/x86_64-pc-linux-gnu-library/3.6/irace
+# called with: -s /workspaces/LearningForOptimizing/irace/scenario-csp-ucb.txt --target-runner /workspaces/LearningForOptimizing/irace/target-runner-csp --parallel 20 --train-instances-file /workspaces/LearningForOptimizing/examples/csp/trainingall.txt
+# Read 1 configuration(s) from file '/workspaces/LearningForOptimizing/irace/defaults-ucb.txt'
+# 2024-10-16 15:44:52 CEST: Initialization
+# Elitist race
+# Elitist new instances: 1
+# Elitist limit: 2
+# nbIterations: 4
+# minNbSurvival: 4
+# nbParameters: 5
+# seed: 1738349414
+# confidence level: 0.95
+# budget: 800
+# mu: 5
+# deterministic: FALSE
+
+# 2024-10-16 15:44:52 CEST: Iteration 1 of 4
+# experimentsUsedSoFar: 0
+# remainingBudget: 800
+# currentBudget: 200
+# nbConfigurations: 33
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|          1|         33|          3|     0.000000000|         33|00:10:03|   NA|  NA|    NA|
+|x|          2|         33|          5|     0.000000000|         66|00:10:02|+0.33|0.67|0.7940|
+|x|          3|         33|          5|    0.3333333333|         99|00:10:02|+0.39|0.60|0.7573|
+|x|          4|         33|         24|     3.500000000|        132|00:10:03|+0.23|0.42|0.8247|
+|-|          5|         10|         24|     2.800000000|        165|00:10:03|+0.01|0.21|0.8490|
+|=|          6|         10|         24|     2.333333333|        175|00:05:01|+0.05|0.21|0.8287|
+|-|          7|          5|         24|     2.000000000|        185|00:05:01|+0.16|0.28|0.2680|
+|=|          8|          5|         24|     1.875000000|        190|00:05:00|+0.14|0.25|0.2439|
+|=|          9|          5|         24|     1.777777778|        195|00:05:01|+0.11|0.21|0.3099|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:          24    mean value:      1.777777778
+Description of the best-so-far configuration:
+   .ID. bandit learningrate movefoundweight efficiencyweight slopeweight confidence .PARENT.
+24   24    ucb       0.4651          0.9282            0.246       0.014      0.932       NA
+
+# 2024-10-16 16:55:12 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   bandit learningrate movefoundweight efficiencyweight slopeweight confidence
+24    ucb       0.4651          0.9282           0.2460      0.0140     0.9320
+8     ucb       0.5838          0.1982           0.1760      0.0139     2.2488
+5     ucb       0.3768          0.5791           0.4777      0.0017     0.8907
+29    ucb       0.7228          0.7326           0.9703      0.3750     4.8662
+# 2024-10-16 16:55:12 CEST: Iteration 2 of 4
+# experimentsUsedSoFar: 195
+# remainingBudget: 605
+# currentBudget: 201
+# nbConfigurations: 23
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|         10|         23|          8|     1.000000000|         23|00:10:02|   NA|  NA|    NA|
+|x|          1|         23|          8|    0.5000000000|         42|00:05:01|+0.32|0.66|0.7786|
+|x|          9|         23|         37|    0.3333333333|         61|00:05:01|+0.24|0.49|0.7702|
+|x|          3|         23|         37|    0.2500000000|         80|00:05:01|+0.27|0.45|0.7371|
+|-|          5|          9|         37|    0.4000000000|         99|00:05:01|-0.03|0.18|0.7499|
+|=|          8|          9|         37|    0.5000000000|        104|00:05:01|+0.02|0.19|0.7399|
+|=|          6|          9|         37|    0.4285714286|        109|00:00:16|+0.02|0.16|0.6343|
+|=|          4|          9|         37|     2.125000000|        114|00:05:01|-0.06|0.07|0.7184|
+|=|          7|          9|         37|     1.888888889|        119|00:05:01|-0.00|0.11|0.7093|
+|=|          2|          9|         52|     1.800000000|        124|00:05:00|+0.05|0.14|0.6930|
+|=|         11|          9|         52|     1.636363636|        133|00:05:01|+0.05|0.14|0.7058|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:          52    mean value:      1.636363636
+Description of the best-so-far configuration:
+   .ID. bandit learningrate movefoundweight efficiencyweight slopeweight confidence .PARENT.
+52   52    ucb       0.2093          0.3497           0.0574       6e-04     1.8814       24
+
+# 2024-10-16 17:50:45 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   bandit learningrate movefoundweight efficiencyweight slopeweight confidence
+52    ucb       0.2093          0.3497           0.0574      0.0006     1.8814
+8     ucb       0.5838          0.1982           0.1760      0.0139     2.2488
+37    ucb       0.7036          0.9181           0.4055      0.0071     1.3231
+24    ucb       0.4651          0.9282           0.2460      0.0140     0.9320
+# 2024-10-16 17:50:45 CEST: Iteration 3 of 4
+# experimentsUsedSoFar: 328
+# remainingBudget: 472
+# currentBudget: 236
+# nbConfigurations: 23
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|         12|         23|         52|     0.000000000|         23|00:05:06|   NA|  NA|    NA|
+|x|          2|         23|         52|     0.000000000|         42|00:05:01|+0.39|0.70|0.7672|
+|x|          8|         23|         52|    0.3333333333|         61|00:05:01|+0.36|0.57|0.8318|
+|x|          3|         23|         52|    0.2500000000|         80|00:05:01|+0.44|0.58|0.7101|
+|-|         10|          9|         52|    0.6000000000|         99|00:05:01|-0.04|0.17|0.5195|
+|=|          4|          9|         52|     2.666666667|        104|00:05:01|-0.05|0.12|0.5959|
+|=|          7|          9|         52|     2.285714286|        109|00:05:01|+0.01|0.15|0.5763|
+|=|          9|          9|         68|     2.125000000|        114|00:05:01|-0.00|0.12|0.6194|
+|=|          1|          9|         68|     1.888888889|        119|00:05:00|+0.05|0.16|0.5863|
+|=|          6|          9|         68|     1.700000000|        124|00:05:01|+0.10|0.19|0.5526|
+|=|         11|          9|         68|     1.545454545|        129|00:02:58|+0.09|0.17|0.5168|
+|-|          5|          8|         68|     1.416666667|        134|00:05:01|-0.08|0.01|0.5485|
+|=|         13|          8|         52|     1.384615385|        142|00:05:01|-0.06|0.02|0.5703|
+|=|         14|          8|         52|     1.285714286|        150|00:05:01|-0.04|0.03|0.5803|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:          52    mean value:      1.285714286
+Description of the best-so-far configuration:
+   .ID. bandit learningrate movefoundweight efficiencyweight slopeweight confidence .PARENT.
+52   52    ucb       0.2093          0.3497           0.0574       6e-04     1.8814       24
+
+# 2024-10-16 18:59:04 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   bandit learningrate movefoundweight efficiencyweight slopeweight confidence
+52    ucb       0.2093          0.3497           0.0574      0.0006     1.8814
+61    ucb       0.2499          0.3525           0.3558      0.0123     2.0912
+8     ucb       0.5838          0.1982           0.1760      0.0139     2.2488
+24    ucb       0.4651          0.9282           0.2460      0.0140     0.9320
+# 2024-10-16 18:59:04 CEST: Iteration 4 of 4
+# experimentsUsedSoFar: 478
+# remainingBudget: 322
+# currentBudget: 322
+# nbConfigurations: 25
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|         15|         25|         52|     0.000000000|         25|00:05:11|   NA|  NA|    NA|
+|x|         11|         25|         52|     0.000000000|         46|00:05:12|+0.46|0.73|0.4561|
+|x|         13|         25|         52|     0.000000000|         67|00:05:06|+0.37|0.58|0.5733|
+|x|         14|         25|         52|     0.000000000|         88|00:05:06|+0.28|0.46|0.6623|
+|-|         10|         16|          8|    0.2000000000|        109|00:10:02|-0.09|0.13|0.8146|
+|=|          3|         16|         52|    0.3333333333|        121|00:05:01|-0.00|0.16|0.7989|
+|=|         12|         16|         52|    0.2857142857|        133|00:05:01|+0.01|0.15|0.7912|
+|=|          8|         16|         52|    0.3750000000|        145|00:05:01|+0.03|0.15|0.7936|
+|=|          4|         16|         52|     1.777777778|        157|00:05:01|+0.04|0.14|0.8155|
+|=|          6|         16|         52|     1.600000000|        169|00:00:27|+0.03|0.13|0.7357|
+|-|          7|         11|         52|     1.454545455|        181|00:05:01|+0.00|0.09|0.5677|
+|=|          1|         11|         52|     1.333333333|        188|00:02:33|+0.00|0.08|0.5213|
+|=|          9|         11|         87|     1.230769231|        195|00:05:01|-0.02|0.06|0.5643|
+|=|          5|         11|         87|     1.142857143|        202|00:02:45|-0.03|0.04|0.5984|
+|=|          2|         11|         87|     1.133333333|        209|00:05:01|-0.03|0.04|0.6205|
+|=|         16|         11|         61|     1.250000000|        220|00:05:01|-0.02|0.04|0.6357|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:          61    mean value:      1.250000000
+Description of the best-so-far configuration:
+   .ID. bandit learningrate movefoundweight efficiencyweight slopeweight confidence .PARENT.
+61   61    ucb       0.2499          0.3525           0.3558      0.0123     2.0912       52
+
+# 2024-10-16 20:15:40 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   bandit learningrate movefoundweight efficiencyweight slopeweight confidence
+61    ucb       0.2499          0.3525           0.3558      0.0123     2.0912
+74    ucb       0.0973          0.3333           0.0852      0.0343     2.9671
+89    ucb       0.2064          0.4826           0.2605      0.0268     2.2121
+8     ucb       0.5838          0.1982           0.1760      0.0139     2.2488
+# 2024-10-16 20:15:40 CEST: Iteration 5 of 5
+# experimentsUsedSoFar: 698
+# remainingBudget: 102
+# currentBudget: 102
+# nbConfigurations: 9
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|         17|          9|         61|     0.000000000|          9|00:05:01|   NA|  NA|    NA|
+|x|          8|          9|         61|    0.5000000000|         14|00:05:01|+0.74|0.87|0.3044|
+|x|         10|          9|          8|    0.6666666667|         19|00:05:01|+0.48|0.65|0.4922|
+|x|         11|          9|          8|    0.5000000000|         24|00:05:01|+0.35|0.51|0.6104|
+|-|          2|          6|          8|    0.4000000000|         29|00:05:00|-0.03|0.18|0.3425|
+|=|         16|          6|          8|    0.5000000000|         31|00:05:00|-0.02|0.15|0.2839|
+|=|         12|          6|          8|    0.4285714286|         33|00:05:00|+0.08|0.21|0.3226|
+|=|         15|          6|          8|    0.3750000000|         35|00:05:00|+0.15|0.26|0.3454|
+|=|          6|          6|          8|    0.3333333333|         37|00:00:52|+0.13|0.23|0.3150|
+|-|         13|          5|          8|    0.3000000000|         39|00:05:00|-0.03|0.07|0.2385|
+|=|          5|          5|          8|    0.2727272727|         40|00:01:46|-0.03|0.07|0.2169|
+|=|          1|          5|          8|    0.2500000000|         41|00:05:01|+0.03|0.11|0.2469|
+|=|          9|          5|         74|    0.3076923077|         42|00:05:01|+0.03|0.10|0.2861|
+|=|         14|          5|         74|    0.2857142857|         43|00:00:17|+0.02|0.09|0.3273|
+|=|          7|          5|          8|    0.2666666667|         44|00:05:00|+0.02|0.09|0.3574|
+|=|          3|          5|          8|    0.3125000000|         45|00:05:00|+0.02|0.08|0.3848|
+|=|          4|          5|         61|     1.176470588|         46|00:05:01|-0.00|0.06|0.4174|
+|=|         18|          5|         61|     1.222222222|         51|00:05:01|-0.00|0.05|0.3946|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:          61    mean value:      1.222222222
+Description of the best-so-far configuration:
+   .ID. bandit learningrate movefoundweight efficiencyweight slopeweight confidence .PARENT.
+61   61    ucb       0.2499          0.3525           0.3558      0.0123     2.0912       52
+
+# 2024-10-16 21:33:52 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   bandit learningrate movefoundweight efficiencyweight slopeweight confidence
+61    ucb       0.2499          0.3525           0.3558      0.0123     2.0912
+74    ucb       0.0973          0.3333           0.0852      0.0343     2.9671
+89    ucb       0.2064          0.4826           0.2605      0.0268     2.2121
+8     ucb       0.5838          0.1982           0.1760      0.0139     2.2488
+# 2024-10-16 21:33:52 CEST: Iteration 6 of 6
+# experimentsUsedSoFar: 749
+# remainingBudget: 51
+# currentBudget: 51
+# nbConfigurations: 6
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|         19|          6|         74|     0.000000000|          6|00:05:01|   NA|  NA|    NA|
+|x|         18|          6|         74|     1.000000000|          8|00:05:00|+0.00|0.50|0.4167|
+|x|         12|          6|         74|    0.6666666667|         10|00:00:01|+0.00|0.33|0.2778|
+|x|         10|          6|         74|     1.000000000|         12|00:05:00|+0.00|0.25|0.4247|
+|=|          3|          6|         74|     1.000000000|         14|00:05:00|-0.02|0.19|0.4895|
+|=|         16|          6|         74|     1.000000000|         16|00:05:00|+0.12|0.26|0.4811|
+|=|          9|          6|         74|    0.8571428571|         18|00:05:00|+0.09|0.22|0.5340|
+|=|          4|          6|         74|     2.375000000|         20|00:05:01|+0.05|0.17|0.5934|
+|=|         13|          6|         74|     2.111111111|         22|00:05:00|+0.12|0.22|0.5650|
+|=|          1|          6|         74|     1.900000000|         24|00:00:22|+0.10|0.19|0.5168|
+|=|         11|          6|         74|     1.727272727|         26|00:00:49|+0.09|0.18|0.4759|
+|-|         15|          5|         74|     1.583333333|         28|00:05:00|-0.04|0.04|0.4092|
+|=|         17|          5|         74|     1.461538462|         29|00:00:21|-0.04|0.04|0.3770|
+|=|          6|          5|         74|     1.357142857|         30|00:00:12|-0.04|0.04|0.3495|
+|=|          8|          5|         74|     1.333333333|         31|00:05:00|-0.03|0.04|0.3258|
+|=|          2|          5|         74|     1.250000000|         32|00:05:00|-0.01|0.05|0.3491|
+|=|          5|          5|         74|     1.176470588|         33|00:00:17|-0.01|0.05|0.3286|
+|=|         14|          5|         74|     1.111111111|         34|00:00:04|-0.02|0.04|0.3580|
+|=|          7|          5|         74|     1.105263158|         35|00:05:00|-0.01|0.04|0.3803|
+|=|         20|          5|         74|     1.300000000|         40|00:05:01|-0.01|0.04|0.3996|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:          74    mean value:      1.300000000
+Description of the best-so-far configuration:
+   .ID. bandit learningrate movefoundweight efficiencyweight slopeweight confidence .PARENT.
+74   74    ucb       0.0973          0.3333           0.0852      0.0343     2.9671       52
+
+# 2024-10-16 22:41:14 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   bandit learningrate movefoundweight efficiencyweight slopeweight confidence
+74    ucb       0.0973          0.3333           0.0852      0.0343     2.9671
+8     ucb       0.5838          0.1982           0.1760      0.0139     2.2488
+61    ucb       0.2499          0.3525           0.3558      0.0123     2.0912
+89    ucb       0.2064          0.4826           0.2605      0.0268     2.2121
+# 2024-10-16 22:41:14 CEST: Stopped because there is not enough budget left to race more than the minimum (4)
+# You may either increase the budget or set 'minNbSurvival' to a lower value
+# Iteration: 7
+# nbIterations: 7
+# experimentsUsedSoFar: 789
+# timeUsed: 0
+# remainingBudget: 11
+# currentBudget: 11
+# number of elites: 4
+# nbConfigurations: 4
+# Total CPU user time: 177995.8, CPU sys time: 2967.821, Wall-clock time: 24981.34
+# Best configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   bandit learningrate movefoundweight efficiencyweight slopeweight confidence
+74    ucb       0.0973          0.3333           0.0852      0.0343     2.9671
+8     ucb       0.5838          0.1982           0.1760      0.0139     2.2488
+61    ucb       0.2499          0.3525           0.3558      0.0123     2.0912
+89    ucb       0.2064          0.4826           0.2605      0.0268     2.2121
+# Best configurations as commandlines (first number is the configuration ID; same order as above):
+74  --bandit ucb -lr 0.0973 -mfw 0.3333 -ew 0.0852 -sw 0.0343 -c 2.9671
+8   --bandit ucb -lr 0.5838 -mfw 0.1982 -ew 0.176 -sw 0.0139 -c 2.2488
+61  --bandit ucb -lr 0.2499 -mfw 0.3525 -ew 0.3558 -sw 0.0123 -c 2.0912
+89  --bandit ucb -lr 0.2064 -mfw 0.4826 -ew 0.2605 -sw 0.0268 -c 2.2121
+
+
+# Testing of elite configurations: 1 
+# Testing iteration configurations: FALSE 
+# 2024-10-16 22:41:14 CEST: No test instances, skip testing

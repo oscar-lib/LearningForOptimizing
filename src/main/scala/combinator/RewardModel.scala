@@ -8,13 +8,13 @@ sealed abstract class RewardModel {
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
 
   /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
-   * one
-   *
-   * @param runStat
-   *   statistics from a performed move
-   * @return
-   *   reward in [0, 1]
-   */
+    * one
+    *
+    * @param runStat
+    *   statistics from a performed move
+    * @return
+    *   reward in [0, 1]
+    */
   def slope(runStat: NeighborhoodStats): Double = {
     val slope = runStat.slope
     Math.abs(slope)
@@ -29,8 +29,8 @@ class OriginalRewardModel(
   /** weight rewarding the slope */
   wSlope: Double = 0.4
 ) extends RewardModel {
-  protected var maxSlope           = 1.0 // stores (and updates) the maximum slope ever observed
-  private var maxRunTimeNano: Long = 1   // max run time experienced by a neighborhood
+  protected var maxSlope             = 1.0 // stores (and updates) the maximum slope ever observed
+  protected var maxRunTimeNano: Long = 1   // max run time experienced by a neighborhood
 
   /** Gives a reward in [0, 1] based on finding a move. 1 means that a move was found, 0 otherwise
     *
@@ -140,5 +140,22 @@ class NormalizedWindowedMeanGain(windowSize: Int) extends NormalizedGain {
 
   override protected def normalize(gain: Long): Double = {
     gain.toDouble / (this.sum.toDouble / window.size)
+  }
+}
+
+/** Returns the log_10 of the gain of the last move. In the case of negative gains, returns
+  * -log_10(-gain) to have a consistent negative reward.
+  */
+class LogGain extends RewardModel {
+  override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
+    val profiler = NeighborhoodUtils.getProfiler(neighborhood)
+    if (profiler._lastCallGain == 0) {
+      0
+    } else if (profiler._lastCallGain > 0) {
+      math.log10(profiler._lastCallGain.toDouble)
+    } else {
+      // The new solution is worse
+      -math.log10(-profiler._lastCallGain.toDouble)
+    }
   }
 }

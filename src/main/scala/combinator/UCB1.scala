@@ -88,7 +88,6 @@ class UCB1(l: List[Neighborhood]) extends AbstractLearningCombinator("EGreedyBan
 
       lastSelectedIdx = neigh_idx
       nSelected(neigh_idx) += 1
-      // println("[" + weights.map(d => f"$d%.2f").mkString(" ") + "] choosing " + lastSelectedIdx + " (" + l(neighborhood_idx) + ")")
       Some(l(neigh_idx))
     }
   }

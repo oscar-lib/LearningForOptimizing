@@ -38,7 +38,11 @@ object Main extends App {
     efficiencyWeight: Double = 0.2,
     moveFoundWeight: Double = 0.4,
     epsilon: Double = 0.7,
-    confidence: Double = 1
+    confidence: Double = 1,
+    debug: Boolean = false,
+    batchSize: Int = 32,
+    ddqn: Boolean = false,
+    clipping: Double = 0
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -53,7 +57,7 @@ object Main extends App {
     efficiencyWeight: Double = 0.2,
     moveFoundWeight: Double = 0.4,
     epsilon: Double = 0.7,
-      confidence: Double = 1
+    confidence: Double = 1
   ) extends Config
 
   private case class SolveAllConfig(
@@ -110,7 +114,9 @@ object Main extends App {
 //              "    - bandit         : the modified bandit algorithm\n" +
               "    - epsilongreedy  : an implementation of the epsilon greedy\n" +
               "    - random         : choose neighborhoods at random\n" +
-              "    - bestslopefirst : the default method"
+              "    - bestslopefirst : the default method\n" +
+              "    - dqn            : use Deep Q-Learning to select the neighborhood\n" +
+              "    - ppo            : use Proximal Policy Optimization to select the neighborhood"
           )
           .action((x, c) =>
             c match {
@@ -201,7 +207,7 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(confidence = x)
-              case _                       => throw new Error("Unexpected Error")
+              case _                         => throw new Error("Unexpected Error")
             }
           ),
         opt[Long]("seed")
@@ -209,6 +215,43 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(seed = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Int]("batchSize")
+          .abbr("bs")
+          .text("Set the batch size for the DQN algorithm (default: 32)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(batchSize = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[String]("ddqn")
+          .text("Double q-learning")
+          .action((x, c) => {
+            var ddqn = false;
+            if (x == "true") {
+              ddqn = true;
+            }
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(ddqn = ddqn)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          }),
+        opt[Double]("clipping")
+          .text("Clipping for the PPO algorithm")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(clipping = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Unit]("debug")
+          .text("Set the debug mode")
+          .action((_, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(debug = true)
               case _                         => throw new Error("Unexpected Error")
             }
           )
@@ -456,7 +499,7 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveAllConfig => conf.copy(confidence = x)
-              case _                       => throw new Error("Unexpected Error")
+              case _                    => throw new Error("Unexpected Error")
             }
           ),
         opt[Long]("seed")
@@ -504,7 +547,11 @@ object Main extends App {
             i.efficiencyWeight,
             i.moveFoundWeight,
             i.epsilon,
-            i.confidence
+            i.confidence,
+            i.debug,
+            i.batchSize,
+            i.ddqn,
+            i.clipping
           )
           i.problem match {
             case "csp" =>
@@ -542,7 +589,8 @@ object Main extends App {
                   s.efficiencyWeight,
                   s.moveFoundWeight,
                   s.epsilon,
-                  s.confidence
+                  s.confidence,
+                  false
                 )
                 solveCSP(in)
               })
@@ -561,7 +609,8 @@ object Main extends App {
                   s.efficiencyWeight,
                   s.moveFoundWeight,
                   s.epsilon,
-                  s.confidence
+                  s.confidence,
+                  false
                 )
                 solvePDPTW(in)
               })
@@ -586,7 +635,8 @@ object Main extends App {
                   a.efficiencyWeight,
                   a.moveFoundWeight,
                   a.epsilon,
-                  a.confidence
+                  a.confidence,
+                  false
                 )
                 solveCSP(in)
               })
@@ -606,7 +656,8 @@ object Main extends App {
                   a.efficiencyWeight,
                   a.moveFoundWeight,
                   a.epsilon,
-                  a.confidence
+                  a.confidence,
+                  false
                 )
                 solvePDPTW(in)
               })

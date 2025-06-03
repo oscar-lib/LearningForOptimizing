@@ -80,6 +80,21 @@ case class Solver(cspModel: Model, in: SolverInput) {
       case "epsilongreedy" =>
         new EpsilonGreedyBanditNew(neighList, in)
 
+      case "dqn" =>
+        new StatefulCombinator(
+          neighList,
+          Right(cspModel),
+          lr = in.learningRate,
+          batchSize = in.batchSize,
+          epsilon = in.epsilon,
+          clipping = in.clipping,
+          ddqn = in.ddqn,
+          debug = in.debug,
+          algo = RLAlgorithm.DQN,
+          device = in.device,
+          objective = obj
+        )
+
       case "ucb" =>
         new UCBNew(neighList, in)
 
@@ -133,7 +148,7 @@ case class Solver(cspModel: Model, in: SolverInput) {
 
     search.verbose = verbosity
     search.doAllMoves(_ => c.isTrue, obj = obj)
-    if (verbosity > 1) {
+    if (verbosity >= 1) {
       search.profilingOnConsole()
       println(obj)
     }
@@ -145,13 +160,19 @@ case class Solver(cspModel: Model, in: SolverInput) {
       if (c.violation.value == 0) "Problem solved"
       else s"PROBLEM COULD NOT BE SOLVED: ${c.violation}"
     )
-    val instanceName = Paths.get(fileName).getFileName.toString
+    val instanceName         = Paths.get(fileName).getFileName.toString
     val realSolutionOverTime = recorder.realObjectiveTimeStamp
-    println(f"solOverTime=" + realSolutionOverTime.map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)").mkString("[", "-", "]"))
+    println(
+      f"solOverTime=" + realSolutionOverTime
+        .map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)")
+        .mkString("[", "-", "]")
+    )
     val currentDirectory = System.getProperty("user.dir")
-    val rootDir = currentDirectory.split("LearningForOptimizing")(0)
+    val rootDir          = currentDirectory.split("LearningForOptimizing")(0)
     val bestKnownSolution =
-      recorder.getBestKnownSolution(rootDir + "/LearningForOptimizing/bks/csp_bks.csv", instanceName).getOrElse(0.0)
+      recorder
+        .getBestKnownSolution(rootDir + "/LearningForOptimizing/bks/csp_bks.csv", instanceName)
+        .getOrElse(0.0)
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f")
   }
