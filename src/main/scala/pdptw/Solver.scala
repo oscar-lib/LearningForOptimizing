@@ -247,13 +247,6 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     if (displaySolution) demoDisplay.drawRoutes(force = true)
 
     val instanceName = Paths.get(fileName).getFileName.toString
-    val bestKnownSolution =
-      recorder
-        .getBestKnownSolution(
-          "/gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing/bks/pdptw_bks.csv",
-          instanceName
-        )
-        .getOrElse(0.0)
     // val gapOverTime = recorder.primalGapOverTime(bestKnownSolution, timeout)
     // println(f"primalGapOverTime=" + gapOverTime.map(e => f"(t=${e._1}%.3f-v=${e._2}%.6f)").mkString("[", "-", "]"))
     if (verbosity >= 1) {
@@ -264,7 +257,6 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     println(oscarModel.toString)
     println("bestObj=" + oscarModel.objectiveFunction.value)
     // println(recorder)
-    val instanceName         = Paths.get(fileName).getFileName.toString
     val realSolutionOverTime = recorder.realObjectiveTimeStamp
     println(
       f"solOverTime=" + realSolutionOverTime
