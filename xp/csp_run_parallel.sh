@@ -1,3 +1,4 @@
+#!/bin/bash
 # run the experiments in parallel, using as many CPU cores as available
 # supposed to be called at the root of the project
 
@@ -26,7 +27,7 @@ sbt assembly
 echo "compilation done"
 echo "running experiments on $nParallel core(s)"
 # creates the file so that the header is present
-echo "instance,bandit,timeout,objective,integralPrimalGap" > $outFilename
+echo "instance,bandit,timeout,objective,solOverTime" > $outFilename
 
 for (( i=1; i<=$nRuns; i++ ))  # one line per solver
 do

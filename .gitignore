@@ -23,3 +23,5 @@ nohup.out
 # Directory used for named pipes
 pipes/ 
 experiences/
+
+logs

@@ -1,3 +1,4 @@
+#!/bin/bash
 #run from anywhere, but do not move this file
 #example run: ./irace_tuning.sh pdptw ucb
 export PATH="$(Rscript -e "cat(paste0(system.file(package='irace', 'bin', mustWork=TRUE), ':'))" 2> /dev/null)${PATH}"
