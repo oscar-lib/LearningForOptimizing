@@ -47,18 +47,6 @@ class Args(tap.TypedArgs):
             return torch.device("cpu")
         device_index = os.getpid() % n_devices
         return torch.device(f"cuda:{device_index}")
-        match self._device:
-            case "gpu":
-                n_devices = torch.cuda.device_count()
-                logging.info(f"Number of available CUDA devices: {n_devices}")
-                if n_devices == 0:
-                    device = torch.device("cpu")
-                else:
-                    device_index = os.getpid() % n_devices
-                    device = torch.device(f"cuda:{device_index}")
-            case _:
-                device = torch.device("cpu")
-        return device
 
     @property
     def bridge(self) -> Bridge:

@@ -77,7 +77,9 @@ class Runner:
 
                         qnetwork = QNetGNN(problem)
                     case CSP():
-                        raise NotImplementedError("CSP not yet supported")
+                        from nn import CNN
+
+                        qnetwork = CNN(problem)
 
                 return DQN(
                     qnetwork=qnetwork,

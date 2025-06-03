@@ -138,7 +138,6 @@ object NamedPipeBridge {
 
   def findPythonPath(): Path = {
     val possiblePaths = Array(
-      Paths.get("/gpfs/projects/shared/p_ariac_cetic/miniconda/envs/myr-env/bin/python"),
       Paths.get(".venv/bin/python"),
       Paths.get(".env/bin/python"),
       Paths.get("venv/bin/python"),
@@ -152,11 +151,7 @@ object NamedPipeBridge {
   }
 
   def findPythonSourcesDirectory(): Path = {
-    val possiblePaths = Array(
-      Paths.get("/gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing/src/python/"),
-      Paths.get("./src/python"),
-      Paths.get("../src/python")
-    )
+    val possiblePaths = Array(Paths.get("./src/python"), Paths.get("../src/python"))
 
     possiblePaths.find(_.toFile.exists()).getOrElse {
       throw new Exception("Python sources path not found")
