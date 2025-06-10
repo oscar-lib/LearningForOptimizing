@@ -83,7 +83,7 @@ class RolloutBuffer:
 
     def sample(self):
         batch_size = len(self.actions)
-        obs = DataLoader([obs.graph for obs in self.obs], batch_size=batch_size, shuffle=False)._get_iterator().__next__()
+        obs = DataLoader([obs.data for obs in self.obs], batch_size=batch_size, shuffle=False)._get_iterator().__next__()
         actions = torch.tensor(self.actions, dtype=torch.long)
         rewards = torch.tensor(self.rewards, dtype=torch.float32)
         dones = torch.tensor(self.dones, dtype=torch.bool)
@@ -151,9 +151,9 @@ class PPO(Algo):
 
     def select_action(self, obs: Observation):
         with torch.no_grad():
-            obs.graph = obs.graph.to(self.device.index, non_blocking=True)
+            obs.data = obs.data.to(self.device.index, non_blocking=True)
             obs.available_actions = obs.available_actions.to(self.device, non_blocking=True)
-            logits = self.actor.forward(obs.graph).squeeze()
+            logits = self.actor.forward(obs.data).squeeze()
             # mask unavailable actions
             logits[~obs.available_actions] = -torch.inf
             dist = Categorical(logits=logits)

@@ -2,12 +2,13 @@ from dataclasses import dataclass
 from typing import Literal, Optional
 import torch
 from algos import DQN, PPO, Algo
+import logging
 from logger import Logger
 from bridge.protocol.message import Message, MessageType
 from bridge import Bridge
 from optimenv import EpisodeEndException, OptimEnv
 from problem import PDPTW, CSP
-from replay_memory import ReplayMemory
+from replay_memory import GraphReplayMemory, LinearMemory
 
 
 @dataclass
@@ -39,10 +40,11 @@ class Runner:
                         action, action_data = agent.select_action(obs)
                         next_obs, reward = env.step(action)
                         logs = agent.learn(t, obs, action, reward, next_obs)
-                        logs = logs | {"action": action, "reward": reward} | {f"action-{i}": x for i, x in enumerate(action_data)}
+                        logs = logs | {"action": action, "reward": reward, **{f"action-{i}": x for i, x in enumerate(action_data)}}
                         logger.log(logs, t)
                         obs = next_obs
                 except EpisodeEndException:
+                    logging.info("Episode ended")
                     agent.notify_episode_end()
         except ConnectionResetError:
             logger.error("Connection with remote closed")
@@ -76,13 +78,15 @@ class Runner:
                         from nn import QNetGNN
 
                         qnetwork = QNetGNN(problem)
+                        memory = GraphReplayMemory(1000)
                     case CSP():
                         from nn import CNN
 
                         qnetwork = CNN(problem)
+                        memory = LinearMemory(1000)
                 return DQN(
                     qnetwork=qnetwork,
-                    memory=ReplayMemory(1000),
+                    memory=memory,
                     double_qlearning=args.ddqn,
                     grad_norm_clipping=args.clipping,
                     lr=args.lr,

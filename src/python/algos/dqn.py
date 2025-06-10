@@ -51,31 +51,19 @@ class DQN(Algo):
         self.grad_norm_clipping = grad_norm_clipping
         self.target_updater = HardUpdate(update_period=100)
 
-    @classmethod
-    def default(cls, problem: PDPTW):
-        from nn import QNetGNN
-
-        return DQN(
-            qnetwork=QNetGNN(problem),
-            memory=ReplayMemory(1000),
-            double_qlearning=False,
-            grad_norm_clipping=None,
-        )
-
     def select_action(self, obs: Observation):
-        obs.graph = obs.graph.to(self.device.index, non_blocking=True)
-        qvalues = self.compute_qvalues(obs).squeeze().numpy(force=True)
-        action = self.policy.get_action(qvalues, obs.available_actions.numpy(force=True))
-        return action, qvalues
-
-    def compute_qvalues(self, state: Observation) -> torch.Tensor:
-        return self.qnetwork.forward(state.graph)
+        with torch.no_grad():
+            data = obs.data.to(self.device, non_blocking=True).unsqueeze(0)  # Add batch dimension
+            qvalues = self.qnetwork.forward(data).squeeze(0).numpy(force=True)  # Squeeze the batch dimension
+            saved_qvalues = qvalues.copy()  # Save the original qvalues for logging
+            action = self.policy.get_action(qvalues, obs.available_actions.numpy(force=True))
+            return action, saved_qvalues
 
     def notify_episode_end(self):
         self.memory.end_episode()
 
-    def learn(self, time_step: int, obs: Observation, action: int, reward: float, next_obs: Observation) -> dict[str, float]:
-        next_obs.graph = next_obs.graph.to(self.device.index, non_blocking=True)
+    def learn(self, time_step: int, obs: Observation, action: int, reward: float, next_obs: Observation):
+        next_obs.data = next_obs.data.to(self.device, non_blocking=True)
         self.memory.add(obs, action, reward, next_obs)
         if not self._can_update():
             return {}
@@ -99,8 +87,15 @@ class DQN(Algo):
         return next_values
 
     def optimise_qnetwork(self):
+        ###########################################
+        #
+        #
+        # TODO: check why the observations are always the same
+        #
+        #
+        ###########################################
+        # Sample a batch from the memory
         batch = self.memory.sample(self.batch_size).to(self.device)
-
         # Qvalues and qvalues with target network computation
         qvalues = self.qnetwork.forward(batch.obs)
         qvalues = torch.gather(qvalues, dim=-1, index=batch.actions)

@@ -15,7 +15,7 @@ class EpisodeEndException(Exception):
 
 @dataclass
 class Observation[T]:
-    graph: T
+    data: T
     available_actions: torch.Tensor
 
 
@@ -48,4 +48,4 @@ class OptimEnv[T]:
         data = json.loads(req.body)
         available_actions = data["available"]
         data = self.problem.build_agent_input(data)
-        return Observation(graph=data, available_actions=torch.tensor(available_actions, dtype=torch.bool))
+        return Observation(data=data, available_actions=torch.tensor(available_actions, dtype=torch.bool))

@@ -52,7 +52,10 @@ class CSP(Problem[torch.Tensor]):
         self.options = options
         self.cars = cars
         self.n_actions = n_actions
-        self.cars_data = torch.stack([c.options for c in cars])
+        cars_data = []
+        for car in cars:
+            cars_data.extend([car.options] * car.n_to_make)
+        self.cars_data = torch.stack(cars_data)
         self.options_data = torch.tensor([[option.max_seq, option.seq_len] for option in options], dtype=torch.float32)
         self.n_cars = sum(car.n_to_make for car in cars)
 
@@ -84,7 +87,7 @@ class CSP(Problem[torch.Tensor]):
         busy_options = torch.zeros(self.n_options, self.n_cars, dtype=torch.float32)
         for car_num in sequence:
             busy_options[:, car_num] = self.cars_data[car_num]
-        return busy_options
+        return busy_options.unsqueeze(0)  # Add the channel dimension
 
     @property
     def n_car_configs(self) -> int:

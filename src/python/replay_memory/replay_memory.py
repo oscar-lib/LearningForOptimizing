@@ -1,36 +1,24 @@
+import os
+import pickle
+from abc import ABC, abstractmethod
 from collections import deque
-from dataclasses import dataclass
-from typing import Deque
-import torch
-from torch_geometric.data import Data
-from torch_geometric.loader import DataLoader
 from datetime import datetime
+from typing import Deque
 
 import numpy as np
-import pickle
-import os
+import torch
 from optimenv import Observation
 
 
-@dataclass
-class Batch:
-    obs: Data
-    available_actions: torch.Tensor
-    actions: torch.Tensor
-    rewards: torch.Tensor
-    dones: torch.Tensor
-    next_obs: Data
-    next_available_actions: torch.Tensor
-    size: int
-
+class Batch[T: torch.Tensor]:
     def __init__(
         self,
-        obs: Data,
+        obs: T,
         available_actions: torch.Tensor,
         actions: torch.Tensor,
         rewards: torch.Tensor,
         dones: torch.Tensor,
-        next_obs: Data,
+        next_obs: T,
         next_available_actions: torch.Tensor,
     ):
         self.obs = obs
@@ -57,8 +45,7 @@ class Batch:
         return self.size
 
 
-@dataclass
-class ReplayMemory:
+class ReplayMemory[T: torch.Tensor](ABC):
     max_size: int
 
     def __init__(self, max_size: int):
@@ -69,11 +56,15 @@ class ReplayMemory:
         self._dones: Deque[bool] = deque(maxlen=max_size)
         self.max_size = max_size
         self.index_episode_start = 0
+        self.perform_check = False
 
     def add(self, obs: Observation, action: int, reward: float, next_obs: Observation):
         """Add an item (transition, episode, ...) to the memory"""
         if len(self) == self.max_size and self.index_episode_start > 0:
             self.index_episode_start -= 1
+        if self.perform_check:
+            assert torch.equal(obs.data, self._next_obs[-1].data)
+        self.perform_check = True
         self._obs.append(obs)
         self._next_obs.append(next_obs)
         self._actions.append(action)
@@ -82,6 +73,7 @@ class ReplayMemory:
 
     def end_episode(self):
         self._dones[-1] = True
+        self.perform_check = False
         return
         # [:-3] to get milliseconds
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")[:-3]
@@ -100,9 +92,9 @@ class ReplayMemory:
             rewards.append(self._rewards[i])
             dones.append(self._dones[i])
             available_actions.append(self._obs[i].available_actions)
-            obs.append(self._obs[i].graph)
+            obs.append(self._obs[i].data)
             next_available_actions.append(self._next_obs[i].available_actions)
-            next_obs.append(self._next_obs[i].graph)
+            next_obs.append(self._next_obs[i].data)
 
         np.save(f"experiences/{timestamp}/actions.npy", np.array(actions))
         np.save(f"experiences/{timestamp}/rewards.npy", np.array(rewards))
@@ -115,26 +107,11 @@ class ReplayMemory:
             pickle.dump(next_obs, f)
         self.index_episode_start = len(self)
 
-    def _get_batch(self, indices: np.ndarray) -> Batch:
-        batch_size = len(indices)
-        obs = DataLoader([self._obs[i].graph for i in indices], batch_size=batch_size, shuffle=False)._get_iterator().__next__()
-        next_obs = DataLoader([self._next_obs[i].graph for i in indices], batch_size=batch_size, shuffle=False)._get_iterator().__next__()
-        actions = torch.tensor([self._actions[i] for i in indices], dtype=torch.long).unsqueeze(-1)
-        rewards = torch.tensor([self._rewards[i] for i in indices], dtype=torch.float32)
-        dones = torch.tensor([self._dones[i] for i in indices], dtype=torch.float32)
-        available_actions = torch.tensor(np.array([self._obs[i].available_actions for i in indices]), dtype=torch.bool)
-        next_available_actions = torch.tensor(np.array([self._next_obs[i].available_actions for i in indices]), dtype=torch.bool)
-        return Batch(
-            obs=obs,
-            available_actions=available_actions,
-            actions=actions,
-            rewards=rewards,
-            dones=dones,
-            next_obs=next_obs,
-            next_available_actions=next_available_actions,
-        )
+    @abstractmethod
+    def _get_batch(self, indices: np.ndarray) -> Batch[T]:
+        """Retrieve a `Batch` from the memory given a list of indices"""
 
-    def sample(self, batch_size: int) -> Batch:
+    def sample(self, batch_size: int) -> Batch[T]:
         """Randomly sample the memory to retrieve a `Batch`"""
         indices = np.random.randint(0, len(self), batch_size)
         return self._get_batch(indices)

@@ -1,4 +1,5 @@
 from typing import Sequence
+import logging
 import torch
 import torch_geometric.nn as gnn
 import math
@@ -97,30 +98,42 @@ class CNN(torch.nn.Module):
     def __init__(self, problem: CSP):
         super().__init__()
         self.problem = problem
-        shape_cars, shape_options = problem.instance_shape
-        n_common_inputs = math.prod(shape_options)
-        self.instance_extractor, n_outputs = make_cnn((1, *shape_cars), [32, 64, 32], [3, 3, 3], [1, 1, 1])
+        self.cars_data = problem.cars_data.unsqueeze(0).unsqueeze(0)  # Add channel and batch dimensions
+        self.options_data = problem.options_data.flatten().unsqueeze(0)  # Add channel and batch dimensions
+        n_common_inputs = math.prod(self.options_data.shape)
+        self.instance_extractor, n_outputs = make_cnn(self.cars_data.shape[1:], [32, 64, 32], [3, 3, 3], [1, 1, 1])
         n_common_inputs += n_outputs
-        self.state_extractor, n_outputs = make_cnn((1, *shape_cars), [32, 64, 32], [3, 3, 3], [1, 1, 1])
+        state_shape = (1, problem.n_options, problem.n_cars)
+        self.state_extractor, n_outputs = make_cnn(state_shape, [32, 64, 32], [3, 3, 3], [1, 1, 1])
         n_common_inputs += n_outputs
-        self.common = torch.nn.Sequential(
-            torch.nn.Linear(n_common_inputs, 128),
-            torch.nn.ReLU(),
-            torch.nn.Linear(128, 64),
-            torch.nn.ReLU(),
-            torch.nn.Linear(64, problem.n_actions),
-        )
+        layer_size = n_common_inputs
+        layers = []
+        while layer_size > 128:
+            layers.append(torch.nn.Linear(layer_size, layer_size // 2))
+            layers.append(torch.nn.ReLU())
+            layer_size //= 2
+        layers.append(torch.nn.Linear(layer_size, problem.n_actions))
+        self.common = torch.nn.Sequential(*layers)
 
     def forward(self, current_solution: torch.Tensor) -> torch.Tensor:
-        x1 = self.instance_extractor.forward(self.problem.cars_data)
+        logging.warning(f"{current_solution.sum()}")
+        batch_size, *_ = current_solution.shape
+        # Repeat the cars data for each batch element
+        cars_data = self.cars_data.repeat(batch_size, 1, 1, 1)
+        options_data = self.options_data.repeat(batch_size, 1)
+        x1 = self.instance_extractor.forward(cars_data)
         x2 = self.state_extractor.forward(current_solution)
-        x = torch.cat((x1, x2, self.problem.options_data.flatten()), dim=1)
+        x = torch.cat((x1, x2, options_data), dim=1)
         qvalues = self.common.forward(x)
         return qvalues
 
 
 def make_cnn(
-    input_shape: tuple[int, int, int], filters: Sequence[int], kernel_sizes: Sequence[int], strides: Sequence[int], min_output_size=1024
+    input_shape: Sequence[int],
+    filters: Sequence[int],
+    kernel_sizes: Sequence[int],
+    strides: Sequence[int],
+    min_output_size=1024,
 ):
     """Create a CNN with flattened output based on the given filters, kernel sizes and strides."""
     channels, height, width = input_shape

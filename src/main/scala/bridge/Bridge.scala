@@ -29,8 +29,7 @@ class Bridge(protected val input: InputStream, protected val output: OutputStrea
   def sendStaticProblemData(problem: SerializableModel, nActions: Int): Unit = {
     val data = problem.getJSONStaticProblemData()
     val json = s"""{"problem":$data,"nActions":$nActions}"""
-    println(json)
-    val msg = Message.create(problem.getProblemCode(), json.getBytes());
+    val msg  = Message.create(problem.getProblemCode(), json.getBytes());
     this.output.write(msg.toBytes())
     val resp = Message.recv(this.input)
     if (resp.msgType() != MessageType.ACK) {
