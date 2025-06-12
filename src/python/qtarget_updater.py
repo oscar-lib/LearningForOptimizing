@@ -23,7 +23,7 @@ class TargetParametersUpdater:
         self.target_params.extend(target_params)
 
     @abstractmethod
-    def update(self, time_step: int) -> dict[str, float]:
+    def update(self, time_step: int, /) -> dict[str, float]:
         """Update the target network parameters based on the current network parameters and return the logs."""
 
 

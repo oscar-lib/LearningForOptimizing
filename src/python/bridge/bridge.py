@@ -19,9 +19,9 @@ class Bridge(ABC):
         return Message(header, data)
 
     @abstractmethod
-    def read(self, nbytes: int) -> bytes:
+    def read(self, nbytes: int, /) -> bytes:
         """Read a message from the input stream"""
 
     @abstractmethod
-    def send(self, bytes: bytes):
+    def send(self, bytes: bytes, /):
         """Write a message to the output stream"""

@@ -18,37 +18,15 @@ class Policy:
         self.name = self.__class__.__name__
 
     @abstractmethod
-    def get_action(self, qvalues: np.ndarray, available_actions: np.ndarray) -> np.ndarray:
+    def get_action(self, qvalues: np.ndarray, available_actions: np.ndarray, /) -> int:
         """
         Choose an action based on the given qvalues and avalable actions.
         Returns the chosen action.
         """
 
     @abstractmethod
-    def update(self, time_step: int) -> dict[str, float]:
+    def update(self, time_step: int, /) -> dict[str, float]:
         """Update the object and return the corresponding logs."""
-
-
-@dataclass
-class SoftmaxPolicy(Policy):
-    """Softmax policy"""
-
-    tau: float
-
-    def __init__(self, n_actions: int, tau: float = 1.0):
-        super().__init__()
-        self.actions = np.arange(n_actions, dtype=np.int64)
-        self.tau = tau
-
-    def get_action(self, qvalues: npt.NDArray[np.float32], available_actions: npt.NDArray[np.float32]) -> npt.NDArray[np.int64]:
-        qvalues[available_actions == 0.0] = -np.inf
-        exp = np.exp(qvalues / self.tau)
-        probs = exp / np.sum(exp, axis=-1, keepdims=True)
-        chosen_actions = [np.random.choice(self.actions, p=agent_probs) for agent_probs in probs]
-        return np.array(chosen_actions)
-
-    def update(self, _: int) -> dict[str, float]:
-        return {"softmax-tau": self.tau}
 
 
 @dataclass
@@ -92,10 +70,10 @@ class ArgMax(Policy):
     def __init__(self):
         super().__init__()
 
-    def get_action(self, qvalues: np.ndarray, available_actions: npt.NDArray[np.float32]) -> np.ndarray:
+    def get_action(self, qvalues: np.ndarray, available_actions: npt.NDArray[np.float32]):
         qvalues[available_actions == 0.0] = -np.inf
         actions = qvalues.argmax(-1)
-        return actions
+        return actions.item()
 
     def update(self, step_num: int):
         return {}

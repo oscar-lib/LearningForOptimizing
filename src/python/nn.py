@@ -1,5 +1,4 @@
 from typing import Sequence
-import logging
 import torch
 import torch_geometric.nn as gnn
 import math
