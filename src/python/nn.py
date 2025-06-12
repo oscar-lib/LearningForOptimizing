@@ -116,7 +116,6 @@ class CNN(torch.nn.Module):
         self.common = torch.nn.Sequential(*layers)
 
     def forward(self, current_solution: torch.Tensor) -> torch.Tensor:
-        logging.warning(f"{current_solution.sum()}")
         batch_size, *_ = current_solution.shape
         # Repeat the cars data for each batch element
         cars_data = self.cars_data.repeat(batch_size, 1, 1, 1)

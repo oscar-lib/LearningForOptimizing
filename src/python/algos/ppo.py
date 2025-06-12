@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 from .algo import Algo
@@ -138,16 +139,8 @@ class PPO(Algo):
         )
         self.mse_loss = torch.nn.MSELoss()
 
-    @staticmethod
-    def default(problem: PDPTW):
-        return PPO(
-            problem=problem,
-            lr_actor=0.001,
-            lr_critic=0.001,
-            gamma=0.99,
-            K_epochs=20,
-            eps_clip=0.2,
-        )
+    def register_transition(self, data: dict[str, Any]):
+        raise NotImplementedError("PPO does not support register_transition method.")
 
     def select_action(self, obs: Observation):
         with torch.no_grad():

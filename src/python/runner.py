@@ -1,13 +1,14 @@
+import logging
 from dataclasses import dataclass
 from typing import Literal, Optional
+
 import torch
 from algos import DQN, PPO, Algo
-import logging
-from logger import Logger
-from bridge.protocol.message import Message, MessageType
 from bridge import Bridge
-from optimenv import EpisodeEndException, OptimEnv
-from problem import PDPTW, CSP
+from bridge.protocol.message import Message, MessageType
+from logger import Logger
+from optimenv import EpisodeEndException, OptimEnv, RegisterTransition
+from problem import CSP, PDPTW
 from replay_memory import GraphReplayMemory, LinearMemory
 
 
@@ -32,26 +33,28 @@ class Runner:
             agent = self._create_agent(problem, algo, args).to(device)
             env = OptimEnv(problem, self.bridge)
             t = 0
+            obs = env.reset()
             while True:
-                obs = env.reset()
+                t += 1
+                action, action_data = agent.select_action(obs)
                 try:
-                    while True:
-                        t += 1
-                        action, action_data = agent.select_action(obs)
-                        next_obs, reward = env.step(action)
-                        logs = agent.learn(t, obs, action, reward, next_obs)
-                        logs = logs | {"action": action, "reward": reward, **{f"action-{i}": x for i, x in enumerate(action_data)}}
-                        logger.log(logs, t)
-                        obs = next_obs
+                    next_obs, reward = env.step(action)
+                    logs = agent.learn(t, obs, action, reward, next_obs)
+                    logs = logs | {"action": action, "reward": reward, **{f"action-{i}": x for i, x in enumerate(action_data)}}
+                    logger.log(logs, t)
+                    obs = next_obs
                 except EpisodeEndException:
                     logging.info("Episode ended")
                     agent.notify_episode_end()
+                    obs = env.reset()
+                except RegisterTransition as e:
+                    agent.register_transition(e.data)
         except ConnectionResetError:
-            logger.error("Connection with remote closed")
-            return
+            logging.error("Connection with remote closed")
         except KeyboardInterrupt:
-            pass
-        logger.info("Stopping runner")
+            logging.info("Stopping runner with Ctrl+C")
+        except Exception as e:
+            logging.error(f"An unexpected error occurred: {e}", exc_info=True)
 
     def _retrieve_problem_data(self, logger: Logger):
         req = self.bridge.recv()
@@ -97,3 +100,12 @@ class Runner:
                 assert isinstance(problem, PDPTW)
                 return PPO.default(problem)
         raise Exception(f"Unknown algorithm: {algo}")
+
+
+class ExperienceColectr(Runner):
+    def run(self, device: torch.device, algo: Literal["dqn"] | Literal["ppo"], args: Params):
+        logger = Logger(csv=True)
+        problem = self._retrieve_problem_data(logger)
+        env = OptimEnv(problem, self.bridge)
+        while True:
+            msg = self.bridge.recv()

@@ -1,4 +1,5 @@
-import json
+from typing import Any
+import orjson
 import struct
 from dataclasses import dataclass
 
@@ -11,6 +12,12 @@ from problem import Problem
 
 class EpisodeEndException(Exception):
     pass
+
+
+class RegisterTransition(Exception):
+    def __init__(self, json_data: dict[str, Any]) -> None:
+        super().__init__()
+        self.data = json_data
 
 
 @dataclass
@@ -33,6 +40,8 @@ class OptimEnv[T]:
         req = self.bridge.recv()
         if req.type == MessageType.END_EPISODE:
             raise EpisodeEndException()
+        if req.type == MessageType.TRANSITION:
+            raise RegisterTransition(orjson.loads(req.body))
         if req.type != MessageType.REWARD:
             raise ValueError(f"Expected message of type {MessageType.REWARD.name} from the client, got {req.type.name}")
         reward = struct.unpack(">f", req.body)[0]
@@ -43,9 +52,11 @@ class OptimEnv[T]:
         req = self.bridge.recv()
         if req.type == MessageType.END_EPISODE:
             raise EpisodeEndException()
+        if req.type == MessageType.TRANSITION:
+            raise RegisterTransition(orjson.loads(req.body))
         if req.type != MessageType.ACTION_REQ:
             raise ValueError(f"Expected message of type {MessageType.ACTION_REQ.name} from the client, got {req.type.name}")
-        data = json.loads(req.body)
+        data = orjson.loads(req.body)
         available_actions = data["available"]
         data = self.problem.build_agent_input(data)
         return Observation(data=data, available_actions=torch.tensor(available_actions, dtype=torch.bool))

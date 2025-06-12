@@ -1,6 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Optional
 
 import torch
 from optimenv import Observation
@@ -71,6 +71,9 @@ class DQN(Algo):
         logs = logs | self.target_updater.update(time_step)
         return logs
 
+    def register_transition(self, data: dict[str, Any]):
+        raise NotImplementedError()
+
     def _can_update(self):
         return self.memory.can_sample(self.batch_size)
 
@@ -87,13 +90,6 @@ class DQN(Algo):
         return next_values
 
     def optimise_qnetwork(self):
-        ###########################################
-        #
-        #
-        # TODO: check why the observations are always the same
-        #
-        #
-        ###########################################
         # Sample a batch from the memory
         batch = self.memory.sample(self.batch_size).to(self.device)
         # Qvalues and qvalues with target network computation
@@ -104,7 +100,7 @@ class DQN(Algo):
         # Next state value computation
         # We use the all_obs_ to handle the case of recurrent qnetworks that require the first element of the sequence.
         next_values = self._next_state_value(batch)
-        qtargets = batch.rewards + self.gamma * next_values * (1 - batch.dones)
+        qtargets = batch.rewards + self.gamma * next_values * (~batch.dones)
         # Compute the loss
         td_error = qvalues - qtargets.detach()
         loss = torch.mean(td_error**2)

@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-import json
+import logging
+import orjson
 import torch
 from .problem import Problem
 
@@ -61,7 +62,7 @@ class CSP(Problem[torch.Tensor]):
 
     @staticmethod
     def parse(bdata: bytes) -> "CSP":
-        data = json.loads(bdata)
+        data = orjson.loads(bdata)
         problem = data["problem"]["instance"]
         n_actions = data["nActions"]
         max_sequences = problem["maxCarsWithOptInSeq"]
@@ -85,8 +86,8 @@ class CSP(Problem[torch.Tensor]):
         """
         sequence = data["state"]
         busy_options = torch.zeros(self.n_options, self.n_cars, dtype=torch.float32)
-        for car_num in sequence:
-            busy_options[:, car_num] = self.cars_data[car_num]
+        for i, car_num in enumerate(sequence):
+            busy_options[:, i] = self.cars_data[car_num]
         return busy_options.unsqueeze(0)  # Add the channel dimension
 
     @property

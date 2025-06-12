@@ -63,6 +63,12 @@ class Bridge(protected val input: InputStream, protected val output: OutputStrea
     val bytes = msg.toBytes()
     this.output.write(bytes)
   }
+
+  def sendTransition(state: String, action: Int, nextState: String, reward: Double): Unit = {
+    val json = s"""{"state":$state,"action":$action,"nextState":$nextState,"reward":$reward}"""
+    val msg  = Message.create(MessageType.TRANSITION, json.getBytes())
+    this.output.write(msg.toBytes())
+  }
 }
 
 object Bridge {

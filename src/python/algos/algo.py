@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Self
+from typing import Any, Self
 
 import numpy as np
 import torch
@@ -34,4 +34,11 @@ class Algo(ABC):
     def to(self, device: torch.device) -> Self:
         """
         Move the algorithm to the given device.
+        """
+
+    @abstractmethod
+    def register_transition(self, data: dict[str, Any]):
+        """
+        Register a transition in the algorithm's memory.
+        This is used when the environment sends a transition message.
         """

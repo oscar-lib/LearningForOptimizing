@@ -6,6 +6,7 @@ import scala.collection.mutable
 
 sealed abstract class RewardModel {
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
+  def apply(prevObj: Long, newObj: Long): Double
 
   /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
     * one
@@ -67,11 +68,23 @@ class OriginalRewardModel(
       this.wEff * rewardExecutionTime(runStat) +
       this.wSlope * slope(runStat)
   }
+
+  override def apply(prevObj: Long, newObj: Long): Double = {
+    throw new UnsupportedOperationException(
+      "This method is not supported in OriginalRewardModel. Use apply(NeighborhoodStats, Neighborhood) instead."
+    )
+  }
 }
 
 class SlopeReward extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     slope(runStat)
+  }
+
+  override def apply(prevObj: Long, newObj: Long): Double = {
+    throw new UnsupportedOperationException(
+      "This method is not supported in SlopeReward. Use apply(NeighborhoodStats, Neighborhood) instead."
+    )
   }
 }
 
@@ -82,6 +95,12 @@ sealed abstract class NormalizedGain extends RewardModel {
     val gain     = profiler._lastCallGain
     this.update(gain)
     this.normalize(gain)
+  }
+
+  override def apply(prevObj: Long, newObj: Long): Double = {
+    throw new UnsupportedOperationException(
+      "This method is not supported in NormalizedGain. Use apply(NeighborhoodStats, Neighborhood) instead."
+    )
   }
 
   protected def update(gain: Long): Unit
@@ -157,5 +176,17 @@ class LogGain extends RewardModel {
       // The new solution is worse
       -math.log10(-profiler._lastCallGain.toDouble)
     }
+  }
+
+  override def apply(prevObj: Long, newObj: Long): Double = {
+    if (newObj == prevObj) {
+      return 0.0
+    }
+    val gain = newObj - prevObj
+    if (gain < 0) {
+      // The new solution is worse
+      return -math.log10(-gain.toDouble)
+    }
+    return math.log10(gain.toDouble)
   }
 }

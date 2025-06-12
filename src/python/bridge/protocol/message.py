@@ -13,6 +13,7 @@ class MessageType(IntEnum):
     REWARD = 5
     END_EPISODE = 6
     STATIC_DATA_CSP = 7
+    TRANSITION = 8
 
 
 @dataclass

@@ -67,19 +67,7 @@ case class Solver(cspModel: Model, in: SolverInput) {
     val restart4: Neighborhood = sn.shuffle()
 
     val banditNeighborhood: Neighborhood = in.bandit.toLowerCase() match {
-//      case "bandit" => BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
-//
-//      case "banditaftermove" =>
-//        BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
-//
-//      case "banditrollingaverage" =>
-//        BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
-
-//      case "epsilongreedy" => new EpsilonGreedyBandit(neighList)
-
-      case "epsilongreedy" =>
-        new EpsilonGreedyBanditNew(neighList, in)
-
+      case "epsilongreedy" => new EpsilonGreedyBanditNew(neighList, in)
       case "dqn" =>
         new StatefulCombinator(
           neighList,
@@ -94,16 +82,9 @@ case class Solver(cspModel: Model, in: SolverInput) {
           device = in.device,
           objective = obj
         )
-
-      case "ucb" =>
-        new UCBNew(neighList, in)
-
+      case "ucb"            => new UCBNew(neighList, in)
       case "bestslopefirst" => bestSlopeFirst(neighList)
-
-//      case "bestsslopefirstnew" => new BestSlopeFirstNew(neighList)
-
-      case "random" => new RandomCombinator(neighList)
-
+      case "random"         => new RandomCombinator(neighList)
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(neighList)
@@ -132,7 +113,6 @@ case class Solver(cspModel: Model, in: SolverInput) {
               obj,
               minRestarts = if (withTimeout) Int.MaxValue else 5
             )
-//            .orElse(restart4 maxMoves 4)
       }
     }
 

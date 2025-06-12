@@ -14,12 +14,7 @@ import oscar.cbls.core.search.StrictImprovement
 import bridge.SerializableModel
 import oscar.cbls.core.search.MoveFound
 
-object RLAlgorithm extends Enumeration {
-  final val DQN = Value("dqn")
-  final val PPO = Value("ppo")
-}
-
-class StatefulCombinator(
+class StatefulCombinatorTraining(
   neighborhoods: List[Neighborhood],
   model: SerializableModel,
   algo: RLAlgorithm.Value,
@@ -44,10 +39,35 @@ class StatefulCombinator(
   private val bridge = NamedPipeBridge(algo, debug, batchSize, epsilon, clipping, lr, ddqn, device)
   bridge.sendStaticProblemData(model, this.nActions)
 
-  override def getNextNeighborhood: Option[Neighborhood] = {
+  override def getMove(
+    obj: Objective,
+    initialObj: Long,
+    acceptanceCriterion: AcceptanceCriterion = StrictImprovement
+  ): SearchResult = {
     if (this.nTabu == this.nNeighbors) {
-      return None
+      return NoMoveFound
     }
+    val action        = this.bridge.askAction(this.model, this.authorizedNeighborhood)
+    val neighbourhood = this.neighborhoods(action);
+    neighbourhood.getMove(obj, initialObj, AcceptAll) match {
+      case MoveFound(result) =>
+        val reward = this.rewardModel(initialObj, result.objAfter)
+        this.bridge.sendReward(reward)
+        return result
+      case NoMoveFound =>
+        return NoMoveFound
+    }
+  }
+
+  private def getAvailableActions(): List[Int] = {
+    (0 until nActions).filterNot(isTabu).toList
+  }
+
+  override def getNextNeighborhood: Option[Neighborhood] = {
+    // If no available actino remains, return None
+    // if (this.nTabu == this.nActions) {
+    // return None
+    // }
     val action = this.bridge.askAction(this.model, this.authorizedNeighborhood)
     Some(this.neighborhoods(action))
   }

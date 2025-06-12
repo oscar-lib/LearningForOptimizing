@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 import numpy as np
-import json
+import orjson
 import torch
 from torch_geometric.data import Data
 
@@ -88,7 +88,7 @@ class PDPTW(Problem[Data]):
         """
         Parse the static data of a PDPTW problem in a JSON format.
         """
-        data = json.loads(bdata)
+        data = orjson.loads(bdata)
         n_vehicles = len(data["vehicles"])
         vehicle_capacity = data["vehicles"][0]["capacity"]
         n_actions = data["nActions"]
