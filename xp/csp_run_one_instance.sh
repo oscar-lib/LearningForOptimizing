@@ -12,6 +12,9 @@ if [ "$bandit" = "epsilongreedy" ]; then
     par_string=" -lr 0.5655 -mfw 0.332 -ew 0.3393 -sw 0.1208 -e 0.2334 "
 elif [ "$bandit" = "ucb" ]; then
     par_string=" -lr 0.0973 -mfw 0.3333 -ew 0.0852 -sw 0.0343 -c 2.9671 "
+elif [ "$bandit" = "dqn" ]; then
+  # par_string=" --learningRate 0.0167 --epsilon 0.0644 --batchSize 117 --ddqn false --clipping 10.0"
+  par_string=" --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn true --clipping 5.0" # Previous best parameters
 fi
 
 launch_solver="java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"

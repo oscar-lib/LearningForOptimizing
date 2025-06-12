@@ -98,14 +98,12 @@ class Runner:
                 )
             case "ppo":
                 assert isinstance(problem, PDPTW)
-                return PPO.default(problem)
+                return PPO(
+                    problem=problem,
+                    lr_actor=0.001,
+                    lr_critic=0.001,
+                    gamma=0.99,
+                    K_epochs=20,
+                    eps_clip=0.2,
+                )
         raise Exception(f"Unknown algorithm: {algo}")
-
-
-class ExperienceColectr(Runner):
-    def run(self, device: torch.device, algo: Literal["dqn"] | Literal["ppo"], args: Params):
-        logger = Logger(csv=True)
-        problem = self._retrieve_problem_data(logger)
-        env = OptimEnv(problem, self.bridge)
-        while True:
-            msg = self.bridge.recv()

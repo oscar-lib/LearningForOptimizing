@@ -43,6 +43,7 @@ class StatefulCombinator(
   private val nActions = neighborhoods.length
   private val bridge = NamedPipeBridge(algo, debug, batchSize, epsilon, clipping, lr, ddqn, device)
   bridge.sendStaticProblemData(model, this.nActions)
+  var justReset = false
 
   override def getNextNeighborhood: Option[Neighborhood] = {
     if (this.nTabu == this.nNeighbors) {
@@ -53,6 +54,7 @@ class StatefulCombinator(
   }
 
   override def notifyMove(searchResult: SearchResult, neighborhood: Neighborhood): Unit = {
+    this.justReset = false
     if (searchResult == NoMoveFound) {
       this.setTabu(neighborhood)
     }
@@ -62,8 +64,11 @@ class StatefulCombinator(
   }
 
   override def reset(): Unit = {
-    this.bridge.sendEpisodeEnded()
+    if (!this.justReset) {
+      this.bridge.sendEpisodeEnded()
+    }
     super.reset()
+    this.justReset = true
   }
 
   def close() = {
