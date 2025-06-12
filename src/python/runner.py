@@ -31,7 +31,7 @@ class Runner:
         try:
             problem = self._retrieve_problem_data(logger)
             agent = self._create_agent(problem, algo, args).to(device)
-            env = OptimEnv(problem, self.bridge)
+            env = OptimEnv(problem, self.bridge, device)
             t = 0
             obs = env.reset()
             while True:

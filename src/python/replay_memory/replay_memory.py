@@ -32,12 +32,12 @@ class Batch[T: torch.Tensor]:
 
     def to(self, device: torch.device) -> "Batch":
         return Batch(
-            obs=self.obs.to(device.index, non_blocking=True),
+            obs=self.obs.to(device, non_blocking=True),
             available_actions=self.available_actions.to(device),
             actions=self.actions.to(device, non_blocking=True),
             rewards=self.rewards.to(device, non_blocking=True),
             dones=self.dones.to(device, non_blocking=True),
-            next_obs=self.next_obs.to(device.index, non_blocking=True),
+            next_obs=self.next_obs.to(device, non_blocking=True),
             next_available_actions=self.next_available_actions.to(device, non_blocking=True),
         )
 

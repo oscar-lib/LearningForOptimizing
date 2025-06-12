@@ -51,9 +51,9 @@ class DQN(Algo):
         self.grad_norm_clipping = grad_norm_clipping
         self.target_updater = HardUpdate(update_period=100)
 
-    def select_action(self, obs: Observation):
+    def select_action(self, obs: Observation[torch.Tensor]):
         with torch.no_grad():
-            data = obs.data.to(self.device, non_blocking=True).unsqueeze(0)  # Add batch dimension
+            data = obs.data.unsqueeze(0)  # Add batch dimension
             qvalues = self.qnetwork.forward(data).squeeze(0).numpy(force=True)  # Squeeze the batch dimension
             saved_qvalues = qvalues.copy()  # Save the original qvalues for logging
             action = self.policy.get_action(qvalues, obs.available_actions.numpy(force=True))

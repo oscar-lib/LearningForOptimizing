@@ -125,6 +125,12 @@ class CNN(torch.nn.Module):
         qvalues = self.common.forward(x)
         return qvalues
 
+    def to(self, device: torch.device, *args, **kwargs):
+        """Override to ensure the CNN is moved to the correct device."""
+        self.cars_data = self.cars_data.to(device, non_blocking=True)
+        self.options_data = self.options_data.to(device, non_blocking=True)
+        return super().to(device, non_blocking=True)
+
 
 def make_cnn(
     input_shape: Sequence[int],

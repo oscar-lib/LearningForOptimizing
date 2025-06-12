@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-import logging
 import orjson
 import torch
 from .problem import Problem
@@ -80,7 +79,7 @@ class CSP(Problem[torch.Tensor]):
         print(res)
         return res
 
-    def build_agent_input(self, data: dict) -> torch.Tensor:
+    def build_agent_input(self, data: dict, device: torch.device) -> torch.Tensor:
         """
         The current state of the problem is represented by the sequence of options to make.
         """
@@ -88,7 +87,7 @@ class CSP(Problem[torch.Tensor]):
         busy_options = torch.zeros(self.n_options, self.n_cars, dtype=torch.float32)
         for i, car_num in enumerate(sequence):
             busy_options[:, i] = self.cars_data[car_num]
-        return busy_options.unsqueeze(0)  # Add the channel dimension
+        return busy_options.unsqueeze(0).to(device)  # Add the channel dimension
 
     @property
     def n_car_configs(self) -> int:

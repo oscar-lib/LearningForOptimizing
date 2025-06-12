@@ -130,7 +130,7 @@ class PDPTW(Problem[Data]):
             delivery_ids=delivery_ids,
         )
 
-    def build_agent_input(self, data: dict) -> Data:
+    def build_agent_input(self, data: dict, device: torch.device) -> Data:
         """
         Params:
           - `routes` contains, for each vehicle, the list of nodes (id) in the order it visits them.
@@ -140,7 +140,7 @@ class PDPTW(Problem[Data]):
         edge_attrs = self._compute_edge_attributes(routes)
         graph = Data(self.node_data, edges, edge_attr=edge_attrs)
         graph.validate()
-        return graph
+        return graph.to(device.index, non_blocking=True)
 
     @staticmethod
     def _compute_edges(routes: list[list[int]]) -> torch.Tensor:

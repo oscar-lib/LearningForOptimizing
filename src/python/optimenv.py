@@ -27,10 +27,10 @@ class Observation[T]:
 
 
 class OptimEnv[T]:
-    def __init__(self, problem: Problem[T], bridge: Bridge):
+    def __init__(self, problem: Problem[T], bridge: Bridge, device: torch.device):
         self.problem = problem
         self.bridge = bridge
-        self.pending_msg = None
+        self.device = device
 
     def reset(self):
         return self.observation()
@@ -58,5 +58,5 @@ class OptimEnv[T]:
             raise ValueError(f"Expected message of type {MessageType.ACTION_REQ.name} from the client, got {req.type.name}")
         data = orjson.loads(req.body)
         available_actions = data["available"]
-        data = self.problem.build_agent_input(data)
-        return Observation(data=data, available_actions=torch.tensor(available_actions, dtype=torch.bool))
+        data = self.problem.build_agent_input(data, self.device)
+        return Observation(data=data, available_actions=torch.tensor(available_actions, dtype=torch.bool, device=self.device))
