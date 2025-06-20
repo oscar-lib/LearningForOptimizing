@@ -1,8 +1,6 @@
+import os
 from dataclasses import dataclass
-from typing import Any
 
-import numpy as np
-from .algo import Algo
 import torch
 from nn import Actor, Critic
 from optimenv import Observation
@@ -10,6 +8,8 @@ from problem import PDPTW
 from torch.distributions import Categorical
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
+
+from .algo import Algo
 
 
 @dataclass
@@ -139,9 +139,6 @@ class PPO(Algo):
         )
         self.mse_loss = torch.nn.MSELoss()
 
-    def register_transition(self, data: dict[str, Any]):
-        raise NotImplementedError("PPO does not support register_transition method.")
-
     def select_action(self, obs: Observation):
         with torch.no_grad():
             obs.data = obs.data.to(self.device.index, non_blocking=True)
@@ -209,3 +206,14 @@ class PPO(Algo):
         self.critic.to(device, non_blocking=True)
         self.device = device
         return self
+
+    def save(self, directory: str):
+        os.makedirs(directory, exist_ok=True)
+        torch.save(self.actor.state_dict(), os.path.join(directory, "actor.weights"))
+        torch.save(self.critic.state_dict(), os.path.join(directory, "critic.weights"))
+
+    def load(self, directory: str):
+        actor_weights = torch.load(os.path.join(directory, "actor.weights"))
+        self.actor.load_state_dict(actor_weights)
+        critic_weights = torch.load(os.path.join(directory, "critic.weights"))
+        self.critic.load_state_dict(critic_weights)

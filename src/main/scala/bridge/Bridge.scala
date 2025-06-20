@@ -39,11 +39,7 @@ class Bridge(protected val input: InputStream, protected val output: OutputStrea
   }
 
   def askAction(problem: SerializableModel, availabeActions: Array[Boolean]): Int = {
-    val jsonState  = problem.getJSONState()
-    val jsonAvail  = upickle.default.write(availabeActions)
-    val jsonString = s"""{"state":$jsonState,"available":$jsonAvail}"""
-    val message    = Message.create(MessageType.INFERENCE_REQ, jsonString.getBytes())
-    this.output.write(message.toBytes())
+    this.sendActionData(problem, availabeActions)
     val response = Message.recv(this.input)
     if (response.msgType() != MessageType.INFERENCE_RSP) {
       throw new Exception("Failed to get inference response")
@@ -52,6 +48,15 @@ class Bridge(protected val input: InputStream, protected val output: OutputStrea
     val action = ByteBuffer.wrap(body).order(ByteOrder.BIG_ENDIAN).getInt()
     action
   }
+
+  def sendActionData(problem: SerializableModel, availabeActions: Array[Boolean]) = {
+    val jsonState  = problem.getJSONState()
+    val jsonAvail  = upickle.default.write(availabeActions)
+    val jsonString = s"""{"state":$jsonState,"available":$jsonAvail}"""
+    val message    = Message.create(MessageType.INFERENCE_REQ, jsonString.getBytes())
+    this.output.write(message.toBytes())
+  }
+
   def sendReward(reward: Double): Unit = {
     val rewardBytes =
       ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putFloat(reward.toFloat).array()
@@ -167,32 +172,8 @@ object NamedPipeBridge {
     val pipeOut = s"pipes/s2p-$id"
     val pipeIn  = s"pipes/p2s-$id"
     new File("pipes").mkdirs();
-    val pipe1 = new File(pipeOut)
-    val pipe2 = new File(pipeIn)
-    if (pipe1.exists()) {
-      pipe1.delete()
-    }
-    if (pipe2.exists()) {
-      pipe2.delete()
-    }
     createFifo(pipeOut)
     createFifo(pipeIn)
-    try {
-      val p =
-        new ProcessBuilder(pythonBinary.toString(), pythonSrcDirectory.resolve("test.py").toString)
-          .start();
-      val ret = p.waitFor();
-      if (ret != 0) {
-        val error = p.getErrorStream().readAllBytes().map(_.toChar).mkString
-        throw new Exception(s"Failed to start python process, exit code: $ret. Error: $error")
-      }
-    } catch {
-      case e: java.io.IOException =>
-        throw new Exception(
-          "Failed to start python process. Make sure you have python installed and the script is in the correct path." +
-            s"Error: ${e.getMessage}"
-        )
-    }
 
     val process = if (!debug) {
       val pb = new ProcessBuilder(
@@ -235,7 +216,10 @@ object NamedPipeBridge {
   }
 
   def createFifo(path: String) = {
-    val process = new ProcessBuilder("mkfifo", path).start()
-    process.waitFor()
+    val pipe1 = new File(path)
+    if (!pipe1.exists()) {
+      val process = new ProcessBuilder("mkfifo", path).start()
+      process.waitFor()
+    }
   }
 }

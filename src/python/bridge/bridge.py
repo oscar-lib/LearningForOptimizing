@@ -25,3 +25,6 @@ class Bridge(ABC):
     @abstractmethod
     def send(self, bytes: bytes, /):
         """Write a message to the output stream"""
+
+    def cleanup(self):
+        """Cleanup resources, if necessary"""

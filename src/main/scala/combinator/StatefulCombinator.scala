@@ -37,7 +37,10 @@ class StatefulCombinator(
       learningScheme = AfterEveryMove, // Not used
       seed: Int,                       // Not used
       learningRate = 0.0,              // Not used
-      rewardModel = new LogGain()
+      rewardModel = model match {
+        case _: csp.Model   => new ObjectiveDifference()
+        case _: pdptw.Model => new LogGain()
+      }
     ) {
 
   private val nActions = neighborhoods.length

@@ -8,7 +8,11 @@ class NamedPipeBridge(Bridge):
         super().__init__()
         self.input_filename = input_filename
         self.output_filename = output_filename
+        if not os.path.exists(output_filename):
+            os.mkfifo(input_filename)
         self.output_stream = open(output_filename, "wb")
+        if not os.path.exists(input_filename):
+            os.mkfifo(input_filename)
         self.input_stream = open(input_filename, "rb")
 
     def read(self, nbytes: int) -> bytes:
@@ -21,20 +25,19 @@ class NamedPipeBridge(Bridge):
         self.output_stream.flush()
 
     def __del__(self):
-        self.close()
-
-    def close(self):
         try:
             self.input_stream.close()
         except AttributeError:
             pass
         try:
-            os.remove(self.input_filename)
-        except FileNotFoundError:
-            pass
-        try:
             self.output_stream.close()
         except AttributeError:
+            pass
+
+    def cleanup(self):
+        try:
+            os.remove(self.input_filename)
+        except FileNotFoundError:
             pass
         try:
             os.remove(self.output_filename)

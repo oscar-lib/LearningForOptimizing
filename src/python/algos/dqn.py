@@ -1,11 +1,11 @@
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Optional
+import os
 
 import torch
 from optimenv import Observation
 from policies import EpsilonGreedy
-from problem import PDPTW
 from qtarget_updater import HardUpdate
 from replay_memory.replay_memory import Batch, ReplayMemory
 
@@ -46,7 +46,7 @@ class DQN(Algo):
         self.double_qlearning = double_qlearning
         self.policy = EpsilonGreedy.constant(epsilon)
         self.lr = lr
-        self.optimiser = torch.optim.Adam(self.qnetwork.parameters(), lr=lr)  # type: ignore
+        self.optimiser = torch.optim.Adam(self.qnetwork.parameters(), lr=lr)
         # Parameters and optimiser
         self.grad_norm_clipping = grad_norm_clipping
         self.target_updater = HardUpdate(update_period=100)
@@ -70,9 +70,6 @@ class DQN(Algo):
         logs, td_error = self.optimise_qnetwork()
         logs = logs | self.target_updater.update(time_step)
         return logs
-
-    def register_transition(self, data: dict[str, Any]):
-        raise NotImplementedError()
 
     def _can_update(self):
         return self.memory.can_sample(self.batch_size)
@@ -119,3 +116,12 @@ class DQN(Algo):
         self.qnetwork = self.qnetwork.to(device, non_blocking=True)
         self.qtarget = self.qtarget.to(device, non_blocking=True)
         return self
+
+    def save(self, directory: str):
+        os.makedirs(directory, exist_ok=True)
+        torch.save(self.qnetwork.state_dict(), os.path.join(directory, "dqn.weights"))
+
+    def load(self, directory: str):
+        weights = torch.load(os.path.join(directory, "dqn.weights"))
+        self.qnetwork.load_state_dict(weights)
+        self.optimiser = torch.optim.Adam(self.qnetwork.parameters(), lr=self.lr)

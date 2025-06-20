@@ -190,3 +190,13 @@ class LogGain extends RewardModel {
     return math.log10(gain.toDouble)
   }
 }
+
+class ObjectiveDifference extends RewardModel {
+  override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
+    return NeighborhoodUtils.getProfiler(neighborhood)._lastCallGain.toDouble
+  }
+
+  override def apply(prevObj: Long, newObj: Long): Double = {
+    return (newObj - prevObj).toDouble
+  }
+}

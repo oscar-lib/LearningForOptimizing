@@ -37,8 +37,9 @@ class Algo(ABC):
         """
 
     @abstractmethod
-    def register_transition(self, data: dict[str, Any]):
-        """
-        Register a transition in the algorithm's memory.
-        This is used when the environment sends a transition message.
-        """
+    def save(self, directory: str):
+        """Save the algorithm to the specified directory."""
+
+    @abstractmethod
+    def load(self, directory: str):
+        """Load the algorithm from the given directory"""

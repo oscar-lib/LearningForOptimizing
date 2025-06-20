@@ -1,37 +1,36 @@
 import logging
-from dataclasses import dataclass
-from typing import Literal, Optional
+from typing import Literal, TYPE_CHECKING
 
-import torch
 from algos import DQN, PPO, Algo
 from bridge import Bridge
 from bridge.protocol.message import Message, MessageType
 from logger import Logger
-from optimenv import EpisodeEndException, OptimEnv, RegisterTransition
+from optimenv import EpisodeEndException, OptimEnv
 from problem import CSP, PDPTW
 from replay_memory import GraphReplayMemory, LinearMemory
 
-
-@dataclass
-class Params:
-    lr: float
-    ddqn: bool
-    batch_size: int
-    clipping: Optional[float]
-    epsilon: float
+if TYPE_CHECKING:
+    from main import Args
 
 
-class Runner:
-    def __init__(self, bridge: Bridge):
-        self.bridge = bridge
-
-    def run(self, device: torch.device, algo: Literal["dqn", "ppo"], args: Params):
-        logger = Logger(csv=True)
-        logger.info("Starting runner")
+def run(args: "Args"):
+    logger = Logger(csv=True)
+    device = args.device
+    logger.info("Starting runner")
+    problem = None
+    agent = None
+    bridge = None
+    while True:
         try:
-            problem = self._retrieve_problem_data(logger)
-            agent = self._create_agent(problem, algo, args).to(device)
-            env = OptimEnv(problem, self.bridge, device)
+            bridge = args.make_bridge()
+            new_problem = _retrieve_problem_data(bridge, logger)
+            if problem is None:
+                problem = new_problem
+            else:
+                assert problem == new_problem
+            if agent is None:
+                agent = _create_agent(problem, args.algorithm, args).to(device)
+            env = OptimEnv(problem, bridge, device)
             t = 0
             obs = env.reset()
             while True:
@@ -47,63 +46,71 @@ class Runner:
                     logging.info("Episode ended")
                     agent.notify_episode_end()
                     obs = env.reset()
-                except RegisterTransition as e:
-                    agent.register_transition(e.data)
         except ConnectionResetError:
-            logging.error("Connection with remote closed")
+            logging.info("Connection with remote closed")
+            if not args.keepalive:
+                break
+            else:
+                logging.info("Waiting for a new connection")
         except KeyboardInterrupt:
             logging.info("Stopping runner with Ctrl+C")
+            break
         except Exception as e:
             logging.error(f"An unexpected error occurred: {e}", exc_info=True)
+            break
+    if bridge is not None:
+        bridge.cleanup()
 
-    def _retrieve_problem_data(self, logger: Logger):
-        req = self.bridge.recv()
-        match req.type:
-            case MessageType.STATIC_DATA_PDPTW:
-                problem = PDPTW.parse(req.body)
-                self.bridge.send(Message.ack().to_bytes())
-                return problem
-            case MessageType.STATIC_DATA_CSP:
-                problem = CSP.parse(req.body)
-                self.bridge.send(Message.ack().to_bytes())
-                return problem
-            case other:
-                error = f"Expected message of type {MessageType.STATIC_DATA_PDPTW} from the client, got {other}"
-                logger.error(error)
-                self.bridge.send(Message.error(error).to_bytes())
-                raise Exception(error)
 
-    def _create_agent(self, problem: PDPTW | CSP, algo: Literal["dqn", "ppo"], args: Params) -> Algo:
-        match algo:
-            case "dqn":
-                match problem:
-                    case PDPTW():
-                        from nn import QNetGNN
+def _retrieve_problem_data(bridge: Bridge, logger: Logger):
+    req = bridge.recv()
+    match req.type:
+        case MessageType.STATIC_DATA_PDPTW:
+            problem = PDPTW.parse(req.body)
+            bridge.send(Message.ack().to_bytes())
+            return problem
+        case MessageType.STATIC_DATA_CSP:
+            problem = CSP.parse(req.body)
+            bridge.send(Message.ack().to_bytes())
+            return problem
+        case other:
+            error = f"Expected message of type {MessageType.STATIC_DATA_PDPTW} from the client, got {other}"
+            logger.error(error)
+            bridge.send(Message.error(error).to_bytes())
+            raise Exception(error)
 
-                        qnetwork = QNetGNN(problem)
-                        memory = GraphReplayMemory(1000)
-                    case CSP():
-                        from nn import CNN
 
-                        qnetwork = CNN(problem)
-                        memory = LinearMemory(1000)
-                return DQN(
-                    qnetwork=qnetwork,
-                    memory=memory,
-                    double_qlearning=args.ddqn,
-                    grad_norm_clipping=args.clipping,
-                    lr=args.lr,
-                    epsilon=args.epsilon,
-                    batch_size=args.batch_size,
-                )
-            case "ppo":
-                assert isinstance(problem, PDPTW)
-                return PPO(
-                    problem=problem,
-                    lr_actor=0.001,
-                    lr_critic=0.001,
-                    gamma=0.99,
-                    K_epochs=20,
-                    eps_clip=0.2,
-                )
-        raise Exception(f"Unknown algorithm: {algo}")
+def _create_agent(problem: PDPTW | CSP, algo: Literal["dqn", "ppo"], args: "Args") -> Algo:
+    match algo:
+        case "dqn":
+            match problem:
+                case PDPTW():
+                    from nn import QNetGNN
+
+                    qnetwork = QNetGNN(problem)
+                    memory = GraphReplayMemory(1000)
+                case CSP():
+                    from nn import CNN
+
+                    qnetwork = CNN(problem)
+                    memory = LinearMemory(1000)
+            return DQN(
+                qnetwork=qnetwork,
+                memory=memory,
+                double_qlearning=args.ddqn,
+                grad_norm_clipping=args.clipping,
+                lr=args.lr,
+                epsilon=args.epsilon,
+                batch_size=args.batch_size,
+            )
+        case "ppo":
+            assert isinstance(problem, PDPTW)
+            return PPO(
+                problem=problem,
+                lr_actor=0.001,
+                lr_critic=0.001,
+                gamma=0.99,
+                K_epochs=20,
+                eps_clip=0.2,
+            )
+    raise Exception(f"Unknown algorithm: {algo}")

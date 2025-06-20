@@ -1,8 +1,7 @@
 from typing import Literal, Optional
 import os
-import traceback
 import torch
-from runner import Runner, Params
+from runner import run
 import typed_argparse as tap
 from bridge import SocketBridge, NamedPipeBridge, Bridge
 import logging
@@ -20,6 +19,7 @@ class Args(tap.TypedArgs):
     batch_size: int = tap.arg("--batch-size", help="Batch size", default=32)
     _ddqn: str = tap.arg("--ddqn", help="Use Double DQN", default="false")
     lr: float = tap.arg("--lr", help="Learning rate", type=float, default=1e-4)
+    keepalive: bool = tap.arg("--keepalive", help="Keep the connection alive", default=False)
 
     @property
     def clipping(self) -> Optional[float]:
@@ -49,8 +49,7 @@ class Args(tap.TypedArgs):
         device_index = os.getpid() % n_devices
         return torch.device(f"cuda:{device_index}")
 
-    @property
-    def bridge(self) -> Bridge:
+    def make_bridge(self) -> Bridge:
         match self.communication:
             case "socket":
                 if self.port is None:
@@ -63,20 +62,13 @@ class Args(tap.TypedArgs):
             case other:
                 raise Exception(f"Unknown communication method: {other}")
 
-    def to_params(self):
-        return Params(lr=self.lr, ddqn=self.ddqn, batch_size=self.batch_size, clipping=self.clipping, epsilon=self.epsilon)
-
 
 def main(args: Args):
     logging.info(f"Starting the runner with arguments {args}:")
     try:
-        runner = Runner(args.bridge)
-        print(args)
-        runner.run(args.device, args.algorithm, args.to_params())
+        run(args)
     except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        logging.error(traceback.format_exc())
-        traceback.print_exc()
+        logging.error(f"An error occurred: {e}", exc_info=True)
 
 
 if __name__ == "__main__":

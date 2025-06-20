@@ -31,6 +31,13 @@ class CarConfig:
     def has_option(self, option_id: int):
         return self.options[option_id] == 1
 
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, CarConfig):
+            return False
+        if self.id != other.id:
+            return False
+        return self.n_to_make == other.n_to_make
+
 
 @dataclass
 class CSP(Problem[torch.Tensor]):
@@ -104,3 +111,14 @@ class CSP(Problem[torch.Tensor]):
     @property
     def state_shape(self):
         return (1, self.n_options, self.n_cars)
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, CSP):
+            return False
+        if self.n_actions != other.n_actions:
+            return False
+        if self.options != other.options:
+            return False
+        if self.cars != other.cars:
+            return False
+        return True

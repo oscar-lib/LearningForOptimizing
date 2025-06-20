@@ -3,7 +3,7 @@ import pickle
 from abc import ABC, abstractmethod
 from collections import deque
 from datetime import datetime
-from typing import Deque
+from typing import Optional
 
 import numpy as np
 import torch
@@ -48,22 +48,15 @@ class Batch[T: torch.Tensor]:
 class ReplayMemory[T: torch.Tensor](ABC):
     max_size: int
 
-    def __init__(self, max_size: int):
-        self._actions: Deque[int] = deque(maxlen=max_size)
-        self._rewards: Deque[float] = deque(maxlen=max_size)
-        self._obs: Deque[Observation] = deque(maxlen=max_size)
-        self._next_obs: Deque[Observation] = deque(maxlen=max_size)
-        self._dones: Deque[bool] = deque(maxlen=max_size)
-        self.max_size = max_size
-        self.index_episode_start = 0
-        self.perform_check = False
+    def __init__(self, max_size: Optional[int]):
+        self._actions = deque[int](maxlen=max_size)
+        self._rewards = deque[float](maxlen=max_size)
+        self._obs = deque[Observation](maxlen=max_size)
+        self._next_obs = deque[Observation](maxlen=max_size)
+        self._dones = deque[bool](maxlen=max_size)
 
     def add(self, obs: Observation, action: int, reward: float, next_obs: Observation):
         """Add an item (transition, episode, ...) to the memory"""
-        if len(self) == self.max_size and self.index_episode_start > 0:
-            self.index_episode_start -= 1
-        if self.perform_check:
-            assert torch.equal(obs.data, self._next_obs[-1].data)
         self.perform_check = True
         self._obs.append(obs)
         self._next_obs.append(next_obs)
@@ -73,7 +66,6 @@ class ReplayMemory[T: torch.Tensor](ABC):
 
     def end_episode(self):
         self._dones[-1] = True
-        self.perform_check = False
         return
         # [:-3] to get milliseconds
         timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")[:-3]
@@ -131,7 +123,6 @@ class ReplayMemory[T: torch.Tensor](ABC):
         self._next_obs.clear()
         self._actions.clear()
         self._rewards.clear()
-        self.index_episode_start = 0
 
     @property
     def is_full(self):

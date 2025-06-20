@@ -201,3 +201,18 @@ class PDPTW(Problem[Data]):
         # - current vehicle load (normalized)
         # - current time (normalized)
         return 3
+
+    def __eq__(self, other) -> bool:
+        if not isinstance(other, PDPTW):
+            return False
+        if self.n_vehicles != other.n_vehicles:
+            return False
+        if self.vehicle_capacity != other.vehicle_capacity:
+            return False
+        if self.n_actions != other.n_actions:
+            return False
+        if self.t_max != other.t_max:
+            return False
+        if self.n_nodes != other.n_nodes:
+            return False
+        return len(self.nodes) == len(other.nodes)

@@ -58,8 +58,8 @@ class EpsilonGreedy(Policy):
         qvalues[available_actions == 0] = -np.inf
         return int(np.argmax(qvalues).item())
 
-    def update(self, step_num: int):
-        self.epsilon.update(step_num)
+    def update(self, time_step: int):
+        self.epsilon.update(time_step)
         return {"epsilon": self.epsilon.value}
 
 
@@ -75,5 +75,5 @@ class ArgMax(Policy):
         actions = qvalues.argmax(-1)
         return actions.item()
 
-    def update(self, step_num: int):
+    def update(self, time_step: int):
         return {}
