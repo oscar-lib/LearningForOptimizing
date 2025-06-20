@@ -22,5 +22,6 @@ output=`$launch_solver --problem csp --input ${instance} --timeout ${timeout} --
 # post process to extract only the relevant information
 objective=$(echo "$output" | grep 'bestObj' | awk -F'=' '{print $2}')
 solOverTime=$(echo "$output" | grep 'solOverTime' | awk -F'=' '{print $2}')
+integralPrimalGap=$(echo "$output" | grep 'integralPrimalGap' | awk -F'=' '{print $2}')
 # prints the relevant informations
-echo "$instance,$bandit,$timeout,$objective,$solOverTime"
+echo "$instance,$bandit,$timeout,$objective,$solOverTime,$integralPrimalGap"

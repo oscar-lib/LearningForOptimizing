@@ -13,7 +13,7 @@ class Args(tap.TypedArgs):
     input_pipe: Optional[str] = tap.arg("-i", help="Input pipe name")
     output_pipe: Optional[str] = tap.arg("-o", help="Output pipe name")
     algorithm: Literal["dqn", "ppo"] = tap.arg("-a", help="Algorithm to use", default="dqn")
-    _device: Literal["gpu", "cpu"] = tap.arg("--device", help="Device to use", default="gpu")
+    _device: Literal["cpu", "auto"] | int = tap.arg("--device", help="Device to use", default="auto")
     epsilon: float = tap.arg("--epsilon", help="Epsilon value", type=float, default=0.1)
     _clipping: str | float = tap.arg("--clipping", help="Clipping value", default=0.0)
     batch_size: int = tap.arg("--batch-size", help="Batch size", default=32)
@@ -42,12 +42,20 @@ class Args(tap.TypedArgs):
 
     @property
     def device(self) -> torch.device:
+        # from utils.gpu import get_device
         n_devices = torch.cuda.device_count()
-        logging.info(f"Number of available CUDA devices: {n_devices}")
         if n_devices == 0:
-            return torch.device("cpu")
-        device_index = os.getpid() % n_devices
-        return torch.device(f"cuda:{device_index}")
+            device = torch.device("cpu")
+        else:
+            with open("device", "r") as f:
+                device_num = int(f.read().strip()) % n_devices
+            device_num = max(1, device_num)  # Do not use device 0
+            next_device = (device_num + 1) % n_devices
+            with open("device", "w") as f:
+                f.write(f"{next_device}")
+            device = torch.device(device_num)
+        logging.info(f"Using device: {device}")
+        return device
 
     def make_bridge(self) -> Bridge:
         match self.communication:

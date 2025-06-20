@@ -26,17 +26,15 @@ class DQN(Algo):
         self,
         qnetwork: torch.nn.Module,
         memory: ReplayMemory,
+        device: torch.device,
         gamma: float = 0.99,
         batch_size: int = 64,
         lr: float = 1e-4,
         epsilon: float = 0.1,
         grad_norm_clipping: Optional[float] = None,
         double_qlearning: bool = False,
-        device: Optional[torch.device] = None,
     ):
         super().__init__()
-        if device is None:
-            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.device = device
         self.qnetwork = qnetwork.to(device, non_blocking=True)
         self.qtarget = deepcopy(qnetwork).to(device, non_blocking=True)
@@ -62,8 +60,7 @@ class DQN(Algo):
     def notify_episode_end(self):
         self.memory.end_episode()
 
-    def learn(self, time_step: int, obs: Observation, action: int, reward: float, next_obs: Observation):
-        next_obs.data = next_obs.data.to(self.device, non_blocking=True)
+    def learn(self, time_step: int, obs: Observation[torch.Tensor], action: int, reward: float, next_obs: Observation):
         self.memory.add(obs, action, reward, next_obs)
         if not self._can_update():
             return {}

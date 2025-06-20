@@ -183,7 +183,7 @@ object NamedPipeBridge {
         s"-i=$pipeOut",
         s"-o=$pipeIn",
         s"-a=$algo",
-        s"--device=gpu",
+        s"--device=auto",
         f"--epsilon=$epsilon%.4f",
         f"--clipping=$clipping%.4f",
         s"--batch-size=$batchSize",
