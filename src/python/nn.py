@@ -100,10 +100,10 @@ class CNN(torch.nn.Module):
         self.cars_data = problem.cars_data.unsqueeze(0).unsqueeze(0)  # Add channel and batch dimensions
         self.options_data = problem.options_data.flatten().unsqueeze(0)  # Add channel and batch dimensions
         n_common_inputs = math.prod(self.options_data.shape)
-        self.instance_extractor, n_outputs = make_cnn(self.cars_data.shape[1:], [32, 64, 32], [3, 3, 3], [1, 1, 1])
+        self.instance_extractor, n_outputs = make_cnn(self.cars_data.shape[1:], [32, 32, 32], [3, 3, 3], [1, 1, 1])
         n_common_inputs += n_outputs
         state_shape = (1, problem.n_options, problem.n_cars)
-        self.state_extractor, n_outputs = make_cnn(state_shape, [32, 64, 32], [3, 3, 3], [1, 1, 1])
+        self.state_extractor, n_outputs = make_cnn(state_shape, [32, 32, 32], [3, 3, 3], [1, 1, 1])
         n_common_inputs += n_outputs
         layer_size = n_common_inputs
         layers = []

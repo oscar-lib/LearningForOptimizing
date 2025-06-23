@@ -1,5 +1,4 @@
 from typing import Literal, Optional
-import os
 import torch
 from runner import run
 import typed_argparse as tap
@@ -47,8 +46,11 @@ class Args(tap.TypedArgs):
         if n_devices == 0:
             device = torch.device("cpu")
         else:
-            with open("device", "r") as f:
-                device_num = int(f.read().strip()) % n_devices
+            try:
+                with open("device", "r") as f:
+                    device_num = int(f.read().strip()) % n_devices
+            except Exception:
+                device_num = 1
             device_num = max(1, device_num)  # Do not use device 0
             next_device = (device_num + 1) % n_devices
             with open("device", "w") as f:
