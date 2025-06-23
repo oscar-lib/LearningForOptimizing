@@ -102,6 +102,7 @@ def _create_agent(problem: PDPTW | CSP, algo: Literal["dqn", "ppo"], args: "Args
                 lr=args.lr,
                 epsilon=args.epsilon,
                 batch_size=args.batch_size,
+                device=args.device,
             )
         case "ppo":
             assert isinstance(problem, PDPTW)
