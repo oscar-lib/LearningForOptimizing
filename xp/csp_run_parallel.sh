@@ -6,7 +6,7 @@
 declare -a BanditType=("dqn")
 timeout=300  # timeout in seconds
 nRuns=20   # number of time an instance is run (to take randomness into account)
-nParallel=4  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
+nParallel=14  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
 run_script="./xp/csp_run_one_instance.sh"  # executable for running the experiments
 # path to the file where the instances to run are written
 # each line in this file should be the full path to an instance to run
@@ -23,7 +23,7 @@ rm -f $inputFile  # erase previous data file
 # compile the project
 echo "compiling..."
 #sbt clean
-# sbt assembly
+sbt assembly
 echo "compilation done"
 echo "running experiments on $nParallel core(s)"
 # creates the file so that the header is present

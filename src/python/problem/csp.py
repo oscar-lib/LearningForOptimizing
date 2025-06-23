@@ -44,11 +44,10 @@ class CSP(Problem[torch.Tensor]):
     options: list[Option]
     cars: list[CarConfig]
     n_cars: int
+    """
+    The total number of cars to make, which is the sum of `n_to_make` for all car configurations.
+    """
     n_actions: int
-    cars_data: torch.Tensor
-    """
-    A tensor of shape (n_cars, n_options) where each row corresponds to the options that a car has.
-    """
     options_data: torch.Tensor
     """
     A tensor of shape (n_options, 2) where each row contains the max_seq and seq_len for each option.
@@ -59,10 +58,10 @@ class CSP(Problem[torch.Tensor]):
         self.options = options
         self.cars = cars
         self.n_actions = n_actions
-        cars_data = []
-        for car in cars:
-            cars_data.extend([car.options] * car.n_to_make)
-        self.cars_data = torch.stack(cars_data)
+        self._cars_data = torch.stack([car.options for car in cars])
+        """
+        A tensor of shape (n_cars, n_options) where each row corresponds to the options that a car has.
+        """
         self.options_data = torch.tensor([[option.max_seq, option.seq_len] for option in options], dtype=torch.float32)
         self.n_cars = sum(car.n_to_make for car in cars)
 
@@ -83,7 +82,6 @@ class CSP(Problem[torch.Tensor]):
         for recipe in recipes:
             cars.append(CarConfig(recipe["id"], recipe["nCarsWithConf"], recipe["optInConf"]))
         res = CSP(n_actions, options, cars)
-        print(res)
         return res
 
     def build_agent_input(self, data: dict, device: torch.device) -> torch.Tensor:
@@ -93,8 +91,8 @@ class CSP(Problem[torch.Tensor]):
         sequence = data["state"]
         busy_options = torch.zeros(self.n_options, self.n_cars, dtype=torch.float32)
         for i, car_num in enumerate(sequence):
-            busy_options[:, i] = self.cars_data[car_num]
-        return busy_options.unsqueeze(0).to(device)  # Add the channel dimension
+            busy_options[:, i] = self._cars_data[car_num]
+        return busy_options.to(device)
 
     @property
     def n_car_configs(self) -> int:
@@ -111,6 +109,10 @@ class CSP(Problem[torch.Tensor]):
     @property
     def state_shape(self):
         return (1, self.n_options, self.n_cars)
+
+    @property
+    def max_seq_length(self) -> int:
+        return max(option.seq_len for option in self.options)
 
     def __eq__(self, other) -> bool:
         if not isinstance(other, CSP):

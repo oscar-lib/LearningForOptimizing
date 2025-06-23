@@ -90,9 +90,11 @@ def _create_agent(problem: PDPTW | CSP, algo: Literal["dqn", "ppo"], args: "Args
                     qnetwork = QNetGNN(problem)
                     memory = GraphReplayMemory(1000)
                 case CSP():
-                    from nn import CNN
+                    from nn import CNN1D
+                    # from torchinfo import summary
 
-                    qnetwork = CNN(problem)
+                    qnetwork = CNN1D(problem)
+                    # logging.info(summary(qnetwork, input_size=(args.batch_size, problem.n_options, problem.n_cars)))
                     memory = LinearMemory(1000)
             return DQN(
                 qnetwork=qnetwork,
