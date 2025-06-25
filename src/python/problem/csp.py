@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Self
 import orjson
 import torch
 from .problem import Problem
@@ -109,6 +110,15 @@ class CSP(Problem[torch.Tensor]):
     @property
     def state_shape(self):
         return (1, self.n_options, self.n_cars)
+
+    def is_compatible_with(self, other) -> bool:
+        """
+        Check if this CSP is compatible with another CSP.
+        Two CSPs are compatible if they have the same number of actions and options.
+        """
+        if not isinstance(other, CSP):
+            return False
+        return self.n_actions == other.n_actions and self.n_options == other.n_options
 
     @property
     def max_seq_length(self) -> int:

@@ -6,7 +6,7 @@ from bridge import Bridge
 from bridge.protocol.message import Message, MessageType
 from logger import Logger
 from optimenv import EpisodeEndException, OptimEnv
-from problem import CSP, PDPTW
+from problem import CSP, PDPTW, Problem
 from replay_memory import GraphReplayMemory, LinearMemory
 
 if TYPE_CHECKING:
@@ -27,7 +27,7 @@ def run(args: "Args"):
             if problem is None:
                 problem = new_problem
             else:
-                assert problem == new_problem
+                assert problem.is_compatible_with(new_problem)
             if agent is None:
                 agent = _create_agent(problem, args.algorithm, args).to(device)
             env = OptimEnv(problem, bridge, device)
@@ -62,7 +62,7 @@ def run(args: "Args"):
         bridge.cleanup()
 
 
-def _retrieve_problem_data(bridge: Bridge, logger: Logger):
+def _retrieve_problem_data(bridge: Bridge, logger: Logger) -> Problem:
     req = bridge.recv()
     match req.type:
         case MessageType.STATIC_DATA_PDPTW:
@@ -80,7 +80,7 @@ def _retrieve_problem_data(bridge: Bridge, logger: Logger):
             raise Exception(error)
 
 
-def _create_agent(problem: PDPTW | CSP, algo: Literal["dqn", "ppo"], args: "Args") -> Algo:
+def _create_agent(problem: Problem, algo: Literal["dqn", "ppo"], args: "Args") -> Algo:
     match algo:
         case "dqn":
             match problem:
@@ -96,6 +96,8 @@ def _create_agent(problem: PDPTW | CSP, algo: Literal["dqn", "ppo"], args: "Args
                     qnetwork = CNN1D(problem)
                     # logging.info(summary(qnetwork, input_size=(args.batch_size, problem.n_options, problem.n_cars)))
                     memory = LinearMemory(1000)
+                case other:
+                    raise Exception(f"Unsupported problem for DQN: {other}")
             return DQN(
                 qnetwork=qnetwork,
                 memory=memory,

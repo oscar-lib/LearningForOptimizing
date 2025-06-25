@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from typing import Self
 import numpy as np
 import orjson
 import torch
@@ -216,3 +217,8 @@ class PDPTW(Problem[Data]):
         if self.n_nodes != other.n_nodes:
             return False
         return len(self.nodes) == len(other.nodes)
+
+    def is_compatible_with(self, other) -> bool:
+        if not isinstance(other, PDPTW):
+            return False
+        return self.n_vehicles == other.n_vehicles and self.n_actions == other.n_actions and self.n_nodes == other.n_nodes
