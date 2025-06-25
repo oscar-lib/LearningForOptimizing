@@ -19,7 +19,9 @@ class Args(tap.TypedArgs):
     _ddqn: str = tap.arg("--ddqn", help="Use Double DQN", default="false")
     lr: float = tap.arg("--lr", help="Learning rate", type=float, default=1e-4)
     keepalive: bool = tap.arg("--keepalive", help="Keep the connection alive", default=False)
-    instance: str = tap.arg("--instance", help="Instance name", default="Not specified")
+    save_to: Optional[str] = tap.arg("--save-to", help="Path to save the model", default=None)
+    load_from: Optional[str] = tap.arg("--load-from", help="Path to load the model from", default=None)
+    no_train: bool = tap.arg("--no-train", help="Whether to train the model or not", default=False)
 
     @property
     def clipping(self) -> Optional[float]:
@@ -35,6 +37,10 @@ class Args(tap.TypedArgs):
         if clip == 0:
             return None
         return clip
+
+    @property
+    def train(self):
+        return not self.no_train
 
     @property
     def ddqn(self) -> bool:

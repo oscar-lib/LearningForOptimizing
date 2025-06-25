@@ -57,7 +57,6 @@ class ReplayMemory[T: torch.Tensor](ABC):
 
     def add(self, obs: Observation, action: int, reward: float, next_obs: Observation):
         """Add an item (transition, episode, ...) to the memory"""
-        self.perform_check = True
         self._obs.append(obs)
         self._next_obs.append(next_obs)
         self._actions.append(action)
@@ -67,37 +66,6 @@ class ReplayMemory[T: torch.Tensor](ABC):
     def end_episode(self):
         self._dones[-1] = True
         return
-        # [:-3] to get milliseconds
-        timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S-%f")[:-3]
-        os.makedirs(f"experiences/{timestamp}/", exist_ok=True)
-
-        actions = []
-        dones = []
-        rewards = []
-        obs = []
-        available_actions = []
-        next_available_actions = []
-        next_obs = []
-
-        for i in range(self.index_episode_start, len(self)):
-            actions.append(self._actions[i])
-            rewards.append(self._rewards[i])
-            dones.append(self._dones[i])
-            available_actions.append(self._obs[i].available_actions)
-            obs.append(self._obs[i].data)
-            next_available_actions.append(self._next_obs[i].available_actions)
-            next_obs.append(self._next_obs[i].data)
-
-        np.save(f"experiences/{timestamp}/actions.npy", np.array(actions))
-        np.save(f"experiences/{timestamp}/rewards.npy", np.array(rewards))
-        np.save(f"experiences/{timestamp}/dones.npy", np.array(dones))
-        np.save(f"experiences/{timestamp}/available_actions.npy", np.array(available_actions))
-        np.save(f"experiences/{timestamp}/next_available_actions.npy", np.array(next_available_actions))
-        with open(f"experiences/{timestamp}/obs.pkl", "wb") as f:
-            pickle.dump(obs, f)
-        with open(f"experiences/{timestamp}/next_obs.pkl", "wb") as f:
-            pickle.dump(next_obs, f)
-        self.index_episode_start = len(self)
 
     @abstractmethod
     def _get_batch(self, indices: np.ndarray) -> Batch[T]:

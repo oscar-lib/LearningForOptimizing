@@ -111,10 +111,7 @@ class NamedPipeBridge(input: InputStream, output: OutputStream, process: Option[
   def close(): Unit = {
     this.input.close()
     this.output.close()
-    if (this.process.isEmpty) {
-      return
-    }
-    process match {
+    this.process match {
       case Some(p) => {
         p.destroy()
         if (!p.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)) {
@@ -160,28 +157,23 @@ object NamedPipeBridge {
     ddqn: Boolean,
     device: String
   ): NamedPipeBridge = {
-    // Scala is responsible for creating the pipes.
-    // Python is responsible for cleaning them up after the run.
-
     val pythonBinary       = this.findPythonPath()
     val pythonSrcDirectory = this.findPythonSourcesDirectory()
 
     val id = if (debug) { 0 }
     else { System.nanoTime() }
     // val id      = 0
-    val pipeOut = s"pipes/s2p-$id"
-    val pipeIn  = s"pipes/p2s-$id"
     new File("pipes").mkdirs();
-    createFifo(pipeOut)
-    createFifo(pipeIn)
+    val pipeOut = createFifoIfNotExists(s"pipes/s2p-$id")
+    val pipeIn  = createFifoIfNotExists(s"pipes/p2s-$id")
 
     val process = if (!debug) {
       val pb = new ProcessBuilder(
         pythonBinary.toString(),
         pythonSrcDirectory.resolve("main.py").toString,
         "--communication=pipe",
-        s"-i=$pipeOut",
-        s"-o=$pipeIn",
+        s"-i=${pipeOut.getPath}",
+        s"-o=${pipeIn.getPath}",
         s"-a=$algo",
         s"--device=auto",
         f"--epsilon=$epsilon%.4f",
@@ -191,35 +183,29 @@ object NamedPipeBridge {
         f"--lr=$lr%.4f"
       );
       println(String.join(" ", pb.command()))
-      Some(pb.start())
-    } else None
-    println("Python process started with PID " + process.map(_.pid()).getOrElse("N/A"))
-    process match {
-      case Some(p) => {
-        println("Waiting 5 seconds for the process to start...")
-        p.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)
-        if (!p.isAlive) {
-          val msg = p.getErrorStream().readAllBytes().map(_.toChar).mkString
-          println("Python process error output: " + msg)
-          throw new Exception(
-            "Python process did not start correctly. Check the logs. Error: " + msg
-          )
-        }
-        println("Python process is alive.")
+      val process = pb.start()
+      println("Waiting 5 seconds for the process to start...")
+      process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)
+      if (!process.isAlive) {
+        val msg = process.getErrorStream().readAllBytes().map(_.toChar).mkString
+        println("Python process error output: " + msg)
+        throw new Exception("Python process did not start correctly. Check the logs. Error: " + msg)
       }
-      case None => true // No process to wait for in debug mode
-    }
+      println("Python process successfully started.")
+      Some(process)
+    } else None
 
-    val input  = new FileInputStream(new File(pipeIn))
-    val output = new FileOutputStream(new File(pipeOut))
+    val input  = new FileInputStream(pipeIn)
+    val output = new FileOutputStream(pipeOut)
     new NamedPipeBridge(input, output, process)
   }
 
-  def createFifo(path: String) = {
-    val pipe1 = new File(path)
-    if (!pipe1.exists()) {
+  def createFifoIfNotExists(path: String): File = {
+    val pipe = new File(path)
+    if (!pipe.exists()) {
       val process = new ProcessBuilder("mkfifo", path).start()
       process.waitFor()
     }
+    pipe
   }
 }

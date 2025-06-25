@@ -17,6 +17,9 @@ import scopt.OptionParser
 import util.SolverInput
 
 import java.io.File
+import oscar.cbls.core.search.AcceptAll
+import oscar.cbls.core.search.AcceptanceCriterion
+import oscar.cbls.core.search.StrictImprovement
 
 /** Object that handles the option parsing and launches the main logic accordingly.
   */
@@ -42,7 +45,8 @@ object Main extends App {
     debug: Boolean = false,
     batchSize: Int = 32,
     ddqn: Boolean = false,
-    clipping: Double = 0
+    clipping: Double = 0,
+    acceptanceCriterion: AcceptanceCriterion = StrictImprovement
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -253,6 +257,25 @@ object Main extends App {
             c match {
               case conf: SolveInstanceConfig => conf.copy(debug = true)
               case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[String]("accept")
+          .text("Accept worse solutions for training DQN and PPO")
+          .action((value, c) =>
+            c match {
+              case conf: SolveInstanceConfig => {
+                val criterion = if (value == "all") {
+                  AcceptAll
+                } else if (value == "strict-improvement") {
+                  StrictImprovement
+                } else {
+                  throw new Error(
+                    s"Invalid acceptance criterion: $value. Valid values are 'all' or 'strict-improvement'."
+                  )
+                }
+                conf.copy(acceptanceCriterion = criterion)
+              }
+              case _ => throw new Error("Unexpected Error")
             }
           )
       )
@@ -549,6 +572,7 @@ object Main extends App {
             i.epsilon,
             i.confidence,
             i.debug,
+            i.acceptanceCriterion,
             i.batchSize,
             i.ddqn,
             i.clipping

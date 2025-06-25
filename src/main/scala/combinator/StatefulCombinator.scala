@@ -31,6 +31,7 @@ class StatefulCombinator(
   device: String,
   batchSize: Int,
   objective: Objective,
+  acceptanceCriterion: AcceptanceCriterion,
   seed: Int = 42
 ) extends BanditSelector(
       neighborhoods: List[Neighborhood],
@@ -47,6 +48,14 @@ class StatefulCombinator(
   private val bridge = NamedPipeBridge(algo, debug, batchSize, epsilon, clipping, lr, ddqn, device)
   bridge.sendStaticProblemData(model, this.nActions)
   var justReset = false
+
+  override def getMove(
+    obj: Objective,
+    initialObj: Long,
+    acceptanceCriterion: AcceptanceCriterion
+  ): SearchResult = {
+    return super.getMove(obj, initialObj, this.acceptanceCriterion)
+  }
 
   override def getNextNeighborhood: Option[Neighborhood] = {
     if (this.nTabu == this.nNeighbors) {

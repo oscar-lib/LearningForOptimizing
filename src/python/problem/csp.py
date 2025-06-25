@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Self
+import logging
 import orjson
 import torch
 from .problem import Problem
@@ -118,7 +118,13 @@ class CSP(Problem[torch.Tensor]):
         """
         if not isinstance(other, CSP):
             return False
-        return self.n_actions == other.n_actions and self.n_options == other.n_options
+        if self.n_actions != other.n_actions:
+            logging.error(f"Number of actions mismatch: {self.n_actions} != {other.n_actions}")
+            return False
+        if self.n_options != other.n_options:
+            logging.error(f"Number of options mismatch: {self.n_options} != {other.n_options}")
+            return False
+        return True
 
     @property
     def max_seq_length(self) -> int:
