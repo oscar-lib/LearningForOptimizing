@@ -26,6 +26,7 @@ import oscar.cbls.business.routing.visu.RoutingMapTypes
 
 import java.nio.file.Paths
 import scala.concurrent.duration.Duration
+import oscar.cbls.core.search.Neighborhood
 
 /** This class is responsible for the handling of the local search procedure for the given pickup
   * and delivery problem with time windows; in particular, it regulates its behavior depending on
@@ -148,7 +149,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       simpleNeighborhoods.segmentExchanges(pdptw.n)
 //      simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
     )
-    var search = in.bandit.toLowerCase() match {
+    var bandit = in.bandit.toLowerCase() match {
       case "epsilongreedy" =>
         new EpsilonGreedyBanditNew(neighList, in) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
@@ -235,7 +236,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           )
       }
     )
-    search = search.afterMove(recorder.notifyMove())
+    var search: Neighborhood = bandit.afterMove(recorder.notifyMove())
     if (displaySolution)
       search = search
         .afterMove(demoDisplay.drawRoutes())
@@ -273,5 +274,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     // println(f"primalGapOverTime=" + gapOverTime.map(e => f"(t=${e._1}%.3f-v=${e._2}%.6f)").mkString("[", "-", "]"))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f".replace(',', '.'))
+    if (bandit.isInstanceOf[StatefulCombinator]) {
+      bandit.asInstanceOf[StatefulCombinator].close();
+    }
   }
 }

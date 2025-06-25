@@ -23,7 +23,7 @@ rm -f $inputFile  # erase previous data file
 # compile the project
 echo "compiling..."
 #sbt clean
-sbt assembly
+# sbt assembly
 echo "compilation done"
 echo "running experiments on $nParallel core(s)"
 # creates the file so that the header is present

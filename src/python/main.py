@@ -19,6 +19,7 @@ class Args(tap.TypedArgs):
     _ddqn: str = tap.arg("--ddqn", help="Use Double DQN", default="false")
     lr: float = tap.arg("--lr", help="Learning rate", type=float, default=1e-4)
     keepalive: bool = tap.arg("--keepalive", help="Keep the connection alive", default=False)
+    instance: str = tap.arg("--instance", help="Instance name", default="Not specified")
 
     @property
     def clipping(self) -> Optional[float]:
@@ -51,8 +52,7 @@ class Args(tap.TypedArgs):
                 with open("device", "r") as f:
                     device_num = int(f.read().strip()) % n_devices
             except Exception:
-                device_num = 1
-            device_num = max(1, device_num)  # Do not use device 0
+                device_num = 0
             next_device = (device_num + 1) % n_devices
             with open("device", "w") as f:
                 f.write(f"{next_device}")
@@ -76,16 +76,22 @@ class Args(tap.TypedArgs):
 
 def main(args: Args):
     logging.info(f"Starting the runner with arguments {args}:")
+    from utils.gpu import list_gpus
+
+    for gpu in list_gpus():
+        logging.info(f"{gpu}")
     try:
         run(args)
     except Exception as e:
         logging.error(f"An error occurred: {e}", exc_info=True)
+    finally:
+        logging.info("Runner finished execution.")
 
 
 if __name__ == "__main__":
     logging.basicConfig(
         level=logging.DEBUG,
-        format="%(asctime)s - %(levelname)s - %(message)s",
+        format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
         handlers=[logging.StreamHandler(), logging.FileHandler("logs.log")],
     )
     try:

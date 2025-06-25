@@ -66,7 +66,7 @@ case class Solver(cspModel: Model, in: SolverInput) {
 
     val restart4: Neighborhood = sn.shuffle()
 
-    val banditNeighborhood: Neighborhood = in.bandit.toLowerCase() match {
+    val bandit: Neighborhood = in.bandit.toLowerCase() match {
       case "epsilongreedy" => new EpsilonGreedyBanditNew(neighList, in)
       case "dqn" =>
         new StatefulCombinator(
@@ -91,10 +91,10 @@ case class Solver(cspModel: Model, in: SolverInput) {
     }
 
     var search: Neighborhood = {
-      banditNeighborhood match {
-        case BanditCombinator(_, _, _, _, _, _, _, _) => banditNeighborhood
+      bandit match {
+        case BanditCombinator(_, _, _, _, _, _, _, _) => bandit
         case _ =>
-          banditNeighborhood
+          bandit
             .onExhaustRestartAfter(
               restart1.acceptAll(),
               5,
@@ -155,5 +155,9 @@ case class Solver(cspModel: Model, in: SolverInput) {
         .getOrElse(0.0)
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f")
+
+    if (bandit.isInstanceOf[StatefulCombinator]) {
+      bandit.asInstanceOf[StatefulCombinator].close();
+    }
   }
 }

@@ -193,7 +193,7 @@ object NamedPipeBridge {
       println(String.join(" ", pb.command()))
       Some(pb.start())
     } else None
-    println("Python process started with PID" + process.map(_.pid()).getOrElse("N/A"))
+    println("Python process started with PID " + process.map(_.pid()).getOrElse("N/A"))
     process match {
       case Some(p) => {
         println("Waiting 5 seconds for the process to start...")
