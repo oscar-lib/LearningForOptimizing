@@ -54,9 +54,12 @@ case class SolverInput(
   epsilon: Double,
   confidence: Double,
   debug: Boolean,
-  acceptanceCriterion: AcceptanceCriterion = StrictImprovement,
-  batchSize: Int = 32,
-  ddqn: Boolean = false,
-  clipping: Double = 0.0,
-  device: String = "cpu"
+  training: Boolean,
+  loadFrom: Option[String],
+  saveTo: Option[String],
+  acceptanceCriterion: AcceptanceCriterion,
+  batchSize: Int,
+  ddqn: Boolean,
+  clipping: Double,
+  device: String
 )

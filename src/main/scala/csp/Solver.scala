@@ -81,7 +81,10 @@ case class Solver(cspModel: Model, in: SolverInput) {
           algo = RLAlgorithm.DQN,
           device = in.device,
           objective = obj,
-          acceptanceCriterion = in.acceptanceCriterion
+          acceptanceCriterion = in.acceptanceCriterion,
+          loadFrom = in.loadFrom,
+          saveTo = in.saveTo,
+          training = in.training
         )
       case "ucb"            => new UCBNew(neighList, in)
       case "bestslopefirst" => bestSlopeFirst(neighList)

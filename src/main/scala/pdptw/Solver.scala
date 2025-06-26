@@ -170,7 +170,10 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           algo = RLAlgorithm.DQN,
           device = in.device,
           objective = oscarModel.objectiveFunction,
-          acceptanceCriterion = in.acceptanceCriterion
+          acceptanceCriterion = in.acceptanceCriterion,
+          loadFrom = in.loadFrom,
+          saveTo = in.saveTo,
+          training = in.training
         ) onExhaustRestartAfter (
           simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
           0,

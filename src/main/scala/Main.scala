@@ -46,7 +46,10 @@ object Main extends App {
     batchSize: Int = 32,
     ddqn: Boolean = false,
     clipping: Double = 0,
-    acceptanceCriterion: AcceptanceCriterion = StrictImprovement
+    acceptanceCriterion: AcceptanceCriterion = StrictImprovement,
+    loadFrom: Option[String] = None,
+    saveTo: Option[String] = None,
+    training: Boolean = true
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -276,6 +279,30 @@ object Main extends App {
                 conf.copy(acceptanceCriterion = criterion)
               }
               case _ => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[String]("loadFrom")
+          .text("Load a model from a file (for DQN and PPO)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(loadFrom = Some(x))
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[String]("saveTo")
+          .text("Save the model to a file (for DQN and PPO)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(saveTo = Some(x))
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Unit]("noTrain")
+          .text("Disable training")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(training = false)
+              case _                         => throw new Error("Unexpected Error")
             }
           )
       )
@@ -560,22 +587,26 @@ object Main extends App {
 
         case i: SolveInstanceConfig =>
           val in = SolverInput(
-            i.instance,
-            i.verbosity,
-            i.bandit,
-            i.display,
-            i.timeout,
-            i.learningRate,
-            i.slopeWeight,
-            i.efficiencyWeight,
-            i.moveFoundWeight,
-            i.epsilon,
-            i.confidence,
-            i.debug,
-            i.acceptanceCriterion,
-            i.batchSize,
-            i.ddqn,
-            i.clipping
+            file = i.instance,
+            verbosity = i.verbosity,
+            bandit = i.bandit,
+            display = i.display,
+            timeout = i.timeout,
+            learningRate = i.learningRate,
+            slopeWeight = i.slopeWeight,
+            efficiencyWeight = i.efficiencyWeight,
+            moveFoundWeight = i.moveFoundWeight,
+            epsilon = i.epsilon,
+            confidence = i.confidence,
+            debug = i.debug,
+            device = "auto",
+            loadFrom = i.loadFrom,
+            saveTo = i.saveTo,
+            training = i.training,
+            acceptanceCriterion = i.acceptanceCriterion,
+            ddqn = i.ddqn,
+            batchSize = i.batchSize,
+            clipping = i.clipping
           )
           i.problem match {
             case "csp" =>
@@ -599,92 +630,94 @@ object Main extends App {
           checkSize(s)
           s.problem match {
             case "csp" =>
-              val dir   = new File(s"examples/csp/csp_${s.seriesSize}")
-              val files = dir.listFiles.filter(_.isFile)
-              files.foreach(x => {
-                val in = SolverInput(
-                  x,
-                  s.verbosity,
-                  s.bandit,
-                  display = false,
-                  s.timeout,
-                  s.learningRate,
-                  s.slopeWeight,
-                  s.efficiencyWeight,
-                  s.moveFoundWeight,
-                  s.epsilon,
-                  s.confidence,
-                  false
-                )
-                solveCSP(in)
-              })
+              throw new Exception("TODO")
+            // val dir   = new File(s"examples/csp/csp_${s.seriesSize}")
+            // val files = dir.listFiles.filter(_.isFile)
+            // files.foreach(x => {
+            //   val in = SolverInput(
+            //     x,
+            //     s.verbosity,
+            //     s.bandit,
+            //     display = false,
+            //     s.timeout,
+            //     s.learningRate,
+            //     s.slopeWeight,
+            //     s.efficiencyWeight,
+            //     s.moveFoundWeight,
+            //     s.epsilon,
+            //     s.confidence,
+            //     false
+            //   )
+            //   solveCSP(in)
+            // })
             case "pdptw" =>
-              val dir   = new File(s"examples/pdptw/pdptw_${s.seriesSize}")
-              val files = dir.listFiles.filter(_.isFile)
-              files.foreach(x => {
-                val in = SolverInput(
-                  x,
-                  s.verbosity,
-                  s.bandit,
-                  display = false,
-                  s.timeout,
-                  s.learningRate,
-                  s.slopeWeight,
-                  s.efficiencyWeight,
-                  s.moveFoundWeight,
-                  s.epsilon,
-                  s.confidence,
-                  false
-                )
-                solvePDPTW(in)
-              })
+              throw new Exception("TODO")
+            // val dir   = new File(s"examples/pdptw/pdptw_${s.seriesSize}")
+            // val files = dir.listFiles.filter(_.isFile)
+            // files.foreach(x => {
+            //   val in = SolverInput(
+            //     x,
+            //     s.verbosity,
+            //     s.bandit,
+            //     display = false,
+            //     s.timeout,
+            //     s.learningRate,
+            //     s.slopeWeight,
+            //     s.efficiencyWeight,
+            //     s.moveFoundWeight,
+            //     s.epsilon,
+            //     s.confidence,
+            //     false
+            //   )
+            //   solvePDPTW(in)
+            // })
             case x => throw new Error(s"Invalid problem name: $x")
           }
 
         case a: SolveAllConfig =>
           a.problem match {
-            case "csp" =>
-              val dir   = new File(s"examples/csp")
-              val dirs  = dir.listFiles.filter(_.isDirectory)
-              val files = dirs.flatMap(_.listFiles.filter(_.isFile))
-              files.foreach(x => {
-                val in = SolverInput(
-                  x,
-                  a.verbosity,
-                  a.bandit,
-                  display = false,
-                  a.timeout,
-                  a.learningRate,
-                  a.slopeWeight,
-                  a.efficiencyWeight,
-                  a.moveFoundWeight,
-                  a.epsilon,
-                  a.confidence,
-                  false
-                )
-                solveCSP(in)
-              })
-            case "pdptw" =>
-              val dir   = new File(s"examples/pdptw")
-              val dirs  = dir.listFiles.filter(_.isDirectory)
-              val files = dirs.flatMap(_.listFiles.filter(_.isFile))
-              files.foreach(x => {
-                val in = SolverInput(
-                  x,
-                  a.verbosity,
-                  a.bandit,
-                  display = false,
-                  a.timeout,
-                  a.learningRate,
-                  a.slopeWeight,
-                  a.efficiencyWeight,
-                  a.moveFoundWeight,
-                  a.epsilon,
-                  a.confidence,
-                  false
-                )
-                solvePDPTW(in)
-              })
+            case "csp" => throw new Exception("TODO")
+            // val dir   = new File(s"examples/csp")
+            // val dirs  = dir.listFiles.filter(_.isDirectory)
+            // val files = dirs.flatMap(_.listFiles.filter(_.isFile))
+            // files.foreach(x => {
+            //   val in = SolverInput(
+            //     x,
+            //     a.verbosity,
+            //     a.bandit,
+            //     display = false,
+            //     a.timeout,
+            //     a.learningRate,
+            //     a.slopeWeight,
+            //     a.efficiencyWeight,
+            //     a.moveFoundWeight,
+            //     a.epsilon,
+            //     a.confidence,
+            //     false
+            //   )
+            //   solveCSP(in)
+            // })
+            case "pdptw" => throw new Exception("TODO")
+            // val dir   = new File(s"examples/pdptw")
+            // val dirs  = dir.listFiles.filter(_.isDirectory)
+            // val files = dirs.flatMap(_.listFiles.filter(_.isFile))
+            // files.foreach(x => {
+            //   val in = SolverInput(
+            //     x,
+            //     a.verbosity,
+            //     a.bandit,
+            //     display = false,
+            //     a.timeout,
+            //     a.learningRate,
+            //     a.slopeWeight,
+            //     a.efficiencyWeight,
+            //     a.moveFoundWeight,
+            //     a.epsilon,
+            //     a.confidence,
+            //     false
+            //   )
+            //   solvePDPTW(in)
+            // })
             case x => throw new Error(s"Invalid problem name: $x")
           }
       }

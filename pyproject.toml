@@ -18,6 +18,8 @@ dependencies = [
     "altair>=5.4.1",
     "jupyterlab>=4.2.5",
     "orjson>=3.10.18",
+    "pandas>=2.3.0",
+    "pyarrow>=20.0.0",
 ]
 
 

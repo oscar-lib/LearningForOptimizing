@@ -3,14 +3,14 @@
 # supposed to be called at the root of the project
 
 # ------ parameters for the run -------
-declare -a BanditType=("dqn")
+declare -a BanditType=("dqn-pretrained" "dqn")
 timeout=300  # timeout in seconds
-nRuns=20   # number of time an instance is run (to take randomness into account)
-nParallel=14  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
+nRuns=10   # number of time an instance is run (to take randomness into account)
+nParallel=7  # number of parallel run (should be <= number of threads on the machine, but small enough to fit in memory)
 run_script="./xp/csp_run_one_instance.sh"  # executable for running the experiments
 # path to the file where the instances to run are written
 # each line in this file should be the full path to an instance to run
-instances="examples/csp/testingall.txt"
+instances="examples/csp/testingall-100.txt"
 
 myDate=`printf '%(%Y-%m-%d_%H_%M_%S)T\n' -1`
 commitId=`git rev-parse --short HEAD`
@@ -41,5 +41,5 @@ done
 # ------ actually run the solver, delay each job by 5 seconds to allow the GPUs to be assigned properly  -------
 cat $inputFile | parallel --delay 5.0 -j $nParallel --colsep ',' $run_script {1} {2} $timeout >> $outFilename
 echo "experiments have been run"
-rm -f $inputFile
+# rm -f $inputFile
 

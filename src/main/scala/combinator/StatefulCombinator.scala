@@ -32,6 +32,9 @@ class StatefulCombinator(
   batchSize: Int,
   objective: Objective,
   acceptanceCriterion: AcceptanceCriterion,
+  loadFrom: Option[String],
+  training: Boolean,
+  saveTo: Option[String] = None,
   seed: Int = 42
 ) extends BanditSelector(
       neighborhoods: List[Neighborhood],
@@ -45,7 +48,20 @@ class StatefulCombinator(
     ) {
 
   private val nActions = neighborhoods.length
-  private val bridge = NamedPipeBridge(algo, debug, batchSize, epsilon, clipping, lr, ddqn, device)
+  private val bridge =
+    NamedPipeBridge(
+      algo,
+      debug,
+      batchSize,
+      epsilon,
+      clipping,
+      lr,
+      ddqn,
+      device,
+      loadFrom,
+      saveTo,
+      training
+    )
   bridge.sendStaticProblemData(model, this.nActions)
   var justReset = false
 

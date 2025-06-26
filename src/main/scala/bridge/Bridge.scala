@@ -155,7 +155,10 @@ object NamedPipeBridge {
     clipping: Double,
     lr: Double,
     ddqn: Boolean,
-    device: String
+    device: String,
+    loadFrom: Option[String],
+    saveTo: Option[String],
+    training: Boolean
   ): NamedPipeBridge = {
     val pythonBinary       = this.findPythonPath()
     val pythonSrcDirectory = this.findPythonSourcesDirectory()
@@ -168,28 +171,40 @@ object NamedPipeBridge {
     val pipeIn  = createFifoIfNotExists(s"pipes/p2s-$id")
 
     val process = if (!debug) {
-      val pb = new ProcessBuilder(
-        pythonBinary.toString(),
-        pythonSrcDirectory.resolve("main.py").toString,
-        "--communication=pipe",
-        s"-i=${pipeOut.getPath}",
-        s"-o=${pipeIn.getPath}",
-        s"-a=$algo",
-        s"--device=auto",
-        f"--epsilon=$epsilon%.4f",
-        f"--clipping=$clipping%.4f",
-        s"--batch-size=$batchSize",
-        s"--ddqn=$ddqn",
-        f"--lr=$lr%.4f"
-      );
+      var command = new Array[String](0)
+      command :+= pythonBinary.toString()
+      command :+= pythonSrcDirectory.resolve("main.py").toString
+      command :+= "--communication=pipe"
+      command :+= f"-i=${pipeOut.getPath}"
+      command :+= f"-o=${pipeIn.getPath}"
+      command :+= f"-a=$algo"
+      command :+= f"--device=${device}"
+      command :+= f"--epsilon=$epsilon%.4f"
+      command :+= f"--clipping=$clipping%.4f"
+      command :+= f"--batch-size=$batchSize"
+      command :+= f"--ddqn=$ddqn"
+      command :+= f"--lr=$lr%.4f"
+      if (loadFrom.isDefined) {
+        command :+= f"--load-from=${loadFrom.get}"
+      }
+      if (saveTo.isDefined) {
+        command :+= f"--save-to=${saveTo.get}"
+      }
+      if (!training) {
+        command :+= "--no-train"
+      }
+      val pb = new ProcessBuilder(command: _*)
       println(String.join(" ", pb.command()))
       val process = pb.start()
       println("Waiting 5 seconds for the process to start...")
-      process.waitFor(5, java.util.concurrent.TimeUnit.SECONDS)
-      if (!process.isAlive) {
-        val msg = process.getErrorStream().readAllBytes().map(_.toChar).mkString
-        println("Python process error output: " + msg)
-        throw new Exception("Python process did not start correctly. Check the logs. Error: " + msg)
+      for (i <- 0 until 5) {
+        print(f"Heartbeat ${i + 1}/5...")
+        process.waitFor(1, java.util.concurrent.TimeUnit.SECONDS)
+        if (!process.isAlive) {
+          val msg = process.getErrorStream().readAllBytes().map(_.toChar).mkString
+          throw new Exception(f"Python process did not start correctly: $msg")
+        }
+        println(" OK")
       }
       println("Python process successfully started.")
       Some(process)

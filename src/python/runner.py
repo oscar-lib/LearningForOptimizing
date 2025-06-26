@@ -19,7 +19,7 @@ def do_run(agent: Algo, env: OptimEnv, logger: Logger, train: bool):
     while True:
         t += 1
         action, action_data = agent.select_action(obs)
-        logs = {"timestep": t, "action": action, **{f"action-{i}": x for i, x in enumerate(action_data)}}
+        logs = {"action": action, **{f"action-{i}": x for i, x in enumerate(action_data)}}
         try:
             next_obs, reward = env.step(action)
             logs["reward"] = reward
@@ -96,12 +96,12 @@ def _create_agent(problem: Problem, algo: Literal["dqn", "ppo"], args: "Args") -
                     from nn import QNetGNN
 
                     qnetwork = QNetGNN(problem)
-                    memory = GraphReplayMemory(1000)
+                    memory = GraphReplayMemory(args.memory_size)
                 case CSP():
                     from nn import CNN1D
 
                     qnetwork = CNN1D(problem)
-                    memory = LinearMemory(1000)
+                    memory = LinearMemory(args.memory_size)
                 case other:
                     raise Exception(f"Unsupported problem for DQN: {other}")
             return DQN(

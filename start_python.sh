@@ -8,6 +8,8 @@ python src/python/main.py \
     --clip=2 \
     --ddqn=true \
     --batch-size=32 \
-    --lr=0.001 \
-    --device=auto \
+    --lr=0.0005 \
+    --device=cuda:6 \
+    --memory-size=50_000 \
+    --save-to=saved_dqn \
     --keepalive

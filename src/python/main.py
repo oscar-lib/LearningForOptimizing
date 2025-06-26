@@ -4,6 +4,8 @@ from runner import run
 import typed_argparse as tap
 from bridge import SocketBridge, NamedPipeBridge, Bridge
 import logging
+import dotenv
+import os
 
 
 class Args(tap.TypedArgs):
@@ -16,6 +18,7 @@ class Args(tap.TypedArgs):
     epsilon: float = tap.arg("--epsilon", help="Epsilon value", type=float, default=0.1)
     _clipping: str | float = tap.arg("--clipping", help="Clipping value", default=0.0)
     batch_size: int = tap.arg("--batch-size", help="Batch size", default=32)
+    memory_size: int = tap.arg("--memory-size", help="Size of the replay memory", default=1_000)
     _ddqn: str = tap.arg("--ddqn", help="Use Double DQN", default="false")
     lr: float = tap.arg("--lr", help="Learning rate", type=float, default=1e-4)
     keepalive: bool = tap.arg("--keepalive", help="Keep the connection alive", default=False)
@@ -52,17 +55,16 @@ class Args(tap.TypedArgs):
             return torch.device(self._device)
         n_devices = torch.cuda.device_count()
         if n_devices == 0:
-            device = torch.device("cpu")
-        else:
-            try:
-                with open("device", "r") as f:
-                    device_num = int(f.read().strip()) % n_devices
-            except Exception:
-                device_num = 0
-            next_device = (device_num + 1) % n_devices
-            with open("device", "w") as f:
-                f.write(f"{next_device}")
-            device = torch.device(device_num)
+            return torch.device("cpu")
+        try:
+            with open("device", "r") as f:
+                device_num = int(f.read().strip()) % n_devices
+        except Exception:
+            device_num = 0
+        next_device = (device_num + 1) % n_devices
+        with open("device", "w") as f:
+            f.write(f"{next_device}")
+        device = torch.device(device_num)
         logging.info(f"Using device: {device}")
         return device
 
@@ -95,14 +97,10 @@ def main(args: Args):
 
 
 if __name__ == "__main__":
+    dotenv.load_dotenv()
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=os.getenv("LOG_LEVEL", "INFO").upper(),
         format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
         handlers=[logging.StreamHandler(), logging.FileHandler("logs.log")],
     )
-    try:
-        logging.info("Binding arguments")
-        tap.Parser(Args).bind(main).run()
-        logging.info("End of the program")
-    except Exception as e:
-        logging.error(f"Argument parsing error: {e}")
+    tap.Parser(Args).bind(main).run()
