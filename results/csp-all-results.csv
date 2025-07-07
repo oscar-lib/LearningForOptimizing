@@ -4016,3 +4016,5 @@ examples/csp/csp_100/carseq_100_8_20_99.txt,dqn,300,1,300.000
 examples/csp/csp_300/carseq_300_8_20_40.txt,dqn-pretrained-csp-300,300,20,300.000
 examples/csp/csp_300/carseq_300_8_20_45.txt,dqn-pretrained-csp-300,300,14,300.000
 examples/csp/csp_300/carseq_300_8_20_40.txt,dqn-pretrained-csp-300,300,4,300.000
+examples/csp/csp_300/carseq_300_8_20_45.txt,dqn-pretrained-csp-300,300,1,300.000
+examples/csp/csp_300/carseq_300_8_20_40.txt,dqn-pretrained-csp-300,300,1,300.000
