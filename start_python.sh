@@ -7,9 +7,9 @@ python src/python/main.py \
     -a=dqn \
     --clip=2 \
     --ddqn=true \
-    --batch-size=32 \
+    --batch-size=64 \
     --lr=0.0005 \
-    --device=cuda:6 \
-    --memory-size=50_000 \
-    --save-to=saved_dqn \
+    --device=cuda:2 \
+    --memory-size=100_000 \
+    --save-to=saved_dqn_csp_200 \
     --keepalive

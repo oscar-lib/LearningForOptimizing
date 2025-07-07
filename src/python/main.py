@@ -6,6 +6,7 @@ from bridge import SocketBridge, NamedPipeBridge, Bridge
 import logging
 import dotenv
 import os
+from datetime import datetime
 
 
 class Args(tap.TypedArgs):
@@ -84,16 +85,7 @@ class Args(tap.TypedArgs):
 
 def main(args: Args):
     logging.info(f"Starting the runner with arguments {args}:")
-    from utils.gpu import list_gpus
-
-    for gpu in list_gpus():
-        logging.info(f"{gpu}")
-    try:
-        run(args)
-    except Exception as e:
-        logging.error(f"An error occurred: {e}", exc_info=True)
-    finally:
-        logging.info("Runner finished execution.")
+    run(args)
 
 
 if __name__ == "__main__":
@@ -101,6 +93,11 @@ if __name__ == "__main__":
     logging.basicConfig(
         level=os.getenv("LOG_LEVEL", "INFO").upper(),
         format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler(), logging.FileHandler("logs.log")],
+        handlers=[logging.StreamHandler(), logging.FileHandler(f"{datetime.now().isoformat()}.log")],
     )
-    tap.Parser(Args).bind(main).run()
+    try:
+        tap.Parser(Args).bind(main).run()
+    except Exception as e:
+        logging.error(f"An error occurred: {e}", exc_info=True)
+    finally:
+        logging.info("Runner finished execution.")

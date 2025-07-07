@@ -49,7 +49,8 @@ object Main extends App {
     acceptanceCriterion: AcceptanceCriterion = StrictImprovement,
     loadFrom: Option[String] = None,
     saveTo: Option[String] = None,
-    training: Boolean = true
+    training: Boolean = true,
+    device: String = "auto"
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -302,6 +303,16 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(training = false)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[String]("device")
+          .text(
+            "Set the device to use for training (default: auto, options: auto, cuda:<device-num>, cpu)"
+          )
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(device = x)
               case _                         => throw new Error("Unexpected Error")
             }
           )
@@ -599,7 +610,7 @@ object Main extends App {
             epsilon = i.epsilon,
             confidence = i.confidence,
             debug = i.debug,
-            device = "auto",
+            device = i.device,
             loadFrom = i.loadFrom,
             saveTo = i.saveTo,
             training = i.training,
