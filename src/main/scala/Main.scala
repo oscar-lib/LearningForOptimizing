@@ -193,12 +193,13 @@ object Main extends App {
               case _                         => throw new Error("Unexpected Error")
             }
           ),
-        opt[Boolean]("objChangeReward")
-          .abbr("r2")
-          .text("Set the reward to be the log difference of objective values")
+        opt[String]("reward")
+          .text("Set the reward to be used\n" +
+            "    - r1 : weighted sum of move found, efficiency, time spend\n" +
+            "    - r2 : log of the change on the objective\n")
           .action((x, c) =>
             c match {
-              case conf: SolveInstanceConfig => conf.copy(objChangeReward = x)
+              case conf: SolveInstanceConfig => conf.copy(objChangeReward = x.equals("r2"))
               case _                         => throw new Error("Unexpected Error")
             }
           ),
