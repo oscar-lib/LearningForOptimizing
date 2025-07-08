@@ -18,8 +18,8 @@ error() {
 }
 # Path to the Learning for Optimizing executable (this path is relative to the execution directory `execDir` specified in the scenario).
 # EXE="~/bin/acotsp"
-EXE='java -jar /gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing/target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar'
-#EXE="../xp/run_one_instance_tuning.sh"
+#EXE='java -jar /gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing/target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar'
+EXE="../xp/run_one_instance_tuning.sh"
 
 # Fixed parameters that should be always passed to Learning for Optimizing.
 
