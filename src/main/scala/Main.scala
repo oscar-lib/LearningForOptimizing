@@ -14,6 +14,7 @@
 import pdptw.{LiLimProblem, Model => PDPTWModel, Parser => PDPTWParser, Solver => PDPTWSolver}
 import csp.{CarSeqProblem, Model => CSPModel, Parser => CSPParser, Solver => CSPSolver}
 import scopt.OptionParser
+import tsp.{Model => TSPModel, Parser => TSPParser, Problem => TSProblem, Solver => TSPSolver}
 import util.SolverInput
 
 import java.io.File
@@ -100,7 +101,8 @@ object Main extends App {
           .text(
             "Use this option to set the type of problem to solve:\n" +
               "    - pdptw : the pickup and delivery problem with time windows\n" +
-              "    - csp   : the car sequencing problem"
+              "    - csp   : the car sequencing problem\n" +
+              "    - tsp   : the traveling salesman problem\n"
           )
           .action((x, c) =>
             c match {
@@ -531,6 +533,13 @@ object Main extends App {
     solver.solve(in.verbosity, in.display, in.file.getName, in.timeout)
   }
 
+  private def solveTSP(in: SolverInput): Unit = {
+    val instanceProblem: TSProblem = TSPParser(in.file)
+    val oscarModel: TSPModel       = TSPModel(instanceProblem)
+    val solver: TSPSolver          = TSPSolver(oscarModel, in)
+    solver.solve(in.verbosity, in.display, in.file.getName, in.timeout)
+  }
+
   private def solveCSP(in: SolverInput): Unit = {
     val instance: CarSeqProblem = CSPParser(in.file)
     val oscarModel: CSPModel    = CSPModel(instance)
@@ -570,6 +579,8 @@ object Main extends App {
               solveCSP(in)
             case "pdptw" =>
               solvePDPTW(in)
+            case "tsp" =>
+              solveTSP(in)
             case x => throw new Error(s"Invalid problem name: $x")
           }
 
