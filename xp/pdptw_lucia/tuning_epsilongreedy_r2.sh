@@ -1,16 +1,16 @@
 #!/bin/bash
 #
-#SBATCH --job-name=irace_csp_ucb_r2
-#SBATCH --output=logs/irace_csp_ucb_r2.out  # stdout log for the task
-#SBATCH --error=logs/irace_csp_ucb_r2.err   # stderr log for the task
+#SBATCH --job-name=irace_pdptw_epsilongreedy_r2
+#SBATCH --output=logs/irace_pdptw_epsilongreedy_r2.out  # stdout log for the task
+#SBATCH --error=logs/irace_pdptw_epsilongreedy_r2.err   # stderr log for the task
 #
 #SBATCH --ntasks=1
 #SBATCH --time=06:00:00
 #SBATCH --cpus-per-task=32
 #SBATCH --mem-per-cpu=5G
 
-PROBLEM="csp"
-ALGO="ucb"
+PROBLEM="pdptw"
+ALGO="epsilongreedy"
 REWARD="r2"
 TRAINING_SIZE="all"
 

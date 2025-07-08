@@ -5,9 +5,6 @@ reward             "--reward "   c    (r2)
 #
 # Shared parameters
 learningrate       "-lr "        r    (0.0, 1.0)
-movefoundweight    "-mfw "       r    (0.0, 1.0)
-efficiencyweight   "-ew "        r    (0.0, 1.0)
-slopeweight        "-sw "        r    (0.0, 1.0)
 #
 # EpsilonGreedy parameter
 epsilon            "-e "         r    (0.0, 1.0)
