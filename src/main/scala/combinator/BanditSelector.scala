@@ -15,15 +15,9 @@ package combinator
 
 import oscar.cbls.core.objective.Objective
 import oscar.cbls.core.search.profiling.SelectionProfiler
-import oscar.cbls.core.search.{
-  AcceptanceCriterion,
-  MoveFound,
-  Neighborhood,
-  NeighborhoodCombinator,
-  NoMoveFound,
-  SearchResult
-}
+import oscar.cbls.core.search.{AcceptanceCriterion, MoveFound, Neighborhood, NeighborhoodCombinator, NoMoveFound, SearchResult}
 
+import java.util.function.{BiConsumer, Consumer}
 import scala.annotation.tailrec
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
@@ -85,6 +79,9 @@ abstract class BanditSelector(
   // index of the last selected neighborhood
   protected var lastSelectedIdx: Int = -1
 
+  protected var moveCallBacks : List[BiConsumer[Neighborhood, SearchResult]] = List()
+  protected var resetCallBack : List[Runnable] = List()
+
   // Populate the map
   for (i <- neighborhoods.indices) {
     neighborhoodIdx += (neighborhoods(i) -> i)
@@ -93,6 +90,15 @@ abstract class BanditSelector(
   // TODO next steps to slightly speeds the selection:
   //  1. use sparse-set to maintain the neighborhoods that are not marked as tabu
   //  2. use sparse-set to maintain the neighborhoods that have been selected at least once since the last weight update (only them must have their weight updated)
+
+  def addMoveCallBack(callback: BiConsumer[Neighborhood, SearchResult]): Unit = {
+    moveCallBacks :+= callback
+  }
+
+  def addResetCallBack(callback: Runnable): Unit = {
+    resetCallBack :+= callback
+  }
+
 
   /** The method that provides a neighborhood.
     *
@@ -129,6 +135,9 @@ abstract class BanditSelector(
     *   - after n moves and the current one.
     */
   override def reset(): Unit = {
+    for (callback <- resetCallBack) {
+      callback.run()
+    }
     resetTabu()
     learningScheme match {
       case AfterEveryDescent =>
@@ -173,6 +182,9 @@ abstract class BanditSelector(
     searchResult match {
       case NoMoveFound  => setTabu(neighborhood)
       case MoveFound(_) => resetTabu()
+    }
+    for (callback <- moveCallBacks) {
+      callback.accept(neighborhood, searchResult)
     }
     learningScheme match {
       case AfterEveryMove =>
