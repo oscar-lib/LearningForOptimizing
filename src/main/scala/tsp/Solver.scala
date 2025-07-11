@@ -101,8 +101,12 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     println("bestObj=" + oscarModel.objectiveFunction.value)
     // retrieve the best known solution and compute the gap over time compared to it
     val instanceName = Paths.get(fileName).getFileName.toString.stripSuffix(".xml").stripSuffix(".tsp")
+    val currentDirectory = System.getProperty("user.dir")
+    val rootDir          = currentDirectory.split("LearningForOptimizing")(0)
     val bestKnownSolution =
-      recorder.getBestKnownSolution("bks/tsp_bks.csv", instanceName).getOrElse(0.0)
+      recorder
+        .getBestKnownSolution(rootDir + "/LearningForOptimizing/bks/tsp_bks.csv", instanceName)
+        .getOrElse(0.0)
     val realSolutionOverTime = recorder.realObjectiveTimeStamp
     println(f"solOverTime=" + realSolutionOverTime.map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)").mkString("[", "-", "]"))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
