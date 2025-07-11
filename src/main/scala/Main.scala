@@ -44,7 +44,8 @@ object Main extends App {
     debug: Boolean = false,
     batchSize: Int = 32,
     ddqn: Boolean = false,
-    clipping: Double = 0
+    clipping: Double = 0,
+    printHistory: Boolean = false
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -265,6 +266,14 @@ object Main extends App {
           .action((_, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(debug = true)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Unit]("printHistory")
+          .text("Print the result of every move")
+          .action((_, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(printHistory = true)
               case _                         => throw new Error("Unexpected Error")
             }
           )
@@ -572,7 +581,8 @@ object Main extends App {
             i.debug,
             i.batchSize,
             i.ddqn,
-            i.clipping
+            i.clipping,
+            i.printHistory
           )
           i.problem match {
             case "csp" =>

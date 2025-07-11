@@ -1,9 +1,10 @@
 package tsp
 
-import combinator.{EpsilonGreedyBanditNew, RandomCombinator, UCBNew}
-import logger.ObjectiveRecorder
+import combinator.{BanditSelector, EpsilonGreedyBanditNew, RandomCombinator, UCBNew}
+import logger.{MoveRecorder, ObjectiveRecorder}
 import oscar.cbls.{Objective, bestSlopeFirst, roundRobin}
 import oscar.cbls.business.routing.model.VRP
+import oscar.cbls.core.search.Neighborhood
 import util.SolverInput
 
 import java.nio.file.Paths
@@ -31,47 +32,39 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     )
 
     // set the bandit according to the user input
-    var search = in.bandit.toLowerCase() match {
+    var search : Neighborhood = in.bandit.toLowerCase() match {
       case "epsilongreedy" =>
-        new EpsilonGreedyBanditNew(neighList, in) onExhaustRestartAfter (
-          simpleNeighborhoods.removeNode(Math.min(50, tsp.n / 5)),
-          5,
-          obj,
-          minRestarts = if (withTimeout) Int.MaxValue else 15
-        )
+        new EpsilonGreedyBanditNew(neighList, in)
       case "random" =>
-        new RandomCombinator(neighList) onExhaustRestartAfter (simpleNeighborhoods.removeNode(
-          Math.min(50, tsp.n / 5)
-        ),
-        5,
-        obj,
-        minRestarts = if (withTimeout) Int.MaxValue else 15)
+        new RandomCombinator(neighList)
       case "ucb" =>
-        new UCBNew(neighList, in) onExhaustRestartAfter (
-          simpleNeighborhoods.removeNode(Math.min(50, tsp.n / 5)),
-          5,
-          obj,
-          minRestarts = if (withTimeout) Int.MaxValue else 15
-        )
+        new UCBNew(neighList, in)
       case "bestslopefirst" =>
-        bestSlopeFirst(neighList) onExhaustRestartAfter (simpleNeighborhoods.removeNode(
-          Math.min(50, tsp.n / 5)
-        ),
-        5, obj,
-        minRestarts = if (withTimeout) Int.MaxValue else 15)
+        bestSlopeFirst(neighList)
       case "roundrobin" =>
-        roundRobin(neighList.zip((0 to neighList.length).map(i => 1))) onExhaustRestartAfter (simpleNeighborhoods.removeNode(
-          Math.min(50, tsp.n / 5)
-        ),
-          5, obj,
-          minRestarts = if (withTimeout) Int.MaxValue else 15)
+        roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
-        bestSlopeFirst(neighList) onExhaustRestartAfter (simpleNeighborhoods.removeNode(
-          Math.min(50, tsp.n / 5)
-        ), 5, obj,
-        minRestarts = if (withTimeout) Int.MaxValue else 15)
+        bestSlopeFirst(neighList)
     }
+
+    val history = new MoveRecorder()
+    if (in.printHistory) {
+      search match {
+        case b: BanditSelector => {
+          b.addResetCallBack(() => history.notifyReset())
+          b.addMoveCallBack((neigh, result) => history.notifySearchResult(neigh, result))
+        }
+        case _ => // do nothing
+      }
+    }
+
+    search = search onExhaustRestartAfter (
+      simpleNeighborhoods.removeNode(Math.min(50, tsp.n / 5)),
+      5,
+      obj,
+      minRestarts = if (withTimeout) Int.MaxValue else 15
+    )
 
     // tracks the objective evolution over time
     val recorder = new ObjectiveRecorder(
@@ -111,6 +104,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     println(f"solOverTime=" + realSolutionOverTime.map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)").mkString("[", "-", "]"))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f".replace(',','.'))
+    println(f"history=" + history.toString)
   }
 
 }
