@@ -10,13 +10,13 @@ timeout=$4
 par_string=""
 # Results of the irace fine tuning
 if [ "$bandit" = "epsilongreedy" ] && [ "$reward" = "r1" ]; then
-    par_string=" -lr 0.4038 -mfw 0.9512 -ew 0.8947 -sw 0.0636 -e 0.8598 "
+    par_string=" -lr 0.0479 -mfw 0.7958 -ew 0.3777 -sw 0.4522 -e 0.8495 "
 elif [ "$bandit" = "epsilongreedy" ] && [ "$reward" = "r2" ]; then
-    par_string=" -lr 0.0973 -mfw 0.3333 -ew 0.0852 -sw 0.0343 -c 2.9671 "
+    par_string=" -lr 0.7446 -e 0.2997 "
 elif [ "$bandit" = "ucb" ] && [ "$reward" = "r1" ]; then
-    par_string=" -lr 0.492 -mfw 0.5589 -ew 0.4476 -sw 0.9639 -c 4.4624 "
+    par_string=" -lr 0.2879 -mfw 0.8656 -ew 0.344 -sw 0.0752 -c 3.1753 "
 elif [ "$bandit" = "ucb" ] && [ "$reward" = "r2" ]; then
-    par_string=" -lr 0.0973 -mfw 0.3333 -ew 0.0852 -sw 0.0343 -c 2.9671 "
+    par_string=" -lr 0.8245 -c 3.5174 "
 fi
 
 launch_solver="java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
