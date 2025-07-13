@@ -104,6 +104,9 @@ case class Solver(cspModel: Model, in: SolverInput) {
 
       case "random" => new RandomCombinator(neighList)
 
+      case "roundrobin" =>
+        roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
+
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(neighList)
