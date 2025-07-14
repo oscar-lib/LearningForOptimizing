@@ -10,7 +10,7 @@
 #
 # Number of tasks in the array:
 # E.g. if your input file has 486 lines:
-#SBATCH --array=0-5669
+#SBATCH --array=0-485
 #
 # If you want to limit how many tasks run concurrently, use e.g. "--array=0-399%20"
 # That means "up to 20 tasks at a time, out of the array of 400."

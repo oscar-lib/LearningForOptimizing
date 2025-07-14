@@ -34,10 +34,10 @@ CONFIG_PARAMS=$*
 STDOUT=c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stdout
 STDERR=c${CONFIG_ID}-${INSTANCE_ID}-${SEED}.stderr
 
-. /gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing/setup.sh
+# . /gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing/setup.sh
 # Now we can call ACOTSP by building a command line with all parameters for it
 #echo "$EXE solveInstance ${FIXED_PARAMS} --input $INSTANCE  --seed $SEED ${CONFIG_PARAMS}"
-$EXE solveInstance --timeout 300 --verbosity 0 --problem pdptw --input $INSTANCE  --seed $SEED ${CONFIG_PARAMS} 1> $STDOUT 2> $STDERR
+$EXE --timeout 300 --verbosity 0 --problem pdptw --input $INSTANCE  --seed $SEED ${CONFIG_PARAMS} 1> $STDOUT 2> $STDERR
 
 # The output of the candidate $CONFIG_ID should be written in the file 
 # c${CONFIG_ID}.stdout (see target runner for ACOTSP).

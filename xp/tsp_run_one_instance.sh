@@ -1,3 +1,4 @@
+#!/bin/bash
 # solves one TSP instance
 # usage: ./script [instance] [bandit] [reward] [timeout]
 # example: ./xp/tsp_run_one_instance.sh examples/tsp/tsplib/att48.tsp epsilongreedy r1 5
@@ -19,7 +20,7 @@ elif [ "$bandit" = "ucb" ] && [ "$reward" = "r2" ]; then
 fi
 
 launch_solver="java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
-output=`$launch_solver --problem tsp --input ${instance} --timeout ${timeout} --bandit ${bandit} --reward ${reward} --verbosity 0 ${par_string}"
+output=`$launch_solver --problem tsp --input ${instance} --timeout ${timeout} --bandit ${bandit} --reward ${reward} --verbosity 0 ${par_string}`
 # post process to extract only the relevant information
 unroutedNodes=$(echo "$output" | grep 'Unrouted nodes' | awk -F': ' '{print $2}')
 travelLength=$(echo "$output" | grep 'Tour length' | awk -F': ' '{print $2}')

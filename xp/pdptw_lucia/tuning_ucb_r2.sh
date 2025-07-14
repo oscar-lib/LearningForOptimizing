@@ -6,8 +6,8 @@
 #
 #SBATCH --ntasks=1
 #SBATCH --time=12:00:00
-#SBATCH --cpus-per-task=15
-#SBATCH --mem-per-cpu=16G
+#SBATCH --cpus-per-task=8
+#SBATCH --mem-per-cpu=30G
 
 PROBLEM="pdptw"
 ALGO="ucb"
@@ -26,5 +26,5 @@ SCENARIO=$IRACE_DIR/scenario-$PROBLEM-$ALGO-$REWARD.txt
 TARGET_RUNNER=$IRACE_DIR/target-runner-$PROBLEM
 TRAIN_INSTANCES="$DATA_DIR"/$PROBLEM/training$TRAINING_SIZE.txt
 
-srun irace --parallel 15 -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --train-instances-file "$TRAIN_INSTANCES"
+srun irace --parallel 8 -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --train-instances-file "$TRAIN_INSTANCES"
 

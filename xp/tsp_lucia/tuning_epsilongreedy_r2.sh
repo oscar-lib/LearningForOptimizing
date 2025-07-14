@@ -5,9 +5,9 @@
 #SBATCH --error=logs/irace_tsp_epsilongreedy_r2.err   # stderr log for the task
 #
 #SBATCH --ntasks=1
-#SBATCH --time=06:00:00
-#SBATCH --cpus-per-task=32
-#SBATCH --mem-per-cpu=5G
+#SBATCH --time=12:00:00
+#SBATCH --cpus-per-task=16
+#SBATCH --mem-per-cpu=10G
 
 PROBLEM="tsp"
 ALGO="epsilongreedy"
@@ -26,5 +26,5 @@ SCENARIO=$IRACE_DIR/scenario-$PROBLEM-$ALGO-$REWARD.txt
 TARGET_RUNNER=$IRACE_DIR/target-runner-$PROBLEM
 TRAIN_INSTANCES="$DATA_DIR"/$PROBLEM/training$TRAINING_SIZE.txt
 
-srun irace --parallel 32 -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --train-instances-file "$TRAIN_INSTANCES"
+srun irace --parallel 16 -s "$SCENARIO" --target-runner "$TARGET_RUNNER" --train-instances-file "$TRAIN_INSTANCES"
 
