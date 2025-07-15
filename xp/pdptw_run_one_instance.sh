@@ -7,32 +7,28 @@ bandit=$2
 reward=$3
 timeout=$4
 
-PREFIX="/gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing"
+# PREFIX="/gpfs/home/acad/ulb-qsec/yanneke/LearningForOptimizing"
 
-. ${PREFIX}/setup.sh
+# . ${PREFIX}/setup.sh
 
 par_string=""
 
 # Results of the irace fine tuning
 if [ "$bandit" = "epsilongreedy" ] && [ "$reward" = "r1" ]; then
-    par_string=" -lr 0.5309 -mfw 0.755 -ew 0.606 -sw 0.3539 -e 0.1484 "
+    par_string=" -lr 0.1664 -mfw 0.4774 -ew 0.3024 -sw 0.7345 -e 0.0861 "
 elif [ "$bandit" = "epsilongreedy" ] && [ "$reward" = "r2" ]; then
-    par_string=" -lr 0.0973 -mfw 0.3333 -ew 0.0852 -sw 0.0343 -c 2.9671 "
+    par_string=" -lr 0.8254 -e 0.0056 "
 elif [ "$bandit" = "ucb" ] && [ "$reward" = "r1" ]; then
-    par_string=" -lr 0.6412 -mfw 0.2131 -ew 0.3275 -sw 0.2214 -c 3.723 "
+    par_string=" -lr 0.717 -mfw 0.9835 -ew 0.6747 -sw 0.5507 -c 1.2658 "
 elif [ "$bandit" = "ucb" ] && [ "$reward" = "r2" ]; then
-    par_string=" -lr 0.0973 -mfw 0.3333 -ew 0.0852 -sw 0.0343 -c 2.9671 "
+    par_string=" -lr 0.2267 -c 3.7874 "
 elif [ "$bandit" = "dqn" ]; then
   par_string=" --learningRate 0.0167 --epsilon 0.0644 --batchSize 117 --ddqn false --clipping 10.0"
   #par_string=" --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn true --clipping 5.0" # Previous best parameters
-else
-  echo "usage: ./script [instance] [bandit] [reward] [timeout]"
-  echo "example: ./xp/pdptw_run_one_instance.sh examples/pdptw/pdptw_100/lc101.txt epsilongreedy r1 1"
-  exit 1
 fi
 
 
-launch_solver="java -jar ${PREFIX}/target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
+launch_solver="java -jar target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
 output=`$launch_solver --problem pdptw --input ${instance} --timeout ${timeout} --bandit ${bandit} --verbosity 1 --reward ${reward} ${par_string}`
 # post process to extract only the relevant information
 unroutedNodes=$(echo "$output" | grep 'Unrouted nodes' | awk -F': ' '{print $2}')
