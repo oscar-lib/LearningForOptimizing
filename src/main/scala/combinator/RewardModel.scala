@@ -193,3 +193,10 @@ class LogGain extends RewardModel {
     }
   }
 }
+
+class Gain extends RewardModel {
+  override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
+    val profiler = NeighborhoodUtils.getProfiler(neighborhood)
+    profiler._lastCallGain.toDouble
+  }
+}

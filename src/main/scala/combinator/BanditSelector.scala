@@ -42,7 +42,7 @@ abstract class BanditSelector(
   learningScheme: LearningScheme = AfterEveryMove,
   seed: Int = 42,
   learningRate: Double = 0.1,
-  protected val rewardModel: RewardModel = new OriginalRewardModel()
+  protected var rewardModel: RewardModel = new OriginalRewardModel()
 ) extends NeighborhoodCombinator(neighborhoods: _*) {
 
   private val _profiler: SelectionProfiler = new SelectionProfiler(this, neighborhoods)
@@ -119,6 +119,10 @@ abstract class BanditSelector(
     */
   def reward(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     this.rewardModel(runStat, neighborhood)
+  }
+
+  def setRewardModel(rewardModel: RewardModel) : Unit = {
+    this.rewardModel = rewardModel
   }
 
   /** Minimum value that can be set for the weight of a neighborhood. No neighborhood can have a

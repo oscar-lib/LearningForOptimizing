@@ -77,8 +77,13 @@ case class Solver(cspModel: Model, in: SolverInput) {
 
 //      case "epsilongreedy" => new EpsilonGreedyBandit(neighList)
 
-      case "epsilongreedy" =>
-        new EpsilonGreedyBanditNew(neighList, in)
+      case "epsilongreedy" => {
+        val b = new EpsilonGreedyBanditNew(neighList, in)
+        if (in.objChangeReward) {  // use obj change instead of log obj change for the csp
+          b.setRewardModel(new Gain())
+        }
+        b
+      }
 
       case "dqn" =>
         new StatefulCombinator(
@@ -95,8 +100,13 @@ case class Solver(cspModel: Model, in: SolverInput) {
           objective = obj
         )
 
-      case "ucb" =>
-        new UCBNew(neighList, in)
+      case "ucb" => {
+        val b = new UCBNew(neighList, in)
+        if (in.objChangeReward) { // use obj change instead of log obj change for the csp
+          b.setRewardModel(new Gain())
+        }
+        b
+      }
 
       case "bestslopefirst" => bestSlopeFirst(neighList)
 
