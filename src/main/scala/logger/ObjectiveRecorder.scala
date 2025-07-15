@@ -44,7 +44,10 @@ class ObjectiveRecorder(objective: Objective, getRealObjective: Function[Long, O
       oscarObjectiveTimeStamp.append((elapsedTimeSeconds, currentValue))
       val realObjective = getRealObjective(currentValue)
       realObjective match {
-        case Some(value) => realObjectiveTimeStamp.append((elapsedTimeSeconds, value))
+        case Some(value) => {
+          if (realObjectiveTimeStamp.isEmpty || value < realObjectiveTimeStamp.last._2)
+            realObjectiveTimeStamp.append((elapsedTimeSeconds, value))
+        }
         case None        =>
       }
     }
