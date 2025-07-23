@@ -4018,3 +4018,16 @@ examples/csp/csp_300/carseq_300_8_20_45.txt,dqn-pretrained-csp-300,300,14,300.00
 examples/csp/csp_300/carseq_300_8_20_40.txt,dqn-pretrained-csp-300,300,4,300.000
 examples/csp/csp_300/carseq_300_8_20_45.txt,dqn-pretrained-csp-300,300,1,300.000
 examples/csp/csp_300/carseq_300_8_20_40.txt,dqn-pretrained-csp-300,300,1,300.000
+examples/csp/csp_300/carseq_300_8_20_45.txt,dqn-pretrained-csp-300,300,0,193.167
+examples/csp/csp_300/carseq_300_8_20_40.txt,dqn-pretrained-csp-300,300,1,300.000
+examples/csp/csp_300/carseq_300_8_20_45.txt,dqn-pretrained-csp-300,300,8,300.000
+examples/csp/csp_300/carseq_300_8_20_40.txt,dqn-pretrained-csp-300,300,1,300.000
+examples/csp/csp_300/carseq_300_8_20_45.txt,dqn-pretrained-csp-300,300,1,300.000
+examples/csp/csp_300/carseq_300_8_20_40.txt,dqn-pretrained-csp-300,300,381,300.000
+examples/csp/csp_300/carseq_300_8_20_45.txt,dqn-pretrained-csp-300,300,396,300.000
+examples/csp/csp_300/carseq_300_8_20_40.txt,dqn-pretrained-csp-300,300,0,288.926
+examples/csp/csp_300/carseq_300_8_20_45.txt,dqn-pretrained-csp-300,300,1,300.000
+examples/csp/csp_300/carseq_300_8_20_40.txt,dqn-pretrained-csp-300,300,0,82.041
+examples/csp/csp_300/carseq_300_8_20_45.txt,dqn-pretrained-csp-300,300,1,300.000
+examples/csp/csp_300/carseq_300_8_20_40.txt,dqn-pretrained-csp-300,300,2,300.000
+examples/csp/csp_300/carseq_300_8_20_45.txt,dqn-pretrained-csp-300,300,1,300.000
