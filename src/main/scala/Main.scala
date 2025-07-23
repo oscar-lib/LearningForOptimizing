@@ -42,7 +42,7 @@ object Main extends App {
     efficiencyWeight: Double = 0.2,
     moveFoundWeight: Double = 0.4,
     epsilon: Double = 0.7,
-    objChangeReward: Boolean = false,
+    rewardType: String = "r1",
     confidence: Double = 1,
     debug: Boolean = false,
     batchSize: Int = 32,
@@ -208,14 +208,17 @@ object Main extends App {
           .text(
             "Set the reward to be used\n" +
               "    - r1 : weighted sum of move found, efficiency, time spend\n" +
-              "    - r2 : log of the change on the objective\n"
+              "    - r2 : change on the objective (in log space for VRP)\n"
           )
-          .action((x, c) =>
+          .action((x, c) => {
+            if (x != "r1" && x != "r2") {
+              throw new Error(s"Invalid reward type: $x. Valid values are 'r1' and 'r2'.");
+            }
             c match {
-              case conf: SolveInstanceConfig => conf.copy(objChangeReward = x.equals("r2"))
+              case conf: SolveInstanceConfig => conf.copy(rewardType = x)
               case _                         => throw new Error("Unexpected Error")
             }
-          ),
+          }),
         opt[Double]("epsilon")
           .abbr("e")
           .text("Set the initial value for the main parameter of epsilon-greedy (default: 0.7)")
@@ -639,7 +642,7 @@ object Main extends App {
             efficiencyWeight = i.efficiencyWeight,
             moveFoundWeight = i.moveFoundWeight,
             epsilon = i.epsilon,
-            i.objChangeReward,
+            rewardType = i.rewardType,
             confidence = i.confidence,
             debug = i.debug,
             device = i.device,
@@ -650,7 +653,7 @@ object Main extends App {
             ddqn = i.ddqn,
             batchSize = i.batchSize,
             clipping = i.clipping,
-            i.printHistory
+            printHistory = i.printHistory
           )
           i.problem match {
             case "csp" =>

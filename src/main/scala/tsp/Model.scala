@@ -1,6 +1,6 @@
 package tsp
 
-import oscar.cbls.{CBLSIntVar, Objective, Store, cardinality}
+import oscar.cbls.{cardinality, CBLSIntVar, Objective, Store}
 import oscar.cbls.business.routing.invariants.global.RouteLength
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.core.objective.CascadingObjective
@@ -15,12 +15,11 @@ object Model {
 }
 
 class Model(val problem: Problem) {
-
   // city 0 is considered as the depot
-  private val v                          = 1;
+  private val v = 1;
   // all nodes in the problem, including the depot
-  private val n: Int                     = 0 + problem.nCities
-  lazy val tsp                        = new VRP(new Store(), n, v, debug = false)
+  private val n: Int = 0 + problem.nCities
+  lazy val tsp       = new VRP(new Store(), n, v, debug = false)
   // distance between cities
   lazy val distanceMatrix: Array[Array[Long]] =
     Array.tabulate(n)(from => {
@@ -39,17 +38,21 @@ class Model(val problem: Problem) {
 
   lazy val objectiveFunction: Objective = generateObjectiveFunction(tsp: VRP)
 
-  /**
-   * Generates an objective function, minimizing the number of unrouted nodes and the traveled distance
-   * @param vrp routing problem to optimize
-   * @return objective function minimizing the number of unrouted nodes and the traveled distance
-   */
+  /** Generates an objective function, minimizing the number of unrouted nodes and the traveled
+    * distance
+    * @param vrp
+    *   routing problem to optimize
+    * @return
+    *   objective function minimizing the number of unrouted nodes and the traveled distance
+    */
   private def generateObjectiveFunction(vrp: VRP): Objective = {
     // To avoid empty route
     val unroutedNodePenalty = 1000000000
     // Cascading : if the first strong constraint is violated, no need to continue
-    val obj = CascadingObjective(Sum2(nUnroutedInvariant * unroutedNodePenalty, routeLengthInvariant))
-    //val obj = CascadingObjective(nUnroutedInvariant * unroutedNodePenalty, routeLengthInvariant)
+    val obj = CascadingObjective(
+      Sum2(nUnroutedInvariant * unroutedNodePenalty, routeLengthInvariant)
+    )
+    // val obj = CascadingObjective(nUnroutedInvariant * unroutedNodePenalty, routeLengthInvariant)
     vrp.m.close()
     obj
   }

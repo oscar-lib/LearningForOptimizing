@@ -5,24 +5,24 @@ import oscar.cbls.core.search.Neighborhood
 import scala.collection.mutable
 
 sealed abstract class RewardModel {
-  protected var maxSlope: Double           = 1.0 // stores (and updates) the maximum slope ever observed
+  protected var maxSlope: Double = 1.0 // stores (and updates) the maximum slope ever observed
 
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
   def apply(prevObj: Long, newObj: Long): Double
 
   /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
-   * one
-   *
-   * @param runStat
-   *   statistics from a performed move
-   * @return
-   *   reward in [0, 1]
-   */
+    * one
+    *
+    * @param runStat
+    *   statistics from a performed move
+    * @return
+    *   reward in [0, 1]
+    */
   protected def slopeReward(runStat: NeighborhoodStats): Double = {
     val slope = Math.abs(runStat.slope)
     this.maxSlope = Math.max(this.maxSlope, slope)
     slope / maxSlope
-    //slope
+    // slope
   }
 }
 
@@ -34,7 +34,7 @@ class OriginalRewardModel(
   /** weight rewarding the slope */
   wSlope: Double = 0.4
 ) extends NormalizedWindowedSlope(30) {
-  private var maxRunTimeNano: Long = 1   // max run time experienced by a neighborhood
+  private var maxRunTimeNano: Long = 1 // max run time experienced by a neighborhood
 
   /** Gives a reward in [0, 1] based on finding a move. 1 means that a move was found, 0 otherwise
     *
@@ -83,13 +83,19 @@ class SlopeReward extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     slopeReward(runStat)
   }
+
+  override def apply(prevObj: Long, newObj: Long): Double = {
+    throw new UnsupportedOperationException(
+      "This method is not supported in SlopeReward. Use apply(NeighborhoodStats, Neighborhood) instead."
+    )
+  }
 }
 
-/**
- * Slope reward, normalized by the maximum slope over the last X iterations
- *
- * @param windowSize number of past slopes retained for computing the maximum slope
- */
+/** Slope reward, normalized by the maximum slope over the last X iterations
+  *
+  * @param windowSize
+  *   number of past slopes retained for computing the maximum slope
+  */
 class NormalizedWindowedSlope(windowSize: Int) extends RewardModel {
   private val window: mutable.Queue[Double] = mutable.Queue.empty
 
@@ -195,10 +201,9 @@ class NormalizedWindowedMeanGain(windowSize: Int) extends NormalizedGain {
   }
 }
 
-
 /** Returns the log_10 of the gain of the last move. In the case of negative gains, returns
- * -log_10(-gain) to have a consistent negative reward.
- */
+  * -log_10(-gain) to have a consistent negative reward.
+  */
 class LogGain extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
@@ -225,19 +230,15 @@ class LogGain extends RewardModel {
   }
 }
 
-class ObjectiveDifference extends RewardModel {
-  override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
-    return NeighborhoodUtils.getProfiler(neighborhood)._lastCallGain.toDouble
-  }
-
-  override def apply(prevObj: Long, newObj: Long): Double = {
-    return (newObj - prevObj).toDouble
-  }
-}
-
+/** Difference in objective from the previous solution to the new one.
+  */
 class Gain extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
     profiler._lastCallGain.toDouble
+  }
+
+  override def apply(prevObj: Long, newObj: Long): Double = {
+    return (newObj - prevObj).toDouble
   }
 }

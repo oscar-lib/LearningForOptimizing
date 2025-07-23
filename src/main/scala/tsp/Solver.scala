@@ -2,17 +2,22 @@ package tsp
 
 import combinator.{BanditSelector, EpsilonGreedyBanditNew, RandomCombinator, UCBNew}
 import logger.{MoveRecorder, ObjectiveRecorder}
-import oscar.cbls.{Objective, bestSlopeFirst, roundRobin}
+import oscar.cbls.{bestSlopeFirst, roundRobin, Objective}
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.core.search.Neighborhood
 import util.SolverInput
 
 import java.nio.file.Paths
 import scala.concurrent.duration.Duration
+import combinator.OriginalRewardModel
+import combinator.Gain
+import bridge.MessageType.REWARD
+import oscar.cbls.business.routing.display
+import combinator.LogGain
 
 case class Solver(oscarModel: Model, in: SolverInput) {
 
-  private val tsp: VRP       = oscarModel.tsp // problem to solve
+  private val tsp: VRP       = oscarModel.tsp               // problem to solve
   private val obj: Objective = oscarModel.objectiveFunction // corresponding objective function
 
   // neighborhoods suited for optimizing the problem
@@ -30,19 +35,27 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       simpleNeighborhoods.moveOneNode(10),
       simpleNeighborhoods.twoOpt(10)
     )
+    val rewardModel = in.rewardType.toLowerCase() match {
+      case "r1" =>
+        new OriginalRewardModel(
+          wSol = in.moveFoundWeight,
+          wEff = in.efficiencyWeight,
+          wSlope = in.slopeWeight
+        )
+      case "r2" => new LogGain()
+      case _ =>
+        throw new IllegalArgumentException(
+          s"Unknown reward type: ${in.rewardType}. Supported types are: r1, r2."
+        )
+    }
 
     // set the bandit according to the user input
-    var search : Neighborhood = in.bandit.toLowerCase() match {
-      case "epsilongreedy" =>
-        new EpsilonGreedyBanditNew(neighList, in)
-      case "random" =>
-        new RandomCombinator(neighList)
-      case "ucb" =>
-        new UCBNew(neighList, in)
-      case "bestslopefirst" =>
-        bestSlopeFirst(neighList)
-      case "roundrobin" =>
-        roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
+    var search: Neighborhood = in.bandit.toLowerCase() match {
+      case "epsilongreedy"  => new EpsilonGreedyBanditNew(neighList, in, rewardModel)
+      case "random"         => new RandomCombinator(neighList)
+      case "ucb"            => new UCBNew(neighList, in, rewardModel)
+      case "bestslopefirst" => bestSlopeFirst(neighList)
+      case "roundrobin"     => roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(neighList)
@@ -71,8 +84,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       oscarModel.objectiveFunction,
       _ => {
         if (tsp.unrouted.value.nonEmpty)
-          None // unrouted nodes, does not correspond to a real solution
-        else   // all nodes are routed, returns the length of the tour
+          None  // unrouted nodes, does not correspond to a real solution
+        else    // all nodes are routed, returns the length of the tour
           Some( // divide by multiplier factor to get back the original double values
             oscarModel.routeLengthInvariant.value.toDouble / oscarModel.problem.multiplierFactor
           )
@@ -93,7 +106,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     println(oscarModel.toString)
     println("bestObj=" + oscarModel.objectiveFunction.value)
     // retrieve the best known solution and compute the gap over time compared to it
-    val instanceName = Paths.get(fileName).getFileName.toString.stripSuffix(".xml").stripSuffix(".tsp")
+    val instanceName =
+      Paths.get(fileName).getFileName.toString.stripSuffix(".xml").stripSuffix(".tsp")
     val currentDirectory = System.getProperty("user.dir")
     val rootDir          = currentDirectory.split("LearningForOptimizing")(0)
     val bestKnownSolution =
@@ -101,9 +115,13 @@ case class Solver(oscarModel: Model, in: SolverInput) {
         .getBestKnownSolution(rootDir + "/LearningForOptimizing/bks/tsp_bks.csv", instanceName)
         .getOrElse(0.0)
     val realSolutionOverTime = recorder.realObjectiveTimeStamp
-    println(f"solOverTime=" + realSolutionOverTime.map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)").mkString("[", "-", "]"))
+    println(
+      f"solOverTime=" + realSolutionOverTime
+        .map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)")
+        .mkString("[", "-", "]")
+    )
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
-    println(f"integralPrimalGap=$integralPrimalGap%.3f".replace(',','.'))
+    println(f"integralPrimalGap=$integralPrimalGap%.3f".replace(',', '.'))
     println(f"history=" + history.toString)
   }
 

@@ -149,15 +149,20 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       simpleNeighborhoods.segmentExchanges(pdptw.n)
 //      simpleNeighborhoods.segmentExchanges(pdptw.n, best = true)
     )
-    var bandit = in.bandit.toLowerCase() match {
-      case "epsilongreedy" =>
-        new EpsilonGreedyBanditNew(neighList, in) onExhaustRestartAfter (
-          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-          0,
-          obj,
-          minRestarts = if (withTimeout) Int.MaxValue else 15
+    val rewardModel = in.rewardType.toLowerCase() match {
+      case "r1" =>
+        new OriginalRewardModel(
+          wSol = in.moveFoundWeight,
+          wEff = in.efficiencyWeight,
+          wSlope = in.slopeWeight
         )
-      case "dqn" => {
+      case "r2" => new LogGain()
+      case _ =>
+        throw new IllegalArgumentException(s"Invalid reward type: ${in.rewardType}")
+    }
+    var bandit: Neighborhood = in.bandit.toLowerCase() match {
+      case "epsilongreedy" => new EpsilonGreedyBanditNew(neighList, in, rewardModel)
+      case "dqn" =>
         new StatefulCombinator(
           neighList,
           this.oscarModel,
@@ -173,62 +178,21 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           acceptanceCriterion = in.acceptanceCriterion,
           loadFrom = in.loadFrom,
           saveTo = in.saveTo,
-          training = in.training
-        ) onExhaustRestartAfter (
-          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-          0,
-          obj,
-          minRestarts = if (withTimeout) Int.MaxValue else 15
+          training = in.training,
+          rewardModel = rewardModel
         )
-      }
-      // case "ppo" => {
-      //   new StatefulCombinator(
-      //     neighList,
-      //     this.oscarModel.lilimProblem(),
-      //     this.oscarModel.pdpProblem,
-      //     debug = in.debug,
-      //     algo = RLAlgorithm.PPO
-      //   ) onExhaustRestartAfter (
-      //     simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-      //     0,
-      //     obj,
-      //     minRestarts = if (withTimeout) Int.MaxValue else 15
-      //   )
-      // }
-      case "ucb" =>
-        new UCBNew(neighList, in) onExhaustRestartAfter (
-          simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
-          0,
-          obj,
-          minRestarts = if (withTimeout) Int.MaxValue else 15
-        )
-      case "bestslopefirst" =>
-//        println("Using bestSlopeFirst")
-        bestSlopeFirst(neighList) onExhaustRestartAfter (simpleNeighborhoods.emptyMultiplesVehicle(
-          pdptw.v / 10
-        ), 0, obj,
-        minRestarts = if (withTimeout) Int.MaxValue else 15)
-//      case "bestslopefirstnew" =>
-//        new BestSlopeFirstNew(neighList) onExhaustRestartAfter (simpleNeighborhoods
-//          .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
-//        minRestarts = if (withTimeout) Int.MaxValue else 15)
-      case "random" =>
-        new RandomCombinator(neighList) onExhaustRestartAfter (simpleNeighborhoods
-          .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
-        minRestarts = if (withTimeout) Int.MaxValue else 15)
-      case "roundrobin" =>
-        roundRobin(neighList.zip((0 to neighList.length).map(i => 1))) onExhaustRestartAfter (simpleNeighborhoods
-          .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
-          minRestarts = if (withTimeout) Int.MaxValue else 15)
-
-      case other =>
-        throw new IllegalArgumentException(s"Invalid bandit specified: $other")
-        println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
-        bestSlopeFirst(neighList) onExhaustRestartAfter (simpleNeighborhoods.emptyMultiplesVehicle(
-          pdptw.v / 10
-        ), 0, obj,
-        minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case "ucb"            => new UCBNew(neighList, in, rewardModel)
+      case "bestslopefirst" => bestSlopeFirst(neighList)
+      case "random"         => new RandomCombinator(neighList)
+      case "roundrobin"     => roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
+      case other => throw new IllegalArgumentException(s"Invalid bandit specified: $other")
     }
+    bandit = bandit onExhaustRestartAfter (
+      simpleNeighborhoods.emptyMultiplesVehicle(pdptw.v / 10),
+      0,
+      obj,
+      minRestarts = if (withTimeout) Int.MaxValue else 15
+    )
 
     val recorder = new ObjectiveRecorder(
       oscarModel.objectiveFunction,

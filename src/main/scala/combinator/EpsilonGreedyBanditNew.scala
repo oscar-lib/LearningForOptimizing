@@ -19,16 +19,17 @@ import oscar.cbls.core.search.Neighborhood
 
 import scala.util.Random
 
-class EpsilonGreedyBanditNew(l: List[Neighborhood], in: SolverInput)
+class EpsilonGreedyBanditNew(l: List[Neighborhood], in: SolverInput, rewardModel: RewardModel)
     extends BanditSelector(
       l,
       learningScheme = AfterEveryMove,
       learningRate = in.learningRate,
-      rewardModel = if (in.objChangeReward) {new LogGain()} else { new OriginalRewardModel(
-        wSol = in.moveFoundWeight,
-        wEff = in.efficiencyWeight,
-        wSlope = in.slopeWeight
-      )}
+      rewardModel = rewardModel
+      // rewardModel = if (in.objChangeReward) {new LogGain()} else { new OriginalRewardModel(
+      //   wSol = in.moveFoundWeight,
+      //   wEff = in.efficiencyWeight,
+      //   wSlope = in.slopeWeight
+      // )}
     ) {
 
   private var t: Int  = 0 // number of times the bandit was called to provide the next neighborhood

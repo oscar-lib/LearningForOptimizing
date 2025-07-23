@@ -15,16 +15,17 @@ package combinator
 import util.SolverInput
 import oscar.cbls.core.search.Neighborhood
 
-class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput)
+class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput, rewardModel: RewardModel)
     extends BanditSelector(
       neighborhoods,
       AfterEveryMove,
       learningRate = in.learningRate,
-      rewardModel = if (in.objChangeReward) {new LogGain()} else { new OriginalRewardModel(
-        wSol = in.moveFoundWeight,
-        wEff = in.efficiencyWeight,
-        wSlope = in.slopeWeight
-      )}
+      rewardModel = rewardModel
+      // rewardModel = if (in.objChangeReward) {new LogGain()} else { new OriginalRewardModel(
+      //   wSol = in.moveFoundWeight,
+      //   wEff = in.efficiencyWeight,
+      //   wSlope = in.slopeWeight
+      // )}
     ) {
 
   private var t: Int = 0 // number of times the bandit was called to provide the next neighborhood

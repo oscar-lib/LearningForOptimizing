@@ -34,17 +34,15 @@ class StatefulCombinator(
   acceptanceCriterion: AcceptanceCriterion,
   loadFrom: Option[String],
   training: Boolean,
+  rewardModel: RewardModel,
   saveTo: Option[String] = None,
   seed: Int = 42
 ) extends BanditSelector(
       neighborhoods: List[Neighborhood],
       learningScheme = AfterEveryMove, // Not used
-      seed: Int,                       // Not used
-      learningRate = 0.0,              // Not used
-      rewardModel = model match {
-        case _: csp.Model   => new ObjectiveDifference()
-        case _: pdptw.Model => new LogGain()
-      }
+      seed = seed,                     // Not used
+      rewardModel = rewardModel,
+      learningRate = 0.0 // Not used
     ) {
 
   private val nActions = neighborhoods.length

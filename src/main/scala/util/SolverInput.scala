@@ -52,7 +52,7 @@ case class SolverInput(
   efficiencyWeight: Double,
   moveFoundWeight: Double,
   epsilon: Double,
-  objChangeReward: Boolean,
+  rewardType: String,
   confidence: Double,
   debug: Boolean,
   training: Boolean,

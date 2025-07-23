@@ -32,15 +32,11 @@ import scala.concurrent.duration.Duration
   *   the remaining input data
   */
 case class Solver(cspModel: Model, in: SolverInput) {
-
-  private val obj: Objective = cspModel.obj
-
-  private val sn = SimpleNeighborhoods(cspModel)
+  private val obj = cspModel.obj
+  private val sn  = SimpleNeighborhoods(cspModel)
 
   def solve(verbosity: Int, display: Boolean, fileName: String, timeout: Int): Unit = {
-
     val withTimeout = timeout < Int.MaxValue
-
     val neighList: List[Neighborhood] =
       List(
         sn.wideningSwapMostViolated(),
@@ -52,10 +48,22 @@ case class Solver(cspModel: Model, in: SolverInput) {
         sn.oneCarMove(),
         sn.oneCarMoveMostViolated()
       )
+    val rewardModel = in.rewardType.toLowerCase() match {
+      case "r1" =>
+        new OriginalRewardModel(
+          wSol = in.moveFoundWeight,
+          wEff = in.efficiencyWeight,
+          wSlope = in.slopeWeight
+        )
+      case "r2" => new Gain()
+      case _ =>
+        throw new IllegalArgumentException(
+          s"Unknown reward type: ${in.rewardType}. Supported types are: r1, r2."
+        )
+    }
 
     val mostViolated = cspModel.mostViolatedCars
     val violated     = cspModel.violatedCars
-
     val restart1: Neighborhood =
       sn.shuffle(indices = Some(mostViolated)) guard (() => mostViolated.value.size > 2)
 
@@ -63,28 +71,10 @@ case class Solver(cspModel: Model, in: SolverInput) {
       sn.shuffle(indices = Some(violated), numOfPositions = Some(5 max violated.value.size / 2))
 
     val restart3: Neighborhood = sn.shuffle(numOfPositions = Some(cspModel.instance.nCars / 2))
-
     val restart4: Neighborhood = sn.shuffle()
 
     val banditNeighborhood: Neighborhood = in.bandit.toLowerCase() match {
-//      case "bandit" => BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
-//
-//      case "banditaftermove" =>
-//        BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
-//
-//      case "banditrollingaverage" =>
-//        BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
-
-//      case "epsilongreedy" => new EpsilonGreedyBandit(neighList)
-
-      case "epsilongreedy" => {
-        val b = new EpsilonGreedyBanditNew(neighList, in)
-        if (in.objChangeReward) { // use obj change instead of log obj change for the csp
-          b.setRewardModel(new Gain())
-        }
-        b
-      }
-
+      case "epsilongreedy" => new EpsilonGreedyBanditNew(neighList, in, rewardModel)
       case "dqn" =>
         new StatefulCombinator(
           neighList,
@@ -101,36 +91,24 @@ case class Solver(cspModel: Model, in: SolverInput) {
           acceptanceCriterion = in.acceptanceCriterion,
           loadFrom = in.loadFrom,
           saveTo = in.saveTo,
-          training = in.training
+          training = in.training,
+          rewardModel = rewardModel
         )
-
-      case "ucb" => {
-        val b = new UCBNew(neighList, in)
-        if (in.objChangeReward) { // use obj change instead of log obj change for the csp
-          b.setRewardModel(new Gain())
-        }
-        b
-      }
-
+      case "ucb"            => new UCBNew(neighList, in, rewardModel)
       case "bestslopefirst" => bestSlopeFirst(neighList)
-
-//      case "bestsslopefirstnew" => new BestSlopeFirstNew(neighList)
-
-      case "random" => new RandomCombinator(neighList)
-
+      case "random"         => new RandomCombinator(neighList)
       case "roundrobin" =>
         roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
-
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(neighList)
     }
 
     var search: Neighborhood = {
-      bandit match {
-        case BanditCombinator(_, _, _, _, _, _, _, _) => bandit
+      banditNeighborhood match {
+        case BanditCombinator(_, _, _, _, _, _, _, _) => banditNeighborhood
         case _ =>
-          bandit
+          banditNeighborhood
             .onExhaustRestartAfter(
               restart1.acceptAll(),
               5,
@@ -192,8 +170,8 @@ case class Solver(cspModel: Model, in: SolverInput) {
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f")
 
-    if (bandit.isInstanceOf[StatefulCombinator]) {
-      bandit.asInstanceOf[StatefulCombinator].close();
+    if (banditNeighborhood.isInstanceOf[StatefulCombinator]) {
+      banditNeighborhood.asInstanceOf[StatefulCombinator].close();
     }
   }
 }
