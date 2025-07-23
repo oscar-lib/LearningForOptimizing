@@ -216,6 +216,10 @@ case class Solver(oscarModel: Model, in: SolverInput) {
         new RandomCombinator(neighList) onExhaustRestartAfter (simpleNeighborhoods
           .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
         minRestarts = if (withTimeout) Int.MaxValue else 15)
+      case "roundrobin" =>
+        roundRobin(neighList.zip((0 to neighList.length).map(i => 1))) onExhaustRestartAfter (simpleNeighborhoods
+          .emptyMultiplesVehicle(pdptw.v / 10), 0, obj,
+          minRestarts = if (withTimeout) Int.MaxValue else 15)
 
       case other =>
         throw new IllegalArgumentException(s"Invalid bandit specified: $other")

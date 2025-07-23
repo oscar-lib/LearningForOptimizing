@@ -52,6 +52,7 @@ case class SolverInput(
   efficiencyWeight: Double,
   moveFoundWeight: Double,
   epsilon: Double,
+  objChangeReward: Boolean,
   confidence: Double,
   debug: Boolean,
   training: Boolean,
@@ -61,5 +62,6 @@ case class SolverInput(
   batchSize: Int,
   ddqn: Boolean,
   clipping: Double,
+  printHistory: Boolean = false,
   device: String
 )

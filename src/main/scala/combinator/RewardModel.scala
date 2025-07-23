@@ -5,33 +5,36 @@ import oscar.cbls.core.search.Neighborhood
 import scala.collection.mutable
 
 sealed abstract class RewardModel {
+  protected var maxSlope: Double           = 1.0 // stores (and updates) the maximum slope ever observed
+
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
   def apply(prevObj: Long, newObj: Long): Double
 
   /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
-    * one
-    *
-    * @param runStat
-    *   statistics from a performed move
-    * @return
-    *   reward in [0, 1]
-    */
-  def slope(runStat: NeighborhoodStats): Double = {
-    val slope = runStat.slope
-    Math.abs(slope)
+   * one
+   *
+   * @param runStat
+   *   statistics from a performed move
+   * @return
+   *   reward in [0, 1]
+   */
+  protected def slopeReward(runStat: NeighborhoodStats): Double = {
+    val slope = Math.abs(runStat.slope)
+    this.maxSlope = Math.max(this.maxSlope, slope)
+    slope / maxSlope
+    //slope
   }
 }
 
 class OriginalRewardModel(
   /** weight rewarding a move being found */
   wSol: Double = 0.4,
-  /* *weight rewarding small execution time */
+  /** weight rewarding small execution time */
   wEff: Double = 0.2,
   /** weight rewarding the slope */
   wSlope: Double = 0.4
-) extends RewardModel {
-  protected var maxSlope             = 1.0 // stores (and updates) the maximum slope ever observed
-  protected var maxRunTimeNano: Long = 1   // max run time experienced by a neighborhood
+) extends NormalizedWindowedSlope(30) {
+  private var maxRunTimeNano: Long = 1   // max run time experienced by a neighborhood
 
   /** Gives a reward in [0, 1] based on finding a move. 1 means that a move was found, 0 otherwise
     *
@@ -66,7 +69,7 @@ class OriginalRewardModel(
     this.maxRunTimeNano = Math.max(this.maxRunTimeNano, runStat.timeNano)
     this.wSol * rewardFoundMove(runStat) +
       this.wEff * rewardExecutionTime(runStat) +
-      this.wSlope * slope(runStat)
+      this.wSlope * slopeReward(runStat)
   }
 
   override def apply(prevObj: Long, newObj: Long): Double = {
@@ -78,7 +81,37 @@ class OriginalRewardModel(
 
 class SlopeReward extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
-    slope(runStat)
+    slopeReward(runStat)
+  }
+}
+
+/**
+ * Slope reward, normalized by the maximum slope over the last X iterations
+ *
+ * @param windowSize number of past slopes retained for computing the maximum slope
+ */
+class NormalizedWindowedSlope(windowSize: Int) extends RewardModel {
+  private val window: mutable.Queue[Double] = mutable.Queue.empty
+
+  override def slopeReward(runStat: NeighborhoodStats): Double = {
+    val slope = Math.abs(runStat.slope)
+    window.enqueue(slope)
+    maxSlope = Math.max(maxSlope, slope)
+    if (window.size > windowSize) {
+      val oldestSlope = window.dequeue()
+      if (oldestSlope == maxSlope) {
+        maxSlope = window.max
+      }
+    }
+    if (maxSlope == 0) {
+      0
+    } else {
+      slope / maxSlope;
+    }
+  }
+
+  override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
+    slopeReward(runStat)
   }
 
   override def apply(prevObj: Long, newObj: Long): Double = {
@@ -162,9 +195,10 @@ class NormalizedWindowedMeanGain(windowSize: Int) extends NormalizedGain {
   }
 }
 
+
 /** Returns the log_10 of the gain of the last move. In the case of negative gains, returns
-  * -log_10(-gain) to have a consistent negative reward.
-  */
+ * -log_10(-gain) to have a consistent negative reward.
+ */
 class LogGain extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
@@ -198,5 +232,12 @@ class ObjectiveDifference extends RewardModel {
 
   override def apply(prevObj: Long, newObj: Long): Double = {
     return (newObj - prevObj).toDouble
+  }
+}
+
+class Gain extends RewardModel {
+  override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
+    val profiler = NeighborhoodUtils.getProfiler(neighborhood)
+    profiler._lastCallGain.toDouble
   }
 }

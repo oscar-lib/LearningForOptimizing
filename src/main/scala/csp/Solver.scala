@@ -66,8 +66,25 @@ case class Solver(cspModel: Model, in: SolverInput) {
 
     val restart4: Neighborhood = sn.shuffle()
 
-    val bandit: Neighborhood = in.bandit.toLowerCase() match {
-      case "epsilongreedy" => new EpsilonGreedyBanditNew(neighList, in)
+    val banditNeighborhood: Neighborhood = in.bandit.toLowerCase() match {
+//      case "bandit" => BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
+//
+//      case "banditaftermove" =>
+//        BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
+//
+//      case "banditrollingaverage" =>
+//        BanditCombinator(neighList, ???, 0, obj, ???) saveBestAndRestoreOnExhaust obj
+
+//      case "epsilongreedy" => new EpsilonGreedyBandit(neighList)
+
+      case "epsilongreedy" => {
+        val b = new EpsilonGreedyBanditNew(neighList, in)
+        if (in.objChangeReward) { // use obj change instead of log obj change for the csp
+          b.setRewardModel(new Gain())
+        }
+        b
+      }
+
       case "dqn" =>
         new StatefulCombinator(
           neighList,
@@ -86,9 +103,24 @@ case class Solver(cspModel: Model, in: SolverInput) {
           saveTo = in.saveTo,
           training = in.training
         )
-      case "ucb"            => new UCBNew(neighList, in)
+
+      case "ucb" => {
+        val b = new UCBNew(neighList, in)
+        if (in.objChangeReward) { // use obj change instead of log obj change for the csp
+          b.setRewardModel(new Gain())
+        }
+        b
+      }
+
       case "bestslopefirst" => bestSlopeFirst(neighList)
-      case "random"         => new RandomCombinator(neighList)
+
+//      case "bestsslopefirstnew" => new BestSlopeFirstNew(neighList)
+
+      case "random" => new RandomCombinator(neighList)
+
+      case "roundrobin" =>
+        roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
+
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(neighList)

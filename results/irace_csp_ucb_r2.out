@@ -1,0 +1,213 @@
+#------------------------------------------------------------------------------
+# irace: An implementation in R of (Elitist) Iterated Racing
+# Version: 4.2.0.b50b134
+# Copyright (C) 2010-2025
+# Manuel Lopez-Ibanez     <manuel.lopez-ibanez@manchester.ac.uk>
+# Jeremie Dubois-Lacoste
+# Leslie Perez Caceres    <leslie.perez.caceres@ulb.ac.be>
+#
+# This is free software, and you are welcome to redistribute it under certain
+# conditions.  See the GNU General Public License for details. There is NO
+# WARRANTY; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+#
+# irace builds upon previous code from the race package:
+#     race: Racing methods for the selection of the best
+#     Copyright (C) 2003 Mauro Birattari
+#------------------------------------------------------------------------------
+# installed at: /gpfs/projects/shared/p_ariac_cetic/miniconda/envs/myr-env/lib/R/library/irace
+# called with: --parallel 32 -s /gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/scenario-csp-ucb-r2.txt --target-runner /gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/target-runner-csp --train-instances-file /gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/examples/csp/trainingall.txt
+# 2025-07-11 11:58:20 CEST: Reading parameter file '/gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/parameters-ucb-r2.txt'.
+# 2025-07-11 11:58:20 CEST: Read 1 configuration(s) from file '/gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/defaults-ucb-r2.txt'
+# 2025-07-11 11:58:20 CEST: Initialization
+# Elitist race
+# Elitist new instances: 1
+# Elitist limit: 2
+# nbIterations: 3
+# minNbSurvival: 3
+# nbParameters: 2
+# seed: 522126648
+# confidence level: 0.95
+# budget: 800
+# mu: 5
+# deterministic: FALSE
+
+# 2025-07-11 11:58:20 CEST: Iteration 1 of 3
+# experimentsUsed: 0
+# remainingBudget: 800
+# currentBudget: 266
+# nbConfigurations: 44
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded.
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|          1|         44|         28|     2.164000000|         44|00:05:08|   NA|  NA|    NA|
+|x|          2|         44|          9|     6.267000000|         88|00:10:02|-0.00|0.50|0.8753|
+|x|          3|         44|          9|     104.1780000|        132|00:10:02|-0.00|0.33|0.6175|
+|x|          4|         44|          9|     153.1335000|        176|00:10:02|-0.00|0.25|0.4716|
+|=|          5|         44|         32|     181.2676000|        220|00:10:02|+0.01|0.21|0.5721|
+|=|          6|         44|         32|     156.1255000|        264|00:05:34|+0.04|0.20|0.6466|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:          32    mean value:      156.1255000
+Description of the best-so-far configuration:
+   .ID. bandit reward learningrate confidence .PARENT.
+32   32    ucb     r2       0.2107     0.5243       NA
+
+# 2025-07-11 12:49:12 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   bandit reward learningrate confidence
+32    ucb     r2       0.2107     0.5243
+4     ucb     r2       0.6170     3.6743
+24    ucb     r2       0.1482     4.4243
+# 2025-07-11 12:49:12 CEST: Iteration 2 of 3
+# experimentsUsed: 264
+# remainingBudget: 536
+# currentBudget: 268
+# nbConfigurations: 40
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded.
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|          7|         40|         54|     5.455000000|         40|00:00:58|   NA|  NA|    NA|
+|x|          5|         40|         77|     4.997500000|         77|00:10:01|+0.23|0.62|0.9659|
+|x|          2|         40|         77|     103.3316667|        114|00:10:01|+0.12|0.42|0.9614|
+|x|          3|         40|         77|     152.4987500|        151|00:10:02|+0.08|0.31|0.7244|
+|=|          1|         40|         54|     132.1214000|        188|00:05:01|+0.02|0.22|0.8333|
+|=|          6|         40|         50|     109.7573333|        225|00:05:36|-0.02|0.15|0.8778|
+|=|          4|         40|         50|     136.9348571|        262|00:10:02|-0.02|0.13|0.7431|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:          50    mean value:      136.9348571
+Description of the best-so-far configuration:
+   .ID. bandit reward learningrate confidence .PARENT.
+50   50    ucb     r2       0.2954     0.8182       32
+
+# 2025-07-11 13:40:57 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   bandit reward learningrate confidence
+50    ucb     r2       0.2954     0.8182
+69    ucb     r2       0.8223     3.5001
+24    ucb     r2       0.1482     4.4243
+# 2025-07-11 13:40:57 CEST: Iteration 3 of 3
+# experimentsUsed: 526
+# remainingBudget: 274
+# currentBudget: 274
+# nbConfigurations: 36
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded.
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|x|          8|         36|        109|     5.551000000|         36|00:05:01|   NA|  NA|    NA|
+|x|          4|         36|        109|     152.7755000|         69|00:10:01|+0.00|0.50|0.4861|
+|x|          7|         36|        113|     105.1910000|        102|00:00:24|-0.20|0.20|0.7313|
+|x|          1|         36|        113|     79.39075000|        135|00:05:01|+0.01|0.26|0.7487|
+|=|          6|         36|        113|     69.02020000|        168|00:05:01|-0.01|0.19|0.7888|
+|=|          3|         36|        113|     107.5168333|        201|00:10:01|-0.01|0.16|0.6555|
+|=|          5|         36|        113|     93.39000000|        234|00:10:01|+0.02|0.16|0.6786|
+|=|          2|         36|        113|     119.2162500|        267|00:10:01|+0.02|0.14|0.5958|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:         113    mean value:      119.2162500
+Description of the best-so-far configuration:
+    .ID. bandit reward learningrate confidence .PARENT.
+113  113    ucb     r2       0.8245     3.5174       69
+
+# 2025-07-11 14:36:34 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+    bandit reward learningrate confidence
+113    ucb     r2       0.8245     3.5174
+95     ucb     r2       0.2830     0.8788
+103    ucb     r2       0.8260     3.5232
+# 2025-07-11 14:36:34 CEST: Stopped because there is not enough budget left to race more than the minimum (3).
+# You may either increase the budget or set 'minNbSurvival' to a lower value.
+# Iteration: 4
+# nbIterations: 4
+# experimentsUsed: 793
+# timeUsed: 0
+# remainingBudget: 7
+# currentBudget: 7
+# number of elites: 3
+# nbConfigurations: 3
+# Total CPU user time: 157124, CPU sys time: 701.992, Wall-clock time: 9493.706
+# 2025-07-11 14:36:34 CEST: Starting post-selection:
+# Configurations selected: 113, 95, 103, 50, 69, 24, 82.
+# Pending instances: 0, 0, 0, 0, 0, 0, 0.
+# 2025-07-11 14:36:34 CEST: seed: 522126648
+# Configurations: 7
+# Available experiments: 7
+# minSurvival: 1
+# Markers:
+     x No test is performed.
+     c Configurations are discarded only due to capping.
+     - The test is performed and some configurations are discarded.
+     = The test is performed but no configuration is discarded.
+     ! The test is performed and configurations could be discarded but elite configurations are preserved.
+     . All alive configurations are elite and nothing is discarded.
+
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+| |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+|.|          1|          7|        113|     1.990000000|          0|00:00:00|   NA|  NA|    NA|
+|.|          5|          7|        113|     5.309500000|          0|00:00:00|-0.64|0.18|1.0378|
+|.|          4|          7|        113|     103.5396667|          0|00:00:00|-0.32|0.12|0.6316|
+|.|          2|          7|        113|     152.6547500|          0|00:00:00|-0.21|0.09|0.4587|
+|.|          7|          7|        113|     123.9584000|          0|00:00:00|-0.18|0.06|0.5327|
+|.|          8|          7|        113|     104.3653333|          0|00:00:00|-0.10|0.09|0.6078|
+|.|          3|          7|        113|     132.3131429|          0|00:00:00|-0.08|0.07|0.5158|
+|.|          6|          7|        113|     119.2162500|          0|00:00:00|-0.02|0.11|0.5345|
+|=|          9|          7|        113|     106.5294444|          7|00:00:29|+0.04|0.15|0.5595|
++-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
+Best-so-far configuration:         113    mean value:      106.5294444
+Description of the best-so-far configuration:
+    .ID. bandit reward learningrate confidence .PARENT.
+113  113    ucb     r2       0.8245     3.5174       69
+
+# 2025-07-11 14:37:04 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+    bandit reward learningrate confidence
+113    ucb     r2       0.8245     3.5174
+95     ucb     r2       0.2830     0.8788
+103    ucb     r2       0.8260     3.5232
+# Total CPU user time: 157228.1, CPU sys time: 706.175, Wall-clock time: 9523.475
+# Best configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+    bandit reward learningrate confidence
+113    ucb     r2       0.8245     3.5174
+95     ucb     r2       0.2830     0.8788
+103    ucb     r2       0.8260     3.5232
+# Best configurations as commandlines (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+113 --bandit ucb --reward r2 -lr 0.8245 -c 3.5174
+95  --bandit ucb --reward r2 -lr 0.283 -c 0.8788
+103 --bandit ucb --reward r2 -lr 0.826 -c 3.5232
+
+
+# Testing of elite configurations: 1 
+# Testing iteration configurations: FALSE 
+# 2025-07-11 14:37:04 CEST: No test instances, skip testing
+
+Resources Used
+
+Total Memory used                        - MEM              : 57GiB
+Total CPU Time                           - CPU_Time         : 3-12:45:52
+Execution Time                           - Wall_Time        : 02:38:56
+total programme cpu time                 - Total_CPU        : 1-19:52:31
+Total_CPU / CPU_Time  (%)                - ETA              : 51%
+Number of alloc CPU                      - NCPUS            : 32
+Number of Mobilized Resources per Job    - NCPUS_EQUIV_PJOB : 86
+Mobilized Resources x Execution Time     - R_Wall_Time      : 9-11:48:16
+CPU_Time / R_Wall_Time (%)               - ALPHA            : 37%
+Energy (Joules)                                             : unknown
+
