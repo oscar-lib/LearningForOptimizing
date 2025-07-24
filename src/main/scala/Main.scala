@@ -254,15 +254,11 @@ object Main extends App {
               case _                         => throw new Error("Unexpected Error")
             }
           ),
-        opt[String]("ddqn")
+        opt[Unit]("ddqn")
           .text("Double q-learning")
           .action((x, c) => {
-            var ddqn = false;
-            if (x == "true") {
-              ddqn = true;
-            }
             c match {
-              case conf: SolveInstanceConfig => conf.copy(ddqn = ddqn)
+              case conf: SolveInstanceConfig => conf.copy(ddqn = true)
               case _                         => throw new Error("Unexpected Error")
             }
           }),

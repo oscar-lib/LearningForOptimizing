@@ -1,0 +1,30 @@
+{
+    "csp": {
+        "epsilongreedy": {
+            "r1": " -lr 0.0479 -mfw 0.7958 -ew 0.3777 -sw 0.4522 -epsilon 0.8495 ",
+            "r2": "-lr 0.7446 -epsilon 0.2997"
+        },
+        "ucb": {
+            "r1": " -lr 0.2879 -mfw 0.8656 -ew 0.344 -sw 0.0752 -c 3.1753 ",
+            "r2": "-lr 0.8245 -c 3.5174 "
+        },
+        "dqn": {
+            "r1": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn true --clipping 5.0",
+            "r2": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn true --clipping 5.0"
+        },
+        "dqn-pretrained-csp-100": {
+            "r1": " --epsilon 0.0 --noTrain --accept=strict-improvement --loadFrom=saved_dqn_csp_100",
+            "r2": " --epsilon 0.0 --noTrain --accept=strict-improvement --loadFrom=saved_dqn_csp_100"
+        },
+        "dqn-pretrained-csp-200": {
+            "r1": " --epsilon 0.0 --noTrain --accept=strict-improvement --loadFrom=saved_dqn_csp_100",
+            "r2": " --epsilon 0.0 --noTrain --accept=strict-improvement --loadFrom=saved_dqn_csp_200"
+        },
+        "dqn-pretrained-csp-300": {
+            "r1": " --epsilon 0.0 --noTrain --accept=strict-improvement --loadFrom=saved_dqn_csp_300",
+            "r2": " --epsilon 0.0 --noTrain --accept=strict-improvement --loadFrom=saved_dqn_csp_300"
+        }
+    },
+    "pdptw": {},
+    "tsp": {}
+}

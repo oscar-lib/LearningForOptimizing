@@ -182,7 +182,9 @@ object NamedPipeBridge {
       command :+= f"--epsilon=$epsilon%.4f"
       command :+= f"--clipping=$clipping%.4f"
       command :+= f"--batch-size=$batchSize"
-      command :+= f"--ddqn=$ddqn"
+      if (ddqn) {
+        command :+= f"--ddqn"
+      }
       command :+= f"--lr=$lr%.4f"
       if (loadFrom.isDefined) {
         command :+= f"--load-from=${loadFrom.get}"

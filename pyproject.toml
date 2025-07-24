@@ -20,6 +20,7 @@ dependencies = [
     "orjson>=3.10.18",
     "pandas>=2.3.0",
     "pyarrow>=20.0.0",
+    "optuna>=4.4.0",
 ]
 
 

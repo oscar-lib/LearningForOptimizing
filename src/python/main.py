@@ -1,5 +1,7 @@
 from typing import Literal, Optional
 import torch
+import random
+import numpy as np
 from runner import run
 import typed_argparse as tap
 from bridge import SocketBridge, NamedPipeBridge, Bridge
@@ -20,12 +22,13 @@ class Args(tap.TypedArgs):
     _clipping: str | float = tap.arg("--clipping", help="Clipping value", default=0.0)
     batch_size: int = tap.arg("--batch-size", help="Batch size", default=32)
     memory_size: int = tap.arg("--memory-size", help="Size of the replay memory", default=1_000)
-    _ddqn: str = tap.arg("--ddqn", help="Use Double DQN", default="false")
+    ddqn: bool = tap.arg("--ddqn", help="Use Double DQN", default=False)
     lr: float = tap.arg("--lr", help="Learning rate", type=float, default=1e-4)
     keepalive: bool = tap.arg("--keepalive", help="Keep the connection alive", default=False)
     save_to: Optional[str] = tap.arg("--save-to", help="Path to save the model", default=None)
     load_from: Optional[str] = tap.arg("--load-from", help="Path to load the model from", default=None)
     no_train: bool = tap.arg("--no-train", help="Whether to train the model or not", default=False)
+    seed: int = tap.arg("--seed", help="Random seed for reproducibility", default=0)
 
     @property
     def clipping(self) -> Optional[float]:
@@ -45,10 +48,6 @@ class Args(tap.TypedArgs):
     @property
     def train(self):
         return not self.no_train
-
-    @property
-    def ddqn(self) -> bool:
-        return self._ddqn.lower() == "true"
 
     @property
     def device(self) -> torch.device:
@@ -85,6 +84,9 @@ class Args(tap.TypedArgs):
 
 def main(args: Args):
     logging.info(f"Starting the runner with arguments {args}:")
+    torch.manual_seed(args.seed)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
     run(args)
 
 
@@ -93,7 +95,7 @@ if __name__ == "__main__":
     logging.basicConfig(
         level=os.getenv("LOG_LEVEL", "INFO").upper(),
         format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler(), logging.FileHandler(f"{datetime.now().isoformat()}.log")],
+        handlers=[logging.StreamHandler(), logging.FileHandler(f"logs/{datetime.now().isoformat()}.log")],
     )
     try:
         tap.Parser(Args).bind(main).run()

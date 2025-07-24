@@ -56,9 +56,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       case "ucb"            => new UCBNew(neighList, in, rewardModel)
       case "bestslopefirst" => bestSlopeFirst(neighList)
       case "roundrobin"     => roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
-      case _ =>
-        println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
-        bestSlopeFirst(neighList)
+      case _ => throw new IllegalArgumentException(s"Unknown bandit type: ${in.bandit}.")
     }
 
     val history = new MoveRecorder()
