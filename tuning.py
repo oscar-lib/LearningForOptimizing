@@ -11,9 +11,10 @@ def run(trial: optuna.Trial):
         bandit="dqn",
         problems_file="examples/csp/trainingall.txt",
         reward="r1",
-        n_jobs=15,
+        n_jobs=18,
         timeout=300,
         n_repeats=3,
+        output_file=None,
         args={
             "learningRate": trial.suggest_float("lr", 1e-5, 1e-2, log=True),
             "batchSize": trial.suggest_int("batchSize", 16, 256),
@@ -35,5 +36,5 @@ if __name__ == "__main__":
         format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
         handlers=[logging.StreamHandler(), logging.FileHandler(f"{datetime.now().isoformat()}.log")],
     )
-    study = optuna.create_study(direction="minimize", storage="sqlite:///csp_dqn.db", load_if_exists=True)
+    study = optuna.create_study(direction="minimize", study_name="CSP - DQN", storage="sqlite:///tuning.db", load_if_exists=True)
     study.optimize(run, n_trials=100)

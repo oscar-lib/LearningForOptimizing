@@ -75,7 +75,7 @@ class MultipleArgs:
     bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"]
     problems_file: str
     reward: Literal["r1", "r2"]
-    output_file: str
+    output_file: Optional[str]
     n_jobs: int
     n_repeats: int
     timeout: int
@@ -88,7 +88,7 @@ class MultipleArgs:
         bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"],
         problems_file: Literal["csp", "tsp", "pdptw"] | str,
         reward: Literal["r1", "r2"],
-        output_file: Optional[str] = None,
+        output_file: Optional[str] = "auto",
         n_jobs: int = 1,
         n_repeats: int = 20,
         timeout: int = 300,
@@ -101,7 +101,7 @@ class MultipleArgs:
         else:
             self.problems_file = problems_file
         self.reward = reward
-        if output_file is None:
+        if output_file == "auto":
             output_file = f"results/{datetime.now().isoformat()}.csv"
         self.output_file = output_file
         self.n_jobs = n_jobs
@@ -195,26 +195,39 @@ def single_run(args: SingleArgs):
 
 def multiple_runs(args: MultipleArgs):
     results = list[RunResult]()
-    with open(args.output_file, "w") as results_file:
+    results_file = None
+    if args.output_file is not None:
+        os.makedirs(os.path.dirname(args.output_file), exist_ok=True)
+        results_file = open(args.output_file, "w")
         results_file.write(RunResult.CSV_HEADER + "\n")
-        with mp.Pool(args.n_jobs) as pool:
-            handles = [pool.apply_async(single_run, (single_args,)) for single_args in args.single_args()]
-            # Collect the results as they become available
-            while len(handles) > 0:
-                to_remove = []
-                for handle in handles:
-                    if handle.ready():
-                        try:
-                            result = handle.get()
-                            results.append(result)
-                            to_remove.append(handle)
+
+    with mp.Pool(args.n_jobs) as pool:
+        handles = [pool.apply_async(single_run, (single_args,)) for single_args in args.single_args()]
+        # Collect the results as they become available
+        dirty = True
+        while len(handles) > 0:
+            if dirty:
+                logging.info(f"Waiting for {len(handles)} results...")
+                dirty = False
+            to_remove = []
+            for handle in handles:
+                if handle.ready():
+                    try:
+                        result = handle.get()
+                        results.append(result)
+                        to_remove.append(handle)
+                        if results_file is not None:
                             results_file.write(result.as_csv() + "\n")
                             results_file.flush()
-                        except Exception as e:
-                            logging.error(f"Error processing result: {e}", exc_info=True)
-                for handle in to_remove:
-                    handles.remove(handle)
-                time.sleep(1)  # Avoid busy waiting
+                    except Exception as e:
+                        logging.error(f"Error processing result: {e}", exc_info=True)
+            for handle in to_remove:
+                dirty = True
+                handles.remove(handle)
+            time.sleep(1)  # Avoid busy waiting
+    if results_file is not None:
+        results_file.close()
+        logging.info(f"Results written to {args.output_file}")
     return results
 
 
