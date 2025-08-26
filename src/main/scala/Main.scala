@@ -14,6 +14,7 @@
 import pdptw.{LiLimProblem, Model => PDPTWModel, Parser => PDPTWParser, Solver => PDPTWSolver}
 import csp.{CarSeqProblem, Model => CSPModel, Parser => CSPParser, Solver => CSPSolver}
 import scopt.OptionParser
+import tsp.{Model => TSPModel, Parser => TSPParser, Problem => TSProblem, Solver => TSPSolver}
 import util.SolverInput
 
 import java.io.File
@@ -53,7 +54,7 @@ object Main extends App {
     efficiencyWeight: Double = 0.2,
     moveFoundWeight: Double = 0.4,
     epsilon: Double = 0.7,
-      confidence: Double = 1
+    confidence: Double = 1
   ) extends Config
 
   private case class SolveAllConfig(
@@ -95,7 +96,8 @@ object Main extends App {
           .text(
             "Use this option to set the type of problem to solve:\n" +
               "    - pdptw : the pickup and delivery problem with time windows\n" +
-              "    - csp   : the car sequencing problem"
+              "    - csp   : the car sequencing problem\n" +
+              "    - tsp   : the traveling salesman problem\n"
           )
           .action((x, c) =>
             c match {
@@ -201,7 +203,7 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(confidence = x)
-              case _                       => throw new Error("Unexpected Error")
+              case _                         => throw new Error("Unexpected Error")
             }
           ),
         opt[Long]("seed")
@@ -456,7 +458,7 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveAllConfig => conf.copy(confidence = x)
-              case _                       => throw new Error("Unexpected Error")
+              case _                    => throw new Error("Unexpected Error")
             }
           ),
         opt[Long]("seed")
@@ -474,6 +476,13 @@ object Main extends App {
     val instanceProblem: LiLimProblem = PDPTWParser(in.file)
     val oscarModel: PDPTWModel        = PDPTWModel(instanceProblem)
     val solver: PDPTWSolver           = PDPTWSolver(oscarModel, in)
+    solver.solve(in.verbosity, in.display, in.file.getName, in.timeout)
+  }
+
+  private def solveTSP(in: SolverInput): Unit = {
+    val instanceProblem: TSProblem = TSPParser(in.file)
+    val oscarModel: TSPModel       = TSPModel(instanceProblem)
+    val solver: TSPSolver          = TSPSolver(oscarModel, in)
     solver.solve(in.verbosity, in.display, in.file.getName, in.timeout)
   }
 
@@ -511,6 +520,8 @@ object Main extends App {
               solveCSP(in)
             case "pdptw" =>
               solvePDPTW(in)
+            case "tsp" =>
+              solveTSP(in)
             case x => throw new Error(s"Invalid problem name: $x")
           }
 
