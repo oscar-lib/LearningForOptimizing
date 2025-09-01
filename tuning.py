@@ -9,9 +9,9 @@ from run_experiments import multiple_runs, MultipleArgs
 def run(trial: optuna.Trial):
     args = MultipleArgs(
         bandit="dqn",
-        problems_file="examples/csp/trainingall.txt",
+        problems_file="examples/csp/training_subset.txt",
         reward="r1",
-        n_jobs=18,
+        n_jobs=16,
         timeout=300,
         n_repeats=3,
         output_file=None,
@@ -37,4 +37,4 @@ if __name__ == "__main__":
         handlers=[logging.StreamHandler(), logging.FileHandler(f"{datetime.now().isoformat()}.log")],
     )
     study = optuna.create_study(direction="minimize", study_name="CSP - DQN", storage="sqlite:///tuning.db", load_if_exists=True)
-    study.optimize(run, n_trials=100)
+    study.optimize(run, n_trials=30)

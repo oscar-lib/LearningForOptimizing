@@ -91,6 +91,7 @@ def main(args: Args):
 
 
 if __name__ == "__main__":
+    os.makedirs("logs", exist_ok=True)
     dotenv.load_dotenv()
     logging.basicConfig(
         level=os.getenv("LOG_LEVEL", "INFO").upper(),

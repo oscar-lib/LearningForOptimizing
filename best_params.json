@@ -9,8 +9,8 @@
             "r2": "-lr 0.8245 -c 3.5174 "
         },
         "dqn": {
-            "r1": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn true --clipping 5.0",
-            "r2": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn true --clipping 5.0"
+            "r1": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn --clipping 5.0",
+            "r2": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn --clipping 5.0"
         },
         "dqn-pretrained-csp-100": {
             "r1": " --epsilon 0.0 --noTrain --accept=strict-improvement --loadFrom=saved_dqn_csp_100",

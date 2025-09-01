@@ -224,7 +224,7 @@ def multiple_runs(args: MultipleArgs):
             for handle in to_remove:
                 dirty = True
                 handles.remove(handle)
-            time.sleep(1)  # Avoid busy waiting
+            time.sleep(0.1)  # Avoid busy waiting
     if results_file is not None:
         results_file.close()
         logging.info(f"Results written to {args.output_file}")
@@ -232,7 +232,8 @@ def multiple_runs(args: MultipleArgs):
 
 
 def main():
-    multiple_runs(MultipleArgs("dqn", "csp", "r1", n_repeats=1, timeout=20, n_jobs=5))
+    args = MultipleArgs("dqn", "csp", "r1", n_repeats=1, timeout=20, n_jobs=2)
+    multiple_runs(args)
 
 
 if __name__ == "__main__":
