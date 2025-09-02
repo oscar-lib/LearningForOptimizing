@@ -201,13 +201,6 @@ def multiple_runs(args: MultipleArgs):
         results_file = open(args.output_file, "w")
         results_file.write(RunResult.CSV_HEADER + "\n")
 
-    r = [
-        single_run(
-            single_args,
-        )
-        for single_args in args.single_args()
-    ]
-    return
     with mp.Pool(args.n_jobs) as pool:
         handles = [pool.apply_async(single_run, (single_args,)) for single_args in args.single_args()]
         # Collect the results as they become available
@@ -228,6 +221,7 @@ def multiple_runs(args: MultipleArgs):
                             results_file.flush()
                     except Exception as e:
                         logging.error(f"Error processing result: {e}", exc_info=True)
+                        to_remove.append(handle)
             for handle in to_remove:
                 dirty = True
                 handles.remove(handle)

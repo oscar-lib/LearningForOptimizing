@@ -44,9 +44,15 @@ class TSP(Problem):
     @staticmethod
     def parse(bdata: bytes):
         data: dict = orjson.loads(bdata)
-        nodes = [Node(num=i, coords=coord) for i, coord in enumerate(data["problem"]["cityCoords"])]
-        n_coords = len(nodes[0].coords)
-        nodes = [Node(0, [0.0] * n_coords, is_depot=True)] + nodes
+        coords = data["problem"]["cityCoords"]
+        n_coords = len(coords[0])
+        # We compute the minimum values for each coordinate to normalize the input such that there is
+        # no negative value for any coordinate
+        mins = [min(coord[i] for coord in coords) for i in range(n_coords)]
+        nodes = [Node(0, mins.copy(), is_depot=True)]
+        for coord in coords:
+            coord = [c - m for c, m in zip(coord, mins)]
+            nodes.append(Node(num=len(nodes), coords=coord))
         return TSP(data["nActions"], nodes)
 
     def build_agent_input(self, data: dict, device: torch.device):

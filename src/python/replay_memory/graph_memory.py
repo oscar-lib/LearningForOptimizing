@@ -17,8 +17,8 @@ class GraphReplayMemory(ReplayMemory):
         actions = torch.tensor([self._actions[i] for i in indices], dtype=torch.long).unsqueeze(-1)
         rewards = torch.tensor([self._rewards[i] for i in indices], dtype=torch.float32)
         dones = torch.tensor([self._dones[i] for i in indices], dtype=torch.bool)
-        available_actions = torch.tensor(np.array([self._obs[i].available_actions for i in indices]), dtype=torch.bool)
-        next_available_actions = torch.tensor(np.array([self._next_obs[i].available_actions for i in indices]), dtype=torch.bool)
+        available_actions = torch.stack([self._obs[i].available_actions for i in indices])
+        next_available_actions = torch.stack([self._next_obs[i].available_actions for i in indices])
         return Batch(
             obs=obs,
             available_actions=available_actions,
