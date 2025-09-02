@@ -1,7 +1,7 @@
 package tsp
 
-import combinator.{BanditSelector, EpsilonGreedyBanditNew, RandomCombinator, UCBNew}
-import logger.{MoveRecorder, ObjectiveRecorder}
+import combinator.{BanditSelector, BestSlopeFirstNew, EpsilonGreedyBanditNew, RandomCombinator, RandomSelector, RoundRobinSelector, UCBNew}
+import logger.{MoveRecorder, ObjectiveRecorder, WeightRecorder}
 import oscar.cbls.{Objective, bestSlopeFirst, roundRobin}
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.core.search.Neighborhood
@@ -36,24 +36,31 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       case "epsilongreedy" =>
         new EpsilonGreedyBanditNew(neighList, in)
       case "random" =>
-        new RandomCombinator(neighList)
+        //new RandomCombinator(neighList)
+        new RandomSelector(neighList)
       case "ucb" =>
         new UCBNew(neighList, in)
       case "bestslopefirst" =>
-        bestSlopeFirst(neighList)
+        //bestSlopeFirst(neighList)
+        new BestSlopeFirstNew(neighList)
       case "roundrobin" =>
-        roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
+        //roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
+        new RoundRobinSelector(neighList)
       case _ =>
         println("warning: invalid bandit specified. Defaulting to bestSlopeFirst")
         bestSlopeFirst(neighList)
     }
 
-    val history = new MoveRecorder()
+    val history = new MoveRecorder(obj)
+    val weightHistory = new WeightRecorder(null)
     if (in.printHistory) {
       search match {
         case b: BanditSelector => {
+          weightHistory.setBanditSelector(b)
           b.addResetCallBack(() => history.notifyReset())
           b.addMoveCallBack((neigh, result) => history.notifySearchResult(neigh, result))
+          b.addResetCallBack(() => weightHistory.registerWeights())
+          b.addMoveCallBack((_, _) => weightHistory.registerWeights())
         }
         case _ => // do nothing
       }
@@ -105,6 +112,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f".replace(',','.'))
     println(f"history=" + history.toString)
+    if (weightHistory.banditSelector != null)
+      println(weightHistory.toString)
   }
 
 }

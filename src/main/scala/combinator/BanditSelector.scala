@@ -99,6 +99,13 @@ abstract class BanditSelector(
     resetCallBack :+= callback
   }
 
+  def weightsCopy() : Array[Double] = {
+    weights.clone()
+  }
+
+  def neighborhoodNames(): List[String] = {
+    neighborhoods.map(n => n.toString())
+  }
 
   /** The method that provides a neighborhood.
     *
@@ -153,7 +160,7 @@ abstract class BanditSelector(
           afterNMoves.resetCounter()
           clearStats()
         }
-      case AfterEveryMove =>
+      case AfterEveryMove | Never =>
     }
   }
 
@@ -201,7 +208,7 @@ abstract class BanditSelector(
           afterNMoves.resetCounter()
           clearStats(neighborhood)
         }
-      case AfterEveryDescent =>
+      case AfterEveryDescent | Never =>
     }
   }
 
@@ -369,6 +376,7 @@ abstract class BanditSelector(
         aggregate(rewardsOnEpisode, neighborhood)
       }
       val newWeight = newWeightFromReward(neighborhood, weights(idx), aggregatedReward)
+      println("new weight for " + neighborhood.toString() + ": " + newWeight)
       setWeight(idx, newWeight)
     }
   }

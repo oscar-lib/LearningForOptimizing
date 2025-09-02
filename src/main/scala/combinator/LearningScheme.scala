@@ -51,3 +51,5 @@ case class AfterNMoves(n: Int) extends LearningScheme {
 /** Learning scheme performed after every descent
   */
 case object AfterEveryDescent extends LearningScheme
+
+case object Never extends LearningScheme

@@ -49,7 +49,7 @@ object NeighborhoodUtils {
   }
 
   def slope(profiler: CommonProfilingData, neighborhood: Neighborhood): Double = {
-    -(profiler.gain * 1000d) / Math.max(profiler.timeSpentMillis, 1)
+    -(profiler._lastCallGain * 1000d) / Math.max(profiler._lastCallDurationNano, 1)
   }
 
   /** Gives the total gain of a neighborhood.
