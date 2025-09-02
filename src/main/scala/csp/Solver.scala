@@ -56,9 +56,10 @@ case class Solver(cspModel: Model, in: SolverInput) {
           wSlope = in.slopeWeight
         )
       case "r2" => new Gain()
+      case "r3" => new LogGain()
       case _ =>
         throw new IllegalArgumentException(
-          s"Unknown reward type: ${in.rewardType}. Supported types are: r1, r2."
+          s"Unknown reward type: ${in.rewardType}. Supported types are: r1, r2, r3."
         )
     }
 

@@ -156,9 +156,12 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           wEff = in.efficiencyWeight,
           wSlope = in.slopeWeight
         )
-      case "r2" => new LogGain()
+      case "r2" => new Gain()
+      case "r3" => new LogGain()
       case _ =>
-        throw new IllegalArgumentException(s"Invalid reward type: ${in.rewardType}")
+        throw new IllegalArgumentException(
+          s"Unknown reward type: ${in.rewardType}. Supported types are: r1, r2, r3."
+        )
     }
     var bandit: Neighborhood = in.bandit.toLowerCase() match {
       case "epsilongreedy" => new EpsilonGreedyBanditNew(neighList, in, rewardModel)

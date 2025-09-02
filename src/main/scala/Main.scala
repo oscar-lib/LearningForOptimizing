@@ -208,11 +208,12 @@ object Main extends App {
           .text(
             "Set the reward to be used\n" +
               "    - r1 : weighted sum of move found, efficiency, time spend\n" +
-              "    - r2 : change on the objective (in log space for VRP)\n"
+              "    - r2 : change on the objective\n" +
+              "    - r3 : change on the objective (in log space)\n"
           )
           .action((x, c) => {
-            if (x != "r1" && x != "r2") {
-              throw new Error(s"Invalid reward type: $x. Valid values are 'r1' and 'r2'.");
+            if (x != "r1" && x != "r2" && x != "r3") {
+              throw new Error(s"Invalid reward type: $x. Valid values are 'r1', 'r2', and 'r3'.");
             }
             c match {
               case conf: SolveInstanceConfig => conf.copy(rewardType = x)
