@@ -29,7 +29,7 @@ object MessageType extends Enumeration {
   final val END_EPISODE     = Value(6)
   final val STATIC_DATA_CSP = Value(7)
   final val TRANSITION      = Value(8)
-
+  final val STATIC_DATA_TSP = Value(9)
 }
 
 class Message(header: Header, body: Array[Byte]) {

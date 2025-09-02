@@ -10,10 +10,9 @@ object Parser {
   // We cannot deal with double within oscar therefore we multiply it by a factor and then divide it again.
   private val multiplierFactor = 1000
 
-  /**
-   * Parses a TSP instance file. This method chooses which specific parser to invoke
-   * based on the file extension.
-   */
+  /** Parses a TSP instance file. This method chooses which specific parser to invoke based on the
+    * file extension.
+    */
   def apply(file: File): Problem = {
     if (file.getName.endsWith("xml")) {
       parseXMLFile(file)
@@ -56,7 +55,8 @@ object Parser {
     }
 
     // Construct the Problem object
-    Problem(nCities, distances, multiplierFactor)
+    throw new NotImplementedError("XML parser does not support coordinates")
+    Problem(Array.empty, distances, multiplierFactor)
   }
 
   def parseTxtFile(file: File): Problem = {
@@ -81,34 +81,39 @@ object Parser {
       }
 
       // Build and return the Problem
-      Problem(nCities, distances, multiplier)
+      throw new NotImplementedError("Txt parser does not support coordinates")
+      // Problem(Array.empty, distances, multiplier)
 
     } finally {
       source.close()
     }
   }
 
-  /**
-   * Parses a TSP instance in TSPLib format:
-   *  - Reads header (NAME, DIMENSION, EDGE_WEIGHT_TYPE, EDGE_WEIGHT_FORMAT, etc.)
-   *  - If EDGE_WEIGHT_TYPE == EXPLICIT and EDGE_WEIGHT_FORMAT == FULL_MATRIX:
-   *      -> Parses the full matrix after EDGE_WEIGHT_SECTION.
-   *  - Otherwise, if e.g. EDGE_WEIGHT_TYPE == EUC_2D or GEO:
-   *      -> Reads NODE_COORD_SECTION and computes distances.
-   *  - Scales each distance by multiplierFactor for integer usage.
-   */
+  /** Parses a TSP instance in TSPLib format:
+    *   - Reads header (NAME, DIMENSION, EDGE_WEIGHT_TYPE, EDGE_WEIGHT_FORMAT, etc.)
+    *   - If EDGE_WEIGHT_TYPE == EXPLICIT and EDGE_WEIGHT_FORMAT == FULL_MATRIX:
+    * -> Parses the full matrix after EDGE_WEIGHT_SECTION.
+    *   - Otherwise, if e.g. EDGE_WEIGHT_TYPE == EUC_2D or GEO:
+    * -> Reads NODE_COORD_SECTION and computes distances.
+    *   - Scales each distance by multiplierFactor for integer usage.
+    */
   def parseTSPLibFile(file: File): Problem = {
     val lines = Source.fromFile(file).getLines().map(_.trim).toList
     if (lines.isEmpty)
       throw new IllegalArgumentException(s"File '${file.getName}' is empty or unreadable.")
 
     // --- 1) Extract header information ---
-    val dimensionLine  = lines.find(_.toUpperCase.startsWith("DIMENSION")).getOrElse("")
-    val ewtLine        = lines.find(_.toUpperCase.startsWith("EDGE_WEIGHT_TYPE")).getOrElse("")
-    val ewfLine        = lines.find(_.toUpperCase.startsWith("EDGE_WEIGHT_FORMAT")).getOrElse("") // may be empty or missing
-    val nCities = dimensionLine.split(":", 2).lift(1).map(_.trim.toInt)
+    val dimensionLine = lines.find(_.toUpperCase.startsWith("DIMENSION")).getOrElse("")
+    val ewtLine       = lines.find(_.toUpperCase.startsWith("EDGE_WEIGHT_TYPE")).getOrElse("")
+    val ewfLine = lines
+      .find(_.toUpperCase.startsWith("EDGE_WEIGHT_FORMAT"))
+      .getOrElse("") // may be empty or missing
+    val nCities = dimensionLine
+      .split(":", 2)
+      .lift(1)
+      .map(_.trim.toInt)
       .getOrElse(throw new IllegalArgumentException("DIMENSION not found or invalid."))
-    val edgeWeightType = ewtLine.split(":", 2).lift(1).map(_.trim.toUpperCase).getOrElse("EUC_2D")
+    val edgeWeightType   = ewtLine.split(":", 2).lift(1).map(_.trim.toUpperCase).getOrElse("EUC_2D")
     val edgeWeightFormat = ewfLine.split(":", 2).lift(1).map(_.trim.toUpperCase).getOrElse("")
 
     // Prepare the distance matrix
@@ -124,23 +129,38 @@ object Parser {
       fillMatrixCoordinates(lines, nCities, edgeWeightType, distances)
     }
 
+    val coordsSectionIdx = lines.indexWhere(_.toUpperCase == "NODE_COORD_SECTION")
+    if (coordsSectionIdx < 0) {
+      throw new NotImplementedError("NODE_COORD_SECTION not found")
+    }
+    val coords: Array[Array[Double]] =
+      lines
+        .slice(coordsSectionIdx + 1, coordsSectionIdx + 1 + nCities)
+        .map { line =>
+          val parts = line.split("\\s+").map(_.trim).drop(1).map(_.toDouble)
+          if (parts.length == 0)
+            throw new IllegalArgumentException(s"Invalid coordinate line: $line")
+          parts
+        }
+        .toArray
+
     // --- 3) Return the resulting Problem ---
-    Problem(nCities, distances, multiplierFactor)
+    Problem(coords, distances, multiplierFactor)
   }
 
   // ==========================================================================
   // (A) EXPLICIT Distance Format
   // ==========================================================================
-  private def fillMatrixExplicit(lines: List[String],
-                                 nCities: Int,
-                                 edgeWeightFormat: String,
-                                 distances: Array[Array[Long]]): Unit = {
+  private def fillMatrixExplicit(
+    lines: List[String],
+    nCities: Int,
+    edgeWeightFormat: String,
+    distances: Array[Array[Long]]
+  ): Unit = {
     // 1. Locate the line "EDGE_WEIGHT_SECTION"
     val idxSection = lines.indexWhere(_.toUpperCase == "EDGE_WEIGHT_SECTION")
     if (idxSection < 0) {
-      throw new IllegalArgumentException(
-        "Cannot find EDGE_WEIGHT_SECTION in an EXPLICIT TSP file."
-      )
+      throw new IllegalArgumentException("Cannot find EDGE_WEIGHT_SECTION in an EXPLICIT TSP file.")
     }
     // 2. Gather all tokens after that line
     val tokens = lines
@@ -193,9 +213,11 @@ object Parser {
   }
 
   /** Parse the entire matrix in row-major order: nCities * nCities tokens. */
-  private def parseFullMatrix(tokens: List[String],
-                              nCities: Int,
-                              distances: Array[Array[Long]]): Unit = {
+  private def parseFullMatrix(
+    tokens: List[String],
+    nCities: Int,
+    distances: Array[Array[Long]]
+  ): Unit = {
     val required = nCities * nCities
     if (tokens.size < required) {
       throw new IllegalArgumentException(
@@ -204,27 +226,28 @@ object Parser {
     }
 
     val numbers = tokens.take(required).map(_.toLong) // no leftover parse
-    var idx = 0
+    var idx     = 0
     for (i <- 0 until nCities; j <- 0 until nCities) {
       distances(i)(j) = numbers(idx) * multiplierFactor
       idx += 1
     }
   }
 
-  /**
-   * Parse a row-wise upper-triangular matrix (with or without diagonals).
-   *
-   * UPPER_ROW means the file lists the edges above the diagonal (i<j) in row order.
-   * e.g. if diagIncluded = false, you skip diagonal, only upper part.
-   * If diagIncluded = true, you include the diagonal as well in that sequence.
-   */
-  private def parseUpperRow(tokens: List[String],
-                            nCities: Int,
-                            distances: Array[Array[Long]],
-                            diagIncluded: Boolean): Unit = {
+  /** Parse a row-wise upper-triangular matrix (with or without diagonals).
+    *
+    * UPPER_ROW means the file lists the edges above the diagonal (i<j) in row order. e.g. if
+    * diagIncluded = false, you skip diagonal, only upper part. If diagIncluded = true, you include
+    * the diagonal as well in that sequence.
+    */
+  private def parseUpperRow(
+    tokens: List[String],
+    nCities: Int,
+    distances: Array[Array[Long]],
+    diagIncluded: Boolean
+  ): Unit = {
     // Number of entries in the upper triangle
     // If diagIncluded, it's nCities*(nCities+1)/2, else it's nCities*(nCities-1)/2
-    val required = if (diagIncluded) nCities*(nCities+1)/2 else nCities*(nCities-1)/2
+    val required = if (diagIncluded) nCities * (nCities + 1) / 2 else nCities * (nCities - 1) / 2
     if (tokens.size < required) {
       throw new IllegalArgumentException(
         s"UPPER_ROW requires $required integers, found ${tokens.size}."
@@ -237,7 +260,7 @@ object Parser {
     for (i <- 0 until nCities) {
       // If diagIncluded => from j=i..(nCities-1)
       // else => from j=i+1..(nCities-1)
-      val start = if (diagIncluded) i else i+1
+      val start = if (diagIncluded) i else i + 1
       for (j <- start until nCities) {
         val value = numbers(idx) * multiplierFactor
         idx += 1
@@ -248,11 +271,13 @@ object Parser {
   }
 
   /** Same as parseUpperRow but for lower-triangular row-wise data. */
-  private def parseLowerRow(tokens: List[String],
-                            nCities: Int,
-                            distances: Array[Array[Long]],
-                            diagIncluded: Boolean): Unit = {
-    val required = if (diagIncluded) nCities*(nCities+1)/2 else nCities*(nCities-1)/2
+  private def parseLowerRow(
+    tokens: List[String],
+    nCities: Int,
+    distances: Array[Array[Long]],
+    diagIncluded: Boolean
+  ): Unit = {
+    val required = if (diagIncluded) nCities * (nCities + 1) / 2 else nCities * (nCities - 1) / 2
     if (tokens.size < required) {
       throw new IllegalArgumentException(
         s"LOWER_ROW requires $required integers, found ${tokens.size}."
@@ -264,7 +289,7 @@ object Parser {
     for (i <- 0 until nCities) {
       // If diagIncluded => from j=0..i
       // else => from j=0..(i-1)
-      val end = if (diagIncluded) i else i-1
+      val end = if (diagIncluded) i else i - 1
       for (j <- 0 to end if j >= 0) {
         val value = numbers(idx) * multiplierFactor
         idx += 1
@@ -274,15 +299,15 @@ object Parser {
     }
   }
 
-  /**
-   * Parse a column-wise upper-triangular format.
-   * Similar logic but we iterate columns first.
-   */
-  private def parseUpperCol(tokens: List[String],
-                            nCities: Int,
-                            distances: Array[Array[Long]],
-                            diagIncluded: Boolean): Unit = {
-    val required = if (diagIncluded) nCities*(nCities+1)/2 else nCities*(nCities-1)/2
+  /** Parse a column-wise upper-triangular format. Similar logic but we iterate columns first.
+    */
+  private def parseUpperCol(
+    tokens: List[String],
+    nCities: Int,
+    distances: Array[Array[Long]],
+    diagIncluded: Boolean
+  ): Unit = {
+    val required = if (diagIncluded) nCities * (nCities + 1) / 2 else nCities * (nCities - 1) / 2
     if (tokens.size < required) {
       throw new IllegalArgumentException(
         s"UPPER_COL requires $required integers, found ${tokens.size}."
@@ -293,11 +318,11 @@ object Parser {
     /*
       UPPER_COL means we list upper triangle by columns.
       For each column j, we have entries from row i=0..(j-1) or j.. if diagIncluded...
-    */
+     */
     var idx = 0
     for (j <- 0 until nCities) {
       val start = if (diagIncluded) 0 else 0
-      val end   = if (diagIncluded) j else j-1
+      val end   = if (diagIncluded) j else j - 1
       for (i <- start to end if i >= 0) {
         val value = numbers(idx) * multiplierFactor
         idx += 1
@@ -308,11 +333,13 @@ object Parser {
   }
 
   /** Parse column-wise lower-triangular formats. */
-  private def parseLowerCol(tokens: List[String],
-                            nCities: Int,
-                            distances: Array[Array[Long]],
-                            diagIncluded: Boolean): Unit = {
-    val required = if (diagIncluded) nCities*(nCities+1)/2 else nCities*(nCities-1)/2
+  private def parseLowerCol(
+    tokens: List[String],
+    nCities: Int,
+    distances: Array[Array[Long]],
+    diagIncluded: Boolean
+  ): Unit = {
+    val required = if (diagIncluded) nCities * (nCities + 1) / 2 else nCities * (nCities - 1) / 2
     if (tokens.size < required) {
       throw new IllegalArgumentException(
         s"LOWER_COL requires $required integers, found ${tokens.size}."
@@ -325,10 +352,10 @@ object Parser {
       For column j, we read from row i=j..(nCities-1) or something similar.
       Actually, be mindful: "lower col" typically means that for each column j,
       we read i from j+1..(nCities-1) (or j.. if diagIncluded).
-    */
+     */
     var idx = 0
     for (j <- 0 until nCities) {
-      val start = if (diagIncluded) j else j+1
+      val start = if (diagIncluded) j else j + 1
       for (i <- start until nCities if i < nCities) {
         val value = numbers(idx) * multiplierFactor
         idx += 1
@@ -341,10 +368,12 @@ object Parser {
   // ==========================================================================
   // (B) Coordinate-based approach
   // ==========================================================================
-  private def fillMatrixCoordinates(lines: List[String],
-                                    nCities: Int,
-                                    edgeWeightType: String,
-                                    distances: Array[Array[Long]]): Unit = {
+  private def fillMatrixCoordinates(
+    lines: List[String],
+    nCities: Int,
+    edgeWeightType: String,
+    distances: Array[Array[Long]]
+  ): Unit = {
 
     // We look for "NODE_COORD_SECTION" or something similar.
     // If 2D, we expect lines with "id x y".
@@ -381,12 +410,12 @@ object Parser {
         val (x1, y1) = coords(i)
         val (x2, y2) = coords(j)
         val distDouble: Double = edgeWeightType match {
-          case "EUC_2D"    => euclidean2D(x1, y1, x2, y2)
-          case "CEIL_2D"   => ceil(euclidean2D(x1, y1, x2, y2))
-          case "MAX_2D"    => maxDistance2D(x1, y1, x2, y2)
-          case "MAN_2D"    => manhattan2D(x1, y1, x2, y2)
-          case "GEO"       => geoDistance(x1, y1, x2, y2)
-          case "ATT"       => attDistance(x1, y1, x2, y2)
+          case "EUC_2D"  => euclidean2D(x1, y1, x2, y2)
+          case "CEIL_2D" => ceil(euclidean2D(x1, y1, x2, y2))
+          case "MAX_2D"  => maxDistance2D(x1, y1, x2, y2)
+          case "MAN_2D"  => manhattan2D(x1, y1, x2, y2)
+          case "GEO"     => geoDistance(x1, y1, x2, y2)
+          case "ATT"     => attDistance(x1, y1, x2, y2)
           // Possibly 3D variants
           // e.g. "EUC_3D", "MAN_3D", "MAX_3D"
           // If you have 3D coords, parse them and implement a separate function
@@ -413,10 +442,9 @@ object Parser {
     }
   }
 
-  /**
-   * Utility to see if we need coordinates for a given edgeWeightType.
-   * If it’s not EXPLICIT, it might require coordinate-based approach (or some specialized function).
-   */
+  /** Utility to see if we need coordinates for a given edgeWeightType. If it’s not EXPLICIT, it
+    * might require coordinate-based approach (or some specialized function).
+    */
   private def requiresCoordinates(ewt: String): Boolean = {
     // EXPLICIT => no
     // Others => yes, unless function-based or specialized?
@@ -435,7 +463,7 @@ object Parser {
   private def euclidean2D(x1: Double, y1: Double, x2: Double, y2: Double): Double = {
     val dx = x2 - x1
     val dy = y2 - y1
-    math.sqrt(dx*dx + dy*dy)
+    math.sqrt(dx * dx + dy * dy)
   }
 
   /** Manhattan distance in 2D. */
@@ -448,20 +476,21 @@ object Parser {
     math.max(math.abs(x1 - x2), math.abs(y1 - y2))
   }
 
-  /**
-   * TSPLib "GEO": great-circle approximation using a formula with radius ~6378.388.
-   * The file's lat/long coords are in "degree.decimal" (e.g., 38.24 => 38 degrees + 24 minutes).
-   * Implementation is approximate here. Typically you do a TSPLib transformation to radians.
-   */
+  /** TSPLib "GEO": great-circle approximation using a formula with radius ~6378.388. The file's
+    * lat/long coords are in "degree.decimal" (e.g., 38.24 => 38 degrees + 24 minutes).
+    * Implementation is approximate here. Typically you do a TSPLib transformation to radians.
+    */
   private def geoDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double = {
     // If the input is truly in TSPLib "degree + minutes" format, parse accordingly.
     // Here, for demonstration, we'll do a direct approximate approach.
-    val R = 6378.388
+    val R    = 6378.388
     val dLat = toRadians(lat2 - lat1)
     val dLon = toRadians(lon2 - lon1)
-    val a = sin(dLat/2)*sin(dLat/2) + cos(toRadians(lat1)) * cos(toRadians(lat2)) * sin(dLon/2)*sin(dLon/2)
-    val c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
-    (R * c) + 1.0  // TSPLib often does dist + 1 before rounding
+    val a = sin(dLat / 2) * sin(dLat / 2) + cos(toRadians(lat1)) * cos(toRadians(lat2)) * sin(
+      dLon / 2
+    ) * sin(dLon / 2)
+    val c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    (R * c) + 1.0 // TSPLib often does dist + 1 before rounding
   }
 
   /** ATT distance function for att48, etc. (special TSPLib formula). Placeholder. */
@@ -469,9 +498,9 @@ object Parser {
     // The TSPLib doc says:
     //   d = sqrt((x1 - x2)^2 / 10 + (y1 - y2)^2 / 10)
     //   Then round up. Something akin to that. Implementation is not official here.
-    val xd = x1 - x2
-    val yd = y1 - y2
-    val rij = math.sqrt((xd*xd + yd*yd) / 10.0)
+    val xd  = x1 - x2
+    val yd  = y1 - y2
+    val rij = math.sqrt((xd * xd + yd * yd) / 10.0)
     // Round up to next integer, possibly. There's also a "special" rounding TSPLib does for ATT.
     math.ceil(rij)
   }

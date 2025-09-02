@@ -14,6 +14,7 @@ class MessageType(IntEnum):
     END_EPISODE = 6
     STATIC_DATA_CSP = 7
     TRANSITION = 8
+    STATIC_DATA_TSP = 9
 
 
 @dataclass

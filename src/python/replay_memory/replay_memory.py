@@ -1,16 +1,13 @@
-import os
-import pickle
 from abc import ABC, abstractmethod
 from collections import deque
-from datetime import datetime
 from typing import Optional
-
+from torch_geometric.data import Data
 import numpy as np
 import torch
 from optimenv import Observation
 
 
-class Batch[T: torch.Tensor]:
+class Batch[T: torch.Tensor | Data]:
     def __init__(
         self,
         obs: T,
@@ -32,12 +29,12 @@ class Batch[T: torch.Tensor]:
 
     def to(self, device: torch.device) -> "Batch":
         return Batch(
-            obs=self.obs.to(device, non_blocking=True),
+            obs=self.obs.to(device, non_blocking=True),  # type: ignore
             available_actions=self.available_actions.to(device),
             actions=self.actions.to(device, non_blocking=True),
             rewards=self.rewards.to(device, non_blocking=True),
             dones=self.dones.to(device, non_blocking=True),
-            next_obs=self.next_obs.to(device, non_blocking=True),
+            next_obs=self.next_obs.to(device, non_blocking=True),  # type: ignore
             next_available_actions=self.next_available_actions.to(device, non_blocking=True),
         )
 

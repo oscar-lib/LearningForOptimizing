@@ -5,6 +5,9 @@ import oscar.cbls.business.routing.invariants.global.RouteLength
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.core.objective.CascadingObjective
 import oscar.cbls.lib.invariant.numeric.Sum2
+import bridge.SerializableModel
+import bridge.MessageType
+import upickle.default._
 
 object Model {
 
@@ -14,12 +17,11 @@ object Model {
 
 }
 
-class Model(val problem: Problem) {
-  // city 0 is considered as the depot
-  private val v = 1;
+class Model(val problem: Problem) extends SerializableModel {
+  implicit val problemRW: ReadWriter[Problem] = macroRW
   // all nodes in the problem, including the depot
-  private val n: Int = 0 + problem.nCities
-  lazy val tsp       = new VRP(new Store(), n, v, debug = false)
+  private val n: Int = problem.nCities()
+  lazy val tsp       = new VRP(new Store(), n, 1, debug = false)
   // distance between cities
   lazy val distanceMatrix: Array[Array[Long]] =
     Array.tabulate(n)(from => {
@@ -32,7 +34,7 @@ class Model(val problem: Problem) {
 
   // Invariant keeping the length of the tour
   val routeLengthInvariant: CBLSIntVar =
-    RouteLength(tsp.routes, n, v, (from, to) => distanceMatrix(from)(to))(0)
+    RouteLength(tsp.routes, n, 1, (from, to) => distanceMatrix(from)(to))(0)
   // invariant keeping the number of unrouted nodes
   val nUnroutedInvariant = cardinality(tsp.unrouted)
 
@@ -58,7 +60,6 @@ class Model(val problem: Problem) {
   }
 
   override def toString: String = {
-
     s"\n\nResult\n" +
       s"=======\n" +
       s"Unrouted nodes : ${tsp.unrouted.value.size}\n" +
@@ -71,4 +72,20 @@ class Model(val problem: Problem) {
         .mkString(" -> ")
   }
 
+  override def getJSONState(): String = {
+    var routes: List[List[Int]] = List.empty
+    for (vehicle <- 0 until this.tsp.v) {
+      val routeOfV = this.tsp.getRouteOfVehicle(vehicle)
+      if (routeOfV.length > 1) {
+        routes = routes :+ routeOfV
+      }
+    }
+    return upickle.default.write(routes)
+  }
+
+  override def getJSONStaticProblemData(): String = {
+    write(this.problem)
+  }
+
+  override def getProblemCode(): MessageType.Value = MessageType.STATIC_DATA_TSP
 }

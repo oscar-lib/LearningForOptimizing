@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from typing import Self
 import numpy as np
 import orjson
 import torch
@@ -45,18 +44,6 @@ class Node:
 
     def distance(self, other: "Node") -> float:
         return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
-
-
-@dataclass
-class Edge:
-    current_route_duration: float
-    """Duration of the route from depot to the endpoint of the edge."""
-    current_load: int
-    """Current load of the vehicle (between src and dst)."""
-
-    @property
-    def as_tensor(self):
-        pass
 
 
 @dataclass

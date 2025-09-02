@@ -21,7 +21,7 @@ with open("best_params.json", "rb") as f:
 class SingleArgs:
     bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"]
     problem_path: str
-    reward: Literal["r1", "r2"]
+    reward: Literal["r1", "r2", "r3"]
     args: str
     timeout: int
     seed: int
@@ -31,7 +31,7 @@ class SingleArgs:
         self,
         bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"],
         problem_path: str,
-        reward: Literal["r1", "r2"],
+        reward: Literal["r1", "r2", "r3"],
         device: str,
         timeout: int = 300,
         seed: int = 0,
@@ -74,7 +74,7 @@ class SingleArgs:
 class MultipleArgs:
     bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"]
     problems_file: str
-    reward: Literal["r1", "r2"]
+    reward: Literal["r1", "r2", "r3"]
     output_file: Optional[str]
     n_jobs: int
     n_repeats: int
@@ -87,8 +87,8 @@ class MultipleArgs:
         self,
         bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"],
         problems_file: Literal["csp", "tsp", "pdptw"] | str,
-        reward: Literal["r1", "r2"],
-        output_file: Optional[str] = "auto",
+        reward: Literal["r1", "r2", "r3"],
+        output_file: str = "auto",
         n_jobs: int = 1,
         n_repeats: int = 20,
         timeout: int = 300,
@@ -102,7 +102,7 @@ class MultipleArgs:
             self.problems_file = problems_file
         self.reward = reward
         if output_file == "auto":
-            output_file = f"results/{datetime.now().isoformat()}.csv"
+            output_file = os.path.join("results", f"{datetime.now().isoformat().replace(':', '-')}.csv")
         self.output_file = output_file
         self.n_jobs = n_jobs
         self.n_repeats = n_repeats
@@ -139,7 +139,7 @@ class RunResult:
     integral_primal_gap: float
     bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"]
     instance: str
-    reward: Literal["r1", "r2"]
+    reward: Literal["r1", "r2", "r3"]
     timeout: int
     seed: int
 
@@ -201,6 +201,13 @@ def multiple_runs(args: MultipleArgs):
         results_file = open(args.output_file, "w")
         results_file.write(RunResult.CSV_HEADER + "\n")
 
+    r = [
+        single_run(
+            single_args,
+        )
+        for single_args in args.single_args()
+    ]
+    return
     with mp.Pool(args.n_jobs) as pool:
         handles = [pool.apply_async(single_run, (single_args,)) for single_args in args.single_args()]
         # Collect the results as they become available
@@ -232,7 +239,7 @@ def multiple_runs(args: MultipleArgs):
 
 
 def main():
-    args = MultipleArgs("dqn", "csp", "r1", n_repeats=1, timeout=20, n_jobs=2)
+    args = MultipleArgs("dqn", "tsp", "r3", n_repeats=1, timeout=5, n_jobs=2)
     multiple_runs(args)
 
 

@@ -14,7 +14,7 @@ def run(trial: optuna.Trial):
         n_jobs=16,
         timeout=300,
         n_repeats=3,
-        output_file=None,
+        output_file="auto",
         args={
             "learningRate": trial.suggest_float("lr", 1e-5, 1e-2, log=True),
             "batchSize": trial.suggest_int("batchSize", 16, 256),

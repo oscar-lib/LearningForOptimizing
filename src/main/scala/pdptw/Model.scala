@@ -36,6 +36,7 @@ import pdptw.LiLimDepot
 import pdptw.LiLimNode
 import pdptw.LiLimProblem
 import pdptw.LiLimVehicle
+import upickle.default.ReadWriter
 import upickle.default._
 
 import java.io.BufferedReader

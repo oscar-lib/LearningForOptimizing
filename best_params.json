@@ -26,5 +26,11 @@
         }
     },
     "pdptw": {},
-    "tsp": {}
+    "tsp": {
+        "dqn": {
+            "r1": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn --clipping 5.0",
+            "r2": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn --clipping 5.0",
+            "r3": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn --clipping 5.0"
+        }
+    }
 }

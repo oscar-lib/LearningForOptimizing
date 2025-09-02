@@ -4,11 +4,11 @@ import torch_geometric.nn as gnn
 import math
 from torch_geometric.data import Data
 
-from problem import PDPTW, CSP
+from problem import PDPTW, CSP, TSP
 
 
 class QNetGNN(torch.nn.Module):
-    def __init__(self, problem: PDPTW):
+    def __init__(self, problem: PDPTW | TSP):
         super().__init__()
         # Node convolutions
         self.OUT_NODE_FEATURES = 64
@@ -17,14 +17,14 @@ class QNetGNN(torch.nn.Module):
         self.node_conv2 = gnn.GCNConv(32, self.OUT_NODE_FEATURES)
 
         # Edge convolution, currently not used
-        self.OUT_EDGE_FEATURES = 32
-        self.edge_conv = gnn.EdgeConv(
-            torch.nn.Sequential(
-                torch.nn.Linear(problem.n_edge_features * 2, problem.n_edge_features),
-                torch.nn.LeakyReLU(0.1),
-                torch.nn.Linear(problem.n_edge_features, self.OUT_EDGE_FEATURES),
-            )
-        )
+        # self.OUT_EDGE_FEATURES = 32
+        # self.edge_conv = gnn.EdgeConv(
+        #    torch.nn.Sequential(
+        #        torch.nn.Linear(problem.n_edge_features * 2, problem.n_edge_features),
+        #        torch.nn.LeakyReLU(0.1),
+        #        torch.nn.Linear(problem.n_edge_features, self.OUT_EDGE_FEATURES),
+        #    )
+        # )
 
         self.linear = torch.nn.Sequential(
             torch.nn.Linear(self.OUT_NODE_FEATURES, 64),

@@ -4,6 +4,7 @@ from typing import Optional
 import os
 
 import torch
+from torch_geometric.data import Data
 from optimenv import Observation
 from policies import EpsilonGreedy
 from qtarget_updater import HardUpdate
@@ -49,10 +50,11 @@ class DQN(Algo):
         self.grad_norm_clipping = grad_norm_clipping
         self.target_updater = HardUpdate(update_period=100)
 
-    def select_action(self, obs: Observation[torch.Tensor]):
+    def select_action(self, obs: Observation[torch.Tensor | Data]):
         with torch.no_grad():
-            data = obs.data.unsqueeze(0)  # Add batch dimension
-            qvalues = self.qnetwork.forward(data).squeeze(0).numpy(force=True)  # Squeeze the batch dimension
+            if isinstance(obs.data, torch.Tensor):
+                obs.data = obs.data.unsqueeze(0)  # Add batch dimension
+            qvalues = self.qnetwork.forward(obs.data).squeeze(0).numpy(force=True)  # Squeeze the batch dimension
             saved_qvalues = qvalues.copy()  # Save the original qvalues for logging
             action = self.policy.get_action(qvalues, obs.available_actions.numpy(force=True))
             return action, saved_qvalues

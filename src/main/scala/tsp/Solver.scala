@@ -14,6 +14,8 @@ import combinator.Gain
 import bridge.MessageType.REWARD
 import oscar.cbls.business.routing.display
 import combinator.LogGain
+import combinator.StatefulCombinator
+import combinator.RLAlgorithm
 
 case class Solver(oscarModel: Model, in: SolverInput) {
 
@@ -56,6 +58,25 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       case "ucb"            => new UCBNew(neighList, in, rewardModel)
       case "bestslopefirst" => bestSlopeFirst(neighList)
       case "roundrobin"     => roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
+      case "dqn" =>
+        new StatefulCombinator(
+          neighList,
+          oscarModel,
+          lr = in.learningRate,
+          batchSize = in.batchSize,
+          epsilon = in.epsilon,
+          clipping = in.clipping,
+          ddqn = in.ddqn,
+          debug = in.debug,
+          algo = RLAlgorithm.DQN,
+          device = in.device,
+          objective = obj,
+          acceptanceCriterion = in.acceptanceCriterion,
+          loadFrom = in.loadFrom,
+          saveTo = in.saveTo,
+          training = in.training,
+          rewardModel = rewardModel
+        )
       case _ => throw new IllegalArgumentException(s"Unknown bandit type: ${in.bandit}.")
     }
 

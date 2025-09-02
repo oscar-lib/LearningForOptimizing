@@ -6,7 +6,7 @@ from bridge import Bridge
 from bridge.protocol.message import Message, MessageType
 from logger import Logger
 from optimenv import EpisodeEndException, OptimEnv
-from problem import CSP, PDPTW, Problem
+from problem import CSP, PDPTW, TSP, Problem
 from replay_memory import GraphReplayMemory, LinearMemory
 
 if TYPE_CHECKING:
@@ -79,8 +79,10 @@ def _retrieve_problem_data(bridge: Bridge, logger: Logger) -> Problem:
             problem = PDPTW.parse(req.body)
         case MessageType.STATIC_DATA_CSP:
             problem = CSP.parse(req.body)
+        case MessageType.STATIC_DATA_TSP:
+            problem = TSP.parse(req.body)
         case other:
-            error = f"Expected message of type {MessageType.STATIC_DATA_PDPTW} from the client, got {other}"
+            error = f"Expected message of type {[MessageType.STATIC_DATA_PDPTW, MessageType.STATIC_DATA_CSP, MessageType.STATIC_DATA_TSP]}  from the client, got {other}"
             logger.error(error)
             bridge.send(Message.error(error).to_bytes())
             raise Exception(error)
@@ -92,7 +94,7 @@ def _create_agent(problem: Problem, algo: Literal["dqn", "ppo"], args: "Args") -
     match algo:
         case "dqn":
             match problem:
-                case PDPTW():
+                case PDPTW() | TSP():
                     from nn import QNetGNN
 
                     qnetwork = QNetGNN(problem)

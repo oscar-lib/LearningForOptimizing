@@ -1,10 +1,9 @@
-from typing import Any
-import orjson
 import struct
 from dataclasses import dataclass
+from typing import Any
 
+import orjson
 import torch
-
 from bridge import Bridge
 from bridge.protocol.message import Message, MessageType
 from problem import Problem
