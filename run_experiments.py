@@ -142,41 +142,52 @@ class MultipleArgs:
 
 @dataclass
 class RunResult:
-    sol_over_time: str
-    objective: float
-    integral_primal_gap: float
+    metrics: dict
     bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"]
     instance: str
     reward: Literal["r1", "r2", "r3"]
     timeout: int
     seed: int
 
-    CSV_HEADER = "instance,bandit,reward,timeout,seed,sol_over_time,objective,integral_primal_gap"
+    def get_columns(self):
+        return [
+            "bandit",
+            "instance",
+            "reward",
+            "timeout",
+            "seed",
+        ] + list(self.metrics.keys())
 
-    def as_csv(self):
-        fields = RunResult.CSV_HEADER.split(",")
-        values = [getattr(self, field) for field in fields]
+    def as_csv(self, columns: list[str]):
+        values = []
+        for col in columns:
+            try:
+                values.append(getattr(self, col))
+            except AttributeError:
+                values.append(self.metrics.get(col, ""))
         return ",".join(map(str, values))
+
+    @property
+    def integral_primal_gap(self) -> float:
+        return self.metrics["integralPrimalGap"]
 
 
 def gather_results(stdout: bytes):
     output = stdout.decode("utf-8").strip()
-    objective_match = re.search(r"bestObj\s*=\s*([^\n]+)", output)
-    if objective_match is None:
+    # Find all key=value pairs (keys can have underscores or hyphens)
+    pairs = re.findall(r"([a-zA-Z_-][a-zA-Z0-9_-]*)\s*=\s*([^\n]+)", output)
+    metrics = dict([(key.strip(), value) for key, value in pairs])
+    metrics.pop("--communication", None)
+
+    if "bestObj" not in metrics:
         raise ValueError(f"No objective found in output: {output}")
-    objective = float(objective_match.group(1))
-
-    sol_over_time_match = re.search(r"solOverTime\s*=\s*([^\n]+)", output)
-    if sol_over_time_match is None:
+    metrics["bestObj"] = float(metrics["bestObj"])
+    if "solOverTime" not in metrics:
         raise ValueError(f"No solution over time found in output: {output}")
-    sol_over_time = sol_over_time_match.group(1)
-
-    integral_primal_gap_match = re.search(r"integralPrimalGap\s*=\s*([^\n]+)", output)
-    if integral_primal_gap_match is None:
+    if "integralPrimalGap" not in metrics:
         raise ValueError(f"No integral primal gap found in output: {output}")
-    integral_primal_gap = float(integral_primal_gap_match.group(1))
-
-    return sol_over_time, objective, integral_primal_gap
+    metrics["integralPrimalGap"] = float(metrics["integralPrimalGap"])
+    return metrics
 
 
 def single_run(args: SingleArgs):
@@ -187,12 +198,10 @@ def single_run(args: SingleArgs):
         logging.error(f"Command failed with return code {process.returncode}")
         logging.error(f"Error output: {process.stderr.decode('utf-8')}")
         raise RuntimeError(f"Command failed: {cmd}")
-    sot, obj, ipg = gather_results(process.stdout)
-    logging.info(f"{args.as_csv()},{sot},{obj},{ipg}")
+    result_dict = gather_results(process.stdout)
+    logging.info(f"{args.as_csv()},{result_dict}")
     return RunResult(
-        sol_over_time=sot,
-        objective=obj,
-        integral_primal_gap=ipg,
+        metrics=result_dict,
         bandit=args.bandit,
         instance=args.problem_path,
         reward=args.reward,
@@ -204,11 +213,14 @@ def single_run(args: SingleArgs):
 def multiple_runs(args: MultipleArgs):
     results = list[RunResult]()
     results_file = None
+    csv_columns = None
     if args.output_file is not None:
         os.makedirs(os.path.dirname(args.output_file), exist_ok=True)
         results_file = open(args.output_file, "w")
-        results_file.write(RunResult.CSV_HEADER + "\n")
 
+    for single_args in args.single_args():
+        r = single_run(single_args)
+        results.append(r)
     with mp.Pool(args.n_jobs) as pool:
         handles = [pool.apply_async(single_run, (single_args,)) for single_args in args.single_args()]
         # Collect the results as they become available
@@ -225,7 +237,10 @@ def multiple_runs(args: MultipleArgs):
                         results.append(result)
                         to_remove.append(handle)
                         if results_file is not None:
-                            results_file.write(result.as_csv() + "\n")
+                            if csv_columns is None:
+                                csv_columns = result.get_columns()
+                                results_file.write(",".join(csv_columns) + "\n")
+                            results_file.write(result.as_csv(csv_columns) + "\n")
                             results_file.flush()
                     except Exception as e:
                         logging.error(f"Error processing result: {e}", exc_info=True)
@@ -241,7 +256,14 @@ def multiple_runs(args: MultipleArgs):
 
 
 def main():
-    args = MultipleArgs("dqn", "pdptw", "r3", n_repeats=5, timeout=300, n_jobs=16)
+    args = MultipleArgs(
+        bandit="dqn",
+        problems_file="csp",
+        reward="r2",
+        n_repeats=5,
+        timeout=2,
+        n_jobs=1,
+    )
     multiple_runs(args)
 
 
