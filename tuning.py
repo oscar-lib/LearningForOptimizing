@@ -36,5 +36,5 @@ if __name__ == "__main__":
         format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
         handlers=[logging.StreamHandler(), logging.FileHandler(f"{datetime.now().isoformat()}.log")],
     )
-    study = optuna.create_study(direction="minimize", study_name="PDPTW - DQN - r3", storage="sqlite:///tuning.db", load_if_exists=True)
-    study.optimize(run, n_trials=30)
+    study = optuna.create_study(direction="minimize", study_name="PDPTW - DQN - r1", storage="sqlite:///tuning.db", load_if_exists=True)
+    study.optimize(run, n_trials=50)

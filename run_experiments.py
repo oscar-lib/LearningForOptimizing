@@ -218,9 +218,6 @@ def multiple_runs(args: MultipleArgs):
         os.makedirs(os.path.dirname(args.output_file), exist_ok=True)
         results_file = open(args.output_file, "w")
 
-    for single_args in args.single_args():
-        r = single_run(single_args)
-        results.append(r)
     with mp.Pool(args.n_jobs) as pool:
         handles = [pool.apply_async(single_run, (single_args,)) for single_args in args.single_args()]
         # Collect the results as they become available
