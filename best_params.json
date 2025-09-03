@@ -9,8 +9,8 @@
             "r2": "-lr 0.8245 -c 3.5174 "
         },
         "dqn": {
-            "r1": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn --clipping 5.0",
-            "r2": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn --clipping 5.0"
+            "r1": " --learningRate 0.0005 --epsilon 0.05 --batchSize 60 --clipping 0.5",
+            "r2": " --learningRate 0.0005 --epsilon 0.2 --batchSize 250 --clipping 35.0"
         },
         "dqn-pretrained-csp-100": {
             "r1": " --epsilon 0.0 --noTrain --accept=strict-improvement --loadFrom=saved_dqn_csp_100",
@@ -28,9 +28,8 @@
     "pdptw": {},
     "tsp": {
         "dqn": {
-            "r1": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn --clipping 5.0",
-            "r2": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn --clipping 5.0",
-            "r3": " --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn --clipping 5.0"
+            "r1": " --learningRate 0.0001 --epsilon 0.65 --batchSize 16 --clipping 45.5",
+            "r3": " --learningRate 0.0001 --epsilon 0.83 --batchSize 19 --ddqn --clipping 49.5"
         }
     }
 }

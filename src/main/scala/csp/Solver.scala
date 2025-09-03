@@ -158,7 +158,7 @@ case class Solver(cspModel: Model, in: SolverInput) {
     val realSolutionOverTime = recorder.realObjectiveTimeStamp
     println(
       f"solOverTime=" + realSolutionOverTime
-        .map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)")
+        .map(e => s"""{"t":${e._1}-"v":${e._2}}""")
         .mkString("[", "-", "]")
     )
     val currentDirectory = System.getProperty("user.dir")

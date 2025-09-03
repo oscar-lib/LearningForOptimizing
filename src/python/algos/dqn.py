@@ -53,8 +53,10 @@ class DQN(Algo):
     def select_action(self, obs: Observation[torch.Tensor | Data]):
         with torch.no_grad():
             if isinstance(obs.data, torch.Tensor):
-                obs.data = obs.data.unsqueeze(0)  # Add batch dimension
-            qvalues = self.qnetwork.forward(obs.data).squeeze(0).numpy(force=True)  # Squeeze the batch dimension
+                data = obs.data.unsqueeze(0)  # Add batch dimension
+            else:
+                data = obs.data
+            qvalues = self.qnetwork.forward(data).squeeze(0).numpy(force=True)  # Squeeze the batch dimension
             saved_qvalues = qvalues.copy()  # Save the original qvalues for logging
             action = self.policy.get_action(qvalues, obs.available_actions.numpy(force=True))
             return action, saved_qvalues
