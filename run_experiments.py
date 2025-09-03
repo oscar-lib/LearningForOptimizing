@@ -44,7 +44,10 @@ class SingleArgs:
         self.seed = seed
         self.device = device
         if args is None:
-            args_str = BEST_PARAMS[self.problem][self.bandit][self.reward]
+            try:
+                args_str = BEST_PARAMS[self.problem][self.bandit][self.reward]
+            except KeyError:
+                raise ValueError(f"No arguments provided and there is no BEST_PARAMS for {self.problem}, {self.bandit}, {self.reward}")
         else:
             args_str = ""
             for key, value in args.items():
@@ -57,7 +60,6 @@ class SingleArgs:
 
     @property
     def problem(self):
-        assert self.problem_path is not None, "Problem path must be provided"
         parts = self.problem_path.split("/")
         assert parts[0] == "examples"
         return parts[1]
@@ -101,15 +103,21 @@ class MultipleArgs:
         else:
             self.problems_file = problems_file
         self.reward = reward
+        self.problems = self._load_problems()
         if output_file == "auto":
-            output_file = os.path.join("results", f"{datetime.now().isoformat().replace(':', '-')}.csv")
+            output_file = os.path.join("results", f"{datetime.now().isoformat().replace(':', '-')}-{self.problem}.csv")
         self.output_file = output_file
         self.n_jobs = n_jobs
         self.n_repeats = n_repeats
         self.timeout = timeout
         self.seed = seed
-        self.problems = self._load_problems()
         self.args = args
+
+    @property
+    def problem(self):
+        parts = self.problems[0].split("/")
+        assert parts[0] == "examples"
+        return parts[1]
 
     def _load_problems(self):
         with open(self.problems_file, "r") as f:
@@ -233,7 +241,7 @@ def multiple_runs(args: MultipleArgs):
 
 
 def main():
-    args = MultipleArgs("dqn", "tsp", "r3", n_repeats=1, timeout=5, n_jobs=2)
+    args = MultipleArgs("dqn", "pdptw", "r3", n_repeats=5, timeout=300, n_jobs=16)
     multiple_runs(args)
 
 

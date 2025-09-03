@@ -77,17 +77,19 @@ class PDPTW(Problem[Data]):
         Parse the static data of a PDPTW problem in a JSON format.
         """
         data = orjson.loads(bdata)
-        n_vehicles = len(data["vehicles"])
-        vehicle_capacity = data["vehicles"][0]["capacity"]
+        problem = data["problem"]["liLimProblem"]
+        n_vehicles = len(problem["vehicles"])
+        vehicle_capacity = problem["vehicles"][0]["capacity"]
         n_actions = data["nActions"]
+        del data
         delivery_ids = dict[int, int]()  # map each node to the corresponding delivery ID
-        for i, delivery in enumerate(data["demands"]):
+        for i, delivery in enumerate(problem["demands"]):
             source = delivery["fromNodeId"]
             destination = delivery["toNodeId"]
             delivery_ids[source] = i
             delivery_ids[destination] = i
         nodes = []
-        for node in data["nodes"]:
+        for node in problem["nodes"]:
             # Since each vehicle has its own depot with the id of the vehicle, we need to add the number of vehicles to the node id
             node_id = node["nodeId"] + n_vehicles
             nodes.append(
