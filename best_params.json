@@ -10,6 +10,7 @@
         },
         "dqn": {
             "r1": " --learningRate 0.0005 --epsilon 0.05 --batchSize 60 --clipping 0.5",
+            "r2": " --learningRate 0.0005 --epsilon 0.2 --batchSize 250 --clipping 35.0""r1": " --learningRate 0.0005 --epsilon 0.05 --batchSize 60 --clipping 0.5",
             "r2": " --learningRate 0.0005 --epsilon 0.2 --batchSize 250 --clipping 35.0"
         },
         "dqn-pretrained-csp-100": {
