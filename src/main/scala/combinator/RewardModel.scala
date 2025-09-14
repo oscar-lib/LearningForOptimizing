@@ -31,8 +31,9 @@ class OriginalRewardModel(
   /** weight rewarding small execution time */
   wEff: Double = 0.2,
   /** weight rewarding the slope */
-  wSlope: Double = 0.4
-) extends NormalizedWindowedSlope(30) {
+  wSlope: Double = 0.4,
+  slopeWidth : Int = 30,
+) extends NormalizedWindowedSlope(slopeWidth) {
   private var maxRunTimeNano: Long = 1   // max run time experienced by a neighborhood
 
   /** Gives a reward in [0, 1] based on finding a move. 1 means that a move was found, 0 otherwise
@@ -84,10 +85,12 @@ class SlopeReward extends RewardModel {
  * @param windowSize number of past slopes retained for computing the maximum slope
  */
 class NormalizedWindowedSlope(windowSize: Int) extends RewardModel {
-  private val window: mutable.Queue[Double] = mutable.Queue.empty
+  private val window: mutable.Queue[Double] = mutable.Queue.empty // only hold non zero slope
 
   override def slopeReward(runStat: NeighborhoodStats): Double = {
     val slope = Math.abs(runStat.slope)
+    if (slope == 0)  // slope of zero are ignored
+      return 0;
     window.enqueue(slope)
     maxSlope = Math.max(maxSlope, slope)
     if (window.size > windowSize) {
@@ -96,6 +99,7 @@ class NormalizedWindowedSlope(windowSize: Int) extends RewardModel {
         maxSlope = window.max
       }
     }
+    //println("current slope = " + slope + " maxslope = " + maxSlope)
     if (maxSlope == 0) {
       0
     } else {

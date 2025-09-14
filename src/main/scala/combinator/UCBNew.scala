@@ -38,7 +38,7 @@ class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput)
     */
   override def getNextNeighborhood: Option[Neighborhood] = {
     t += 1
-    if (t < neighborhoods.length) { // play each neighborhood once for initialization
+    if (t <= neighborhoods.length) { // play each neighborhood once for initialization
       return Some(neighborhoods(t - 1))
     }
     var maxUcb: Double = Double.MinValue

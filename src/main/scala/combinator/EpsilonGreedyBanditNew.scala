@@ -27,7 +27,8 @@ class EpsilonGreedyBanditNew(l: List[Neighborhood], in: SolverInput)
       rewardModel = if (in.objChangeReward) {new LogGain()} else { new OriginalRewardModel(
         wSol = in.moveFoundWeight,
         wEff = in.efficiencyWeight,
-        wSlope = in.slopeWeight
+        wSlope = in.slopeWeight,
+        slopeWidth = l.length * 2
       )}
     ) {
 
@@ -41,7 +42,7 @@ class EpsilonGreedyBanditNew(l: List[Neighborhood], in: SolverInput)
     */
   override def getNextNeighborhood: Option[Neighborhood] = {
     t += 1
-    val epsilon_t: Double = epsilon * Math.sqrt(l.length.toDouble / t)
+    val epsilon_t: Double = epsilon// * Math.sqrt(l.length.toDouble / t)
     val prob_t: Double    = Random.nextDouble()
     if (prob_t > epsilon_t) { // gives the best neighborhood
       getBestNeighborhood

@@ -191,7 +191,10 @@ abstract class BanditSelector(
     val stats = NeighborhoodStats(searchResult, neighborhood)
     appendStats(stats, neighborhood)
     searchResult match {
-      case NoMoveFound  => setTabu(neighborhood)
+      case NoMoveFound  => {
+        val a = 0;
+        setTabu(neighborhood)
+      }
       case MoveFound(_) => resetTabu()
     }
     for (callback <- moveCallBacks) {
@@ -376,7 +379,7 @@ abstract class BanditSelector(
         aggregate(rewardsOnEpisode, neighborhood)
       }
       val newWeight = newWeightFromReward(neighborhood, weights(idx), aggregatedReward)
-      println("new weight for " + neighborhood.toString() + ": " + newWeight)
+      //println("new weight for " + neighborhood.toString() + ": " + newWeight)
       setWeight(idx, newWeight)
     }
   }
