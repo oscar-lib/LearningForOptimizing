@@ -16,22 +16,22 @@
 #------------------------------------------------------------------------------
 # installed at: /gpfs/projects/shared/p_ariac_cetic/miniconda/envs/myr-env/lib/R/library/irace
 # called with: --parallel 32 -s /gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/scenario-csp-ucb-r2.txt --target-runner /gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/target-runner-csp --train-instances-file /gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/examples/csp/trainingall.txt
-# 2025-07-11 11:58:20 CEST: Reading parameter file '/gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/parameters-ucb-r2.txt'.
-# 2025-07-11 11:58:20 CEST: Read 1 configuration(s) from file '/gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/defaults-ucb-r2.txt'
-# 2025-07-11 11:58:20 CEST: Initialization
+# 2025-07-15 15:08:38 CEST: Reading parameter file '/gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/parameters-ucb-r2.txt'.
+# 2025-07-15 15:08:38 CEST: Read 1 configuration(s) from file '/gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/defaults-ucb-r2.txt'
+# 2025-07-15 15:08:38 CEST: Initialization
 # Elitist race
 # Elitist new instances: 1
 # Elitist limit: 2
 # nbIterations: 3
 # minNbSurvival: 3
 # nbParameters: 2
-# seed: 522126648
+# seed: 1818775605
 # confidence level: 0.95
 # budget: 800
 # mu: 5
 # deterministic: FALSE
 
-# 2025-07-11 11:58:20 CEST: Iteration 1 of 3
+# 2025-07-15 15:08:38 CEST: Iteration 1 of 3
 # experimentsUsed: 0
 # remainingBudget: 800
 # currentBudget: 266
@@ -47,24 +47,24 @@
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
 | |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-|x|          1|         44|         28|     2.164000000|         44|00:05:08|   NA|  NA|    NA|
-|x|          2|         44|          9|     6.267000000|         88|00:10:02|-0.00|0.50|0.8753|
-|x|          3|         44|          9|     104.1780000|        132|00:10:02|-0.00|0.33|0.6175|
-|x|          4|         44|          9|     153.1335000|        176|00:10:02|-0.00|0.25|0.4716|
-|=|          5|         44|         32|     181.2676000|        220|00:10:02|+0.01|0.21|0.5721|
-|=|          6|         44|         32|     156.1255000|        264|00:05:34|+0.04|0.20|0.6466|
+|x|          1|         44|         15|     10.29300000|         44|00:05:52|   NA|  NA|    NA|
+|x|          2|         44|         39|     12.52350000|         88|00:05:09|-0.14|0.43|1.1520|
+|x|          3|         44|         39|     108.3490000|        132|00:10:02|-0.07|0.29|0.7097|
+|x|          4|         44|         39|     82.90000000|        176|00:00:26|-0.07|0.20|0.7912|
+|=|          5|         44|         39|     126.3200000|        220|00:10:02|-0.05|0.16|0.6213|
+|=|          6|         44|         39|     155.2666667|        264|00:10:02|-0.04|0.13|0.5119|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-Best-so-far configuration:          32    mean value:      156.1255000
+Best-so-far configuration:          39    mean value:      155.2666667
 Description of the best-so-far configuration:
    .ID. bandit reward learningrate confidence .PARENT.
-32   32    ucb     r2       0.2107     0.5243       NA
+39   39    ucb     r2       0.9774     1.1716       NA
 
-# 2025-07-11 12:49:12 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+# 2025-07-15 15:50:14 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
    bandit reward learningrate confidence
-32    ucb     r2       0.2107     0.5243
-4     ucb     r2       0.6170     3.6743
-24    ucb     r2       0.1482     4.4243
-# 2025-07-11 12:49:12 CEST: Iteration 2 of 3
+39    ucb     r2       0.9774     1.1716
+12    ucb     r2       0.4931     2.5966
+41    ucb     r2       0.2274     2.3716
+# 2025-07-15 15:50:14 CEST: Iteration 2 of 3
 # experimentsUsed: 264
 # remainingBudget: 536
 # currentBudget: 268
@@ -80,25 +80,25 @@ Description of the best-so-far configuration:
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
 | |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-|x|          7|         40|         54|     5.455000000|         40|00:00:58|   NA|  NA|    NA|
-|x|          5|         40|         77|     4.997500000|         77|00:10:01|+0.23|0.62|0.9659|
-|x|          2|         40|         77|     103.3316667|        114|00:10:01|+0.12|0.42|0.9614|
-|x|          3|         40|         77|     152.4987500|        151|00:10:02|+0.08|0.31|0.7244|
-|=|          1|         40|         54|     132.1214000|        188|00:05:01|+0.02|0.22|0.8333|
-|=|          6|         40|         50|     109.7573333|        225|00:05:36|-0.02|0.15|0.8778|
-|=|          4|         40|         50|     136.9348571|        262|00:10:02|-0.02|0.13|0.7431|
+|x|          7|         40|         68|     7.143000000|         40|00:05:12|   NA|  NA|    NA|
+|x|          6|         40|         68|     153.5715000|         77|00:10:01|+0.00|0.50|0.4875|
+|x|          1|         40|         76|     111.3850000|        114|00:05:28|+0.05|0.37|0.5715|
+|x|          4|         40|         41|     87.31325000|        151|00:00:17|+0.08|0.31|0.6732|
+|=|          2|         40|         41|     70.70640000|        188|00:05:04|+0.08|0.27|0.7203|
+|=|          5|         40|         41|     108.9220000|        225|00:10:01|+0.07|0.22|0.6102|
+|=|          3|         40|         41|     136.2188571|        262|00:10:02|+0.05|0.19|0.5287|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-Best-so-far configuration:          50    mean value:      136.9348571
+Best-so-far configuration:          41    mean value:      136.2188571
 Description of the best-so-far configuration:
    .ID. bandit reward learningrate confidence .PARENT.
-50   50    ucb     r2       0.2954     0.8182       32
+41   41    ucb     r2       0.2274     2.3716       NA
 
-# 2025-07-11 13:40:57 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+# 2025-07-15 16:36:23 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
    bandit reward learningrate confidence
-50    ucb     r2       0.2954     0.8182
-69    ucb     r2       0.8223     3.5001
-24    ucb     r2       0.1482     4.4243
-# 2025-07-11 13:40:57 CEST: Iteration 3 of 3
+41    ucb     r2       0.2274     2.3716
+46    ucb     r2       0.9554     1.6893
+47    ucb     r2       0.9450     0.6600
+# 2025-07-15 16:36:23 CEST: Iteration 3 of 3
 # experimentsUsed: 526
 # remainingBudget: 274
 # currentBudget: 274
@@ -114,26 +114,26 @@ Description of the best-so-far configuration:
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
 | |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-|x|          8|         36|        109|     5.551000000|         36|00:05:01|   NA|  NA|    NA|
-|x|          4|         36|        109|     152.7755000|         69|00:10:01|+0.00|0.50|0.4861|
-|x|          7|         36|        113|     105.1910000|        102|00:00:24|-0.20|0.20|0.7313|
-|x|          1|         36|        113|     79.39075000|        135|00:05:01|+0.01|0.26|0.7487|
-|=|          6|         36|        113|     69.02020000|        168|00:05:01|-0.01|0.19|0.7888|
-|=|          3|         36|        113|     107.5168333|        201|00:10:01|-0.01|0.16|0.6555|
-|=|          5|         36|        113|     93.39000000|        234|00:10:01|+0.02|0.16|0.6786|
-|=|          2|         36|        113|     119.2162500|        267|00:10:01|+0.02|0.14|0.5958|
+|x|          8|         36|         41|     300.0000000|         36|00:10:02|   NA|  NA|    NA|
+|x|          7|         36|         96|     153.9480000|         69|00:00:59|+0.00|0.50|0.4861|
+|x|          4|         36|         41|     104.2470000|        102|00:00:15|+0.02|0.35|0.6677|
+|x|          3|         36|         41|     153.1852500|        135|00:10:01|+0.01|0.26|0.4959|
+|=|          5|         36|         41|     182.5482000|        168|00:10:01|+0.01|0.21|0.3947|
+|=|          6|         36|         41|     202.1235000|        201|00:10:01|+0.01|0.17|0.3280|
+|=|          2|         36|         46|     173.9492857|        234|00:05:01|-0.00|0.14|0.4258|
+|=|          1|         36|         46|     157.2671250|        267|00:05:02|+0.00|0.13|0.4897|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-Best-so-far configuration:         113    mean value:      119.2162500
+Best-so-far configuration:          46    mean value:      157.2671250
 Description of the best-so-far configuration:
-    .ID. bandit reward learningrate confidence .PARENT.
-113  113    ucb     r2       0.8245     3.5174       69
+   .ID. bandit reward learningrate confidence .PARENT.
+46   46    ucb     r2       0.9554     1.6893       39
 
-# 2025-07-11 14:36:34 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
-    bandit reward learningrate confidence
-113    ucb     r2       0.8245     3.5174
-95     ucb     r2       0.2830     0.8788
-103    ucb     r2       0.8260     3.5232
-# 2025-07-11 14:36:34 CEST: Stopped because there is not enough budget left to race more than the minimum (3).
+# 2025-07-15 17:27:50 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   bandit reward learningrate confidence
+46    ucb     r2       0.9554     1.6893
+41    ucb     r2       0.2274     2.3716
+95    ucb     r2       0.9512     0.6448
+# 2025-07-15 17:27:50 CEST: Stopped because there is not enough budget left to race more than the minimum (3).
 # You may either increase the budget or set 'minNbSurvival' to a lower value.
 # Iteration: 4
 # nbIterations: 4
@@ -143,11 +143,11 @@ Description of the best-so-far configuration:
 # currentBudget: 7
 # number of elites: 3
 # nbConfigurations: 3
-# Total CPU user time: 157124, CPU sys time: 701.992, Wall-clock time: 9493.706
-# 2025-07-11 14:36:34 CEST: Starting post-selection:
-# Configurations selected: 113, 95, 103, 50, 69, 24, 82.
+# Total CPU user time: 142303.5, CPU sys time: 580.974, Wall-clock time: 8351.26
+# 2025-07-15 17:27:50 CEST: Starting post-selection:
+# Configurations selected: 46, 41, 95, 47, 82, 83, 84.
 # Pending instances: 0, 0, 0, 0, 0, 0, 0.
-# 2025-07-11 14:36:34 CEST: seed: 522126648
+# 2025-07-15 17:27:50 CEST: seed: 1818775605
 # Configurations: 7
 # Available experiments: 7
 # minSurvival: 1
@@ -162,52 +162,53 @@ Description of the best-so-far configuration:
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
 | |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-|.|          1|          7|        113|     1.990000000|          0|00:00:00|   NA|  NA|    NA|
-|.|          5|          7|        113|     5.309500000|          0|00:00:00|-0.64|0.18|1.0378|
-|.|          4|          7|        113|     103.5396667|          0|00:00:00|-0.32|0.12|0.6316|
-|.|          2|          7|        113|     152.6547500|          0|00:00:00|-0.21|0.09|0.4587|
-|.|          7|          7|        113|     123.9584000|          0|00:00:00|-0.18|0.06|0.5327|
-|.|          8|          7|        113|     104.3653333|          0|00:00:00|-0.10|0.09|0.6078|
-|.|          3|          7|        113|     132.3131429|          0|00:00:00|-0.08|0.07|0.5158|
-|.|          6|          7|        113|     119.2162500|          0|00:00:00|-0.02|0.11|0.5345|
-|=|          9|          7|        113|     106.5294444|          7|00:00:29|+0.04|0.15|0.5595|
+|.|          2|          7|         46|     2.029000000|          0|00:00:00|   NA|  NA|    NA|
+|.|          5|          7|         46|     151.0145000|          0|00:00:00|+0.00|0.50|0.4286|
+|.|          4|          7|         46|     103.0026667|          0|00:00:00|+0.31|0.54|0.4598|
+|.|          1|          7|         46|     87.37500000|          0|00:00:00|+0.49|0.62|0.3943|
+|.|          3|          7|         46|     129.9000000|          0|00:00:00|+0.37|0.49|0.3651|
+|.|          6|          7|         46|     158.2500000|          0|00:00:00|+0.29|0.41|0.3291|
+|.|          8|          7|         46|     178.5000000|          0|00:00:00|+0.24|0.35|0.2963|
+|.|          7|          7|         46|     157.2671250|          0|00:00:00|+0.17|0.27|0.3706|
+|-|          9|          4|         41|     139.3466667|          7|00:00:01|-0.04|0.08|0.4544|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-Best-so-far configuration:         113    mean value:      106.5294444
+Best configuration for the instances in this race: 41
+Best-so-far configuration:          47    mean value:      137.6824444
 Description of the best-so-far configuration:
-    .ID. bandit reward learningrate confidence .PARENT.
-113  113    ucb     r2       0.8245     3.5174       69
+   .ID. bandit reward learningrate confidence .PARENT.
+47   47    ucb     r2        0.945       0.66       39
 
-# 2025-07-11 14:37:04 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
-    bandit reward learningrate confidence
-113    ucb     r2       0.8245     3.5174
-95     ucb     r2       0.2830     0.8788
-103    ucb     r2       0.8260     3.5232
-# Total CPU user time: 157228.1, CPU sys time: 706.175, Wall-clock time: 9523.475
+# 2025-07-15 17:27:51 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+   bandit reward learningrate confidence
+47    ucb     r2       0.9450     0.6600
+41    ucb     r2       0.2274     2.3716
+95    ucb     r2       0.9512     0.6448
+# Total CPU user time: 142323.4, CPU sys time: 582.818, Wall-clock time: 8353.068
 # Best configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
-    bandit reward learningrate confidence
-113    ucb     r2       0.8245     3.5174
-95     ucb     r2       0.2830     0.8788
-103    ucb     r2       0.8260     3.5232
+   bandit reward learningrate confidence
+47    ucb     r2       0.9450     0.6600
+41    ucb     r2       0.2274     2.3716
+95    ucb     r2       0.9512     0.6448
 # Best configurations as commandlines (first number is the configuration ID; listed from best to worst according to the sum of ranks):
-113 --bandit ucb --reward r2 -lr 0.8245 -c 3.5174
-95  --bandit ucb --reward r2 -lr 0.283 -c 0.8788
-103 --bandit ucb --reward r2 -lr 0.826 -c 3.5232
+47 --bandit ucb --reward r2 -lr 0.945 -c 0.66
+41 --bandit ucb --reward r2 -lr 0.2274 -c 2.3716
+95 --bandit ucb --reward r2 -lr 0.9512 -c 0.6448
 
 
 # Testing of elite configurations: 1 
 # Testing iteration configurations: FALSE 
-# 2025-07-11 14:37:04 CEST: No test instances, skip testing
+# 2025-07-15 17:27:51 CEST: No test instances, skip testing
 
 Resources Used
 
-Total Memory used                        - MEM              : 57GiB
-Total CPU Time                           - CPU_Time         : 3-12:45:52
-Execution Time                           - Wall_Time        : 02:38:56
-total programme cpu time                 - Total_CPU        : 1-19:52:31
-Total_CPU / CPU_Time  (%)                - ETA              : 51%
+Total Memory used                        - MEM              : 47GiB
+Total CPU Time                           - CPU_Time         : 3-02:40:00
+Execution Time                           - Wall_Time        : 02:20:00
+total programme cpu time                 - Total_CPU        : 1-15:42:03
+Total_CPU / CPU_Time  (%)                - ETA              : 53%
 Number of alloc CPU                      - NCPUS            : 32
 Number of Mobilized Resources per Job    - NCPUS_EQUIV_PJOB : 86
-Mobilized Resources x Execution Time     - R_Wall_Time      : 9-11:48:16
+Mobilized Resources x Execution Time     - R_Wall_Time      : 8-08:40:00
 CPU_Time / R_Wall_Time (%)               - ALPHA            : 37%
 Energy (Joules)                                             : unknown
 

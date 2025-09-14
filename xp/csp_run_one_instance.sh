@@ -12,11 +12,11 @@ par_string=""
 if [ "$bandit" = "epsilongreedy" ] && [ "$reward" = "r1" ]; then
     par_string=" -lr 0.0479 -mfw 0.7958 -ew 0.3777 -sw 0.4522 -e 0.8495 "
 elif [ "$bandit" = "epsilongreedy" ] && [ "$reward" = "r2" ]; then
-    par_string=" -lr 0.7446 -e 0.2997 "
+    par_string=" -lr 0.6797 -e 0.2029 "
 elif [ "$bandit" = "ucb" ] && [ "$reward" = "r1" ]; then
     par_string=" -lr 0.2879 -mfw 0.8656 -ew 0.344 -sw 0.0752 -c 3.1753 "
 elif [ "$bandit" = "ucb" ] && [ "$reward" = "r2" ]; then
-    par_string=" -lr 0.8245 -c 3.5174 "
+    par_string=" -lr 0.945 -c 0.66 "
 fi
 
 launch_solver="java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
