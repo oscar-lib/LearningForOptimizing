@@ -41,8 +41,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       case "ucb" =>
         new UCBNew(neighList, in)
       case "bestslopefirst" =>
-        //bestSlopeFirst(neighList)
-        new BestSlopeFirstNew(neighList)
+        bestSlopeFirst(neighList)
+        //new BestSlopeFirstNew(neighList)
       case "roundrobin" =>
         //roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
         new RoundRobinSelector(neighList)
@@ -108,7 +108,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
         .getBestKnownSolution(rootDir + "/LearningForOptimizing/bks/tsp_bks.csv", instanceName)
         .getOrElse(0.0)
     val realSolutionOverTime = recorder.realObjectiveTimeStamp
-    println(f"solOverTime=" + realSolutionOverTime.map(e => f"(t:${e._1}%.3f-v:${e._2}%.3f)").mkString("[", "-", "]"))
+    println(f"solOverTime=" + realSolutionOverTime.map(e => f"(t:${e._1}%.3f-t:${e._2}-v:${e._3})").mkString("[", "-", "]"))
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
     println(f"integralPrimalGap=$integralPrimalGap%.3f".replace(',','.'))
     println(f"history=" + history.toString)
