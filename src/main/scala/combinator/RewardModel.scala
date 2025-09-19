@@ -116,7 +116,7 @@ sealed abstract class NormalizedGain extends RewardModel {
 
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
-    val gain     = profiler._lastCallGain
+    val gain     = if (runStat.foundMove) profiler._lastCallGain else 0
     this.update(gain)
     this.normalize(gain)
   }
@@ -187,7 +187,7 @@ class NormalizedWindowedMeanGain(windowSize: Int) extends NormalizedGain {
 class LogGain extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
-    if (profiler._lastCallGain == 0) {
+    if (!runStat.foundMove) {
       0
     } else if (profiler._lastCallGain > 0) {
       math.log10(profiler._lastCallGain.toDouble)
@@ -200,7 +200,12 @@ class LogGain extends RewardModel {
 
 class Gain extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
-    val profiler = NeighborhoodUtils.getProfiler(neighborhood)
-    profiler._lastCallGain.toDouble
+    if (runStat.foundMove) {
+      val profiler = NeighborhoodUtils.getProfiler(neighborhood)
+      profiler._lastCallGain.toDouble
+    } else {
+      0
+    }
+
   }
 }

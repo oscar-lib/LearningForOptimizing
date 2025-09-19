@@ -23,7 +23,8 @@ class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput)
       rewardModel = if (in.objChangeReward) {new LogGain()} else { new OriginalRewardModel(
         wSol = in.moveFoundWeight,
         wEff = in.efficiencyWeight,
-        wSlope = in.slopeWeight
+        wSlope = in.slopeWeight,
+        slopeWidth = neighborhoods.length * 2
       )}
     ) {
 
