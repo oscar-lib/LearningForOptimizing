@@ -33,7 +33,7 @@ output=`$launch_solver --problem pdptw --input ${instance} --timeout ${timeout} 
 # post process to extract only the relevant information
 unroutedNodes=$(echo "$output" | grep 'Unrouted nodes' | awk -F': ' '{print $2}')
 nVehicles=$(echo "$output" | grep 'Number of used vehicles' | awk -F': ' '{print $2}')
-travelLength=$(echo "$output" | grep 'travelLength' | awk -F': ' '{print $2}')
+travelLength=$(echo "$output" | grep 'Total route length' | awk -F': ' '{print $2}')
 objective=$(echo "$output" | grep 'bestObj' | awk -F'=' '{print $2}')
 integralPrimalGap=$(echo "$output" | grep 'integralPrimalGap' | awk -F'=' '{print $2}')
 solOverTime=$(echo "$output" | grep 'solOverTime' | awk -F'=' '{print $2}')
