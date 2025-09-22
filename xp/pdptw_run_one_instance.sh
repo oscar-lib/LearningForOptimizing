@@ -15,13 +15,13 @@ par_string=""
 
 # Results of the irace fine tuning
 if [ "$bandit" = "epsilongreedy" ] && [ "$reward" = "r1" ]; then
-    par_string=" -lr 0.7421 -mfw 0.3389 -ew 0.8716 -sw 0.3646 -e 0.0667 "
+    par_string=" -lr 0.5225 -mfw 0.4637 -ew 0.2431 -sw 0.5015 -e 0.0045 "
 elif [ "$bandit" = "epsilongreedy" ] && [ "$reward" = "r2" ]; then
-    par_string=" -lr 0.2075 -e 0.0055 "
+    par_string=" -lr 0.5061 -e 0.0058 "
 elif [ "$bandit" = "ucb" ] && [ "$reward" = "r1" ]; then
-    par_string=" -lr 0.0521 -mfw 0.6485 -ew 0.2779 -sw 0.6319 -c 0.5123 "
+    par_string=" -lr 0.6184 -mfw 0.2398 -ew 0.4172 -sw 0.6568 -c 4.5627 "
 elif [ "$bandit" = "ucb" ] && [ "$reward" = "r2" ]; then
-    par_string=" -lr 0.048 -c 3.3047 "
+    par_string=" -lr 0.9669 -c 0.3947 "
 elif [ "$bandit" = "dqn" ]; then
   par_string=" --learningRate 0.0167 --epsilon 0.0644 --batchSize 117 --ddqn false --clipping 10.0"
   #par_string=" --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn true --clipping 5.0" # Previous best parameters
