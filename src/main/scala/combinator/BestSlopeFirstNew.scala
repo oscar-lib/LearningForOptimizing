@@ -15,14 +15,22 @@ package combinator
 
 import oscar.cbls.core.search.Neighborhood
 class BestSlopeFirstNew(neighborhoods: List[Neighborhood])
-    extends BanditSelector(neighborhoods, AfterEveryMove, rewardModel = new SlopeReward()) {
+    extends BanditSelector(neighborhoods, AfterEveryMove, rewardModel = new NormalizedWindowedSlope(10), learningRate = 1.0) {
+
+  for (i <- weights.indices)
+    weights(i) = 0.0
+
+  override def minWeight(): Double = 0.0
 
   /** The method that provides a neighborhood.
     *
     * @return
     *   Some(n) if a neighborhood is available or None if the neighborhoods are exhausted
     */
-  override def getNextNeighborhood: Option[Neighborhood] = getBestNeighborhood
+  override def getNextNeighborhood: Option[Neighborhood] = {
+    val v = getBestNeighborhood
+    v
+  }
 
   /** Use the reward to setup the new weight
     * @param neighborhood

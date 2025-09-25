@@ -1,7 +1,15 @@
 package tsp
 
-import combinator.{BanditSelector, EpsilonGreedyBanditNew, RandomCombinator, UCBNew}
-import logger.{MoveRecorder, ObjectiveRecorder}
+import combinator.{
+  BanditSelector,
+  BestSlopeFirstNew,
+  EpsilonGreedyBanditNew,
+  RandomCombinator,
+  RandomSelector,
+  RoundRobinSelector,
+  UCBNew
+}
+import logger.{MoveRecorder, ObjectiveRecorder, WeightRecorder}
 import oscar.cbls.{bestSlopeFirst, roundRobin, Objective}
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.core.search.Neighborhood
@@ -46,6 +54,23 @@ case class Solver(oscarModel: Model, in: SolverInput) {
         )
       case "r2" => new Gain()
       case "r3" => new LogGain()
+    }
+
+    // set the bandit according to the user input
+    var search: Neighborhood = in.bandit.toLowerCase() match {
+      case "epsilongreedy" =>
+        new EpsilonGreedyBanditNew(neighList, in)
+      case "random" =>
+        // new RandomCombinator(neighList)
+        new RandomSelector(neighList)
+      case "ucb" =>
+        new UCBNew(neighList, in)
+      case "bestslopefirst" =>
+        bestSlopeFirst(neighList)
+      // new BestSlopeFirstNew(neighList)
+      case "roundrobin" =>
+        // roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
+        new RoundRobinSelector(neighList)
       case _ =>
         throw new IllegalArgumentException(
           s"Unknown reward type: ${in.rewardType}. Supported types are: r1, r2, r3."
@@ -80,12 +105,16 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       case _ => throw new IllegalArgumentException(s"Unknown bandit type: ${in.bandit}.")
     }
 
-    val history = new MoveRecorder()
+    val history       = new MoveRecorder(obj)
+    val weightHistory = new WeightRecorder(null)
     if (in.printHistory) {
       search match {
         case b: BanditSelector => {
+          weightHistory.setBanditSelector(b)
           b.addResetCallBack(() => history.notifyReset())
           b.addMoveCallBack((neigh, result) => history.notifySearchResult(neigh, result))
+          b.addResetCallBack(() => weightHistory.registerWeights())
+          b.addMoveCallBack((_, _) => weightHistory.registerWeights())
         }
         case _ => // do nothing
       }
@@ -136,7 +165,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     val realSolutionOverTime = recorder.realObjectiveTimeStamp
     println(
       f"solOverTime=" + realSolutionOverTime
-        .map(e => s"""{"t":${e._1}-"v":${e._2}}""")
+        .map(e => f"(t:${e._1}%.3f-t:${e._2}-v:${e._3})")
         .mkString("[", "-", "]")
     )
     val integralPrimalGap = recorder.integralPrimalGap(bestKnownSolution, timeout)
@@ -145,6 +174,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     if (search.isInstanceOf[StatefulCombinator]) {
       search.asInstanceOf[StatefulCombinator].close();
     }
+    if (weightHistory.banditSelector != null)
+      println(weightHistory.toString)
   }
 
 }

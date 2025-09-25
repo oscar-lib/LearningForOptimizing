@@ -54,7 +54,10 @@ object NeighborhoodStats {
         case NoMoveFound  => false
         case MoveFound(_) => NeighborhoodUtils.lastCallGain(neighborhood) > 0
       },
-      slope = NeighborhoodUtils.slope(neighborhood),
+      slope = searchResult match {
+        case NoMoveFound  => 0.0
+        case MoveFound(_) => NeighborhoodUtils.slope(neighborhood)
+      },
       timeNano = NeighborhoodUtils.lastCallDuration(neighborhood)
     )
   }

@@ -16,22 +16,22 @@
 #------------------------------------------------------------------------------
 # installed at: /gpfs/projects/shared/p_ariac_cetic/miniconda/envs/myr-env/lib/R/library/irace
 # called with: --parallel 8 -s /gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/scenario-pdptw-epsilongreedy-r2.txt --target-runner /gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/target-runner-pdptw --train-instances-file /gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/examples/pdptw/trainingall.txt
-# 2025-07-13 22:50:40 CEST: Reading parameter file '/gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/parameters-epsilongreedy-r2.txt'.
-# 2025-07-13 22:50:40 CEST: Read 1 configuration(s) from file '/gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/defaults-epsilongreedy-r2.txt'
-# 2025-07-13 22:50:40 CEST: Initialization
+# 2025-07-15 15:11:51 CEST: Reading parameter file '/gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/parameters-epsilongreedy-r2.txt'.
+# 2025-07-15 15:11:51 CEST: Read 1 configuration(s) from file '/gpfs/projects/shared/p_ariac_cetic/LearningForOptimizing/irace/defaults-epsilongreedy-r2.txt'
+# 2025-07-15 15:11:52 CEST: Initialization
 # Elitist race
 # Elitist new instances: 1
 # Elitist limit: 2
 # nbIterations: 3
 # minNbSurvival: 3
 # nbParameters: 2
-# seed: 1086986710
+# seed: 290263223
 # confidence level: 0.95
 # budget: 800
 # mu: 5
 # deterministic: FALSE
 
-# 2025-07-13 22:50:40 CEST: Iteration 1 of 3
+# 2025-07-15 15:11:52 CEST: Iteration 1 of 3
 # experimentsUsed: 0
 # remainingBudget: 800
 # currentBudget: 266
@@ -47,30 +47,28 @@
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
 | |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-|x|          1|         44|         25|     3.372000000|         44|00:30:19|   NA|  NA|    NA|
-|x|          2|         44|          2|     76.30700000|         88|00:30:28|+0.18|0.59|0.7637|
-|x|          3|         44|          2|     94.07566667|        132|00:30:21|+0.25|0.50|0.5946|
-|x|          4|         44|          2|     101.2817500|        176|00:30:22|+0.35|0.51|0.4873|
-|-|          5|          9|          2|     88.31780000|        220|00:30:16|+0.41|0.53|0.6076|
-|-|          6|          4|          2|     74.34533333|        229|00:10:03|-0.03|0.14|0.5606|
-|=|          7|          4|         44|     69.00971429|        233|00:05:02|-0.08|0.08|0.6592|
-|=|          8|          4|         44|     83.88075000|        237|00:05:02|-0.02|0.11|0.6079|
+|x|          1|         44|         16|     4.554000000|         44|00:30:18|   NA|  NA|    NA|
+|x|          2|         44|         34|     21.10550000|         88|00:30:15|+0.27|0.63|0.8064|
+|x|          3|         44|         25|     37.46733333|        132|00:30:16|+0.04|0.36|0.9417|
+|x|          4|         44|         25|     48.79325000|        176|00:30:22|+0.11|0.33|0.8633|
+|=|          5|         44|         25|     51.02100000|        220|00:30:20|+0.07|0.26|0.9271|
+|-|          6|         17|         25|     54.07433333|        264|00:30:18|-0.05|0.12|0.9840|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-Best-so-far configuration:          44    mean value:      83.88075000
+Best-so-far configuration:          25    mean value:      54.07433333
 Description of the best-so-far configuration:
    .ID.        bandit reward learningrate epsilon .PARENT.
-44   44 epsilongreedy     r2       0.8254  0.0056       NA
+25   25 epsilongreedy     r2       0.3963  0.0049       NA
 
-# 2025-07-14 01:42:38 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+# 2025-07-15 18:13:44 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
           bandit reward learningrate epsilon
-44 epsilongreedy     r2       0.8254  0.0056
-2  epsilongreedy     r2       0.1223  0.0212
-25 epsilongreedy     r2       0.4036  0.1150
-# 2025-07-14 01:42:38 CEST: Iteration 2 of 3
-# experimentsUsed: 237
-# remainingBudget: 563
-# currentBudget: 281
-# nbConfigurations: 33
+25 epsilongreedy     r2       0.3963  0.0049
+16 epsilongreedy     r2       0.1151  0.0986
+27 epsilongreedy     r2       0.5838  0.0674
+# 2025-07-15 18:13:44 CEST: Iteration 2 of 3
+# experimentsUsed: 264
+# remainingBudget: 536
+# currentBudget: 268
+# nbConfigurations: 40
 # Markers:
      x No test is performed.
      c Configurations are discarded only due to capping.
@@ -82,32 +80,30 @@ Description of the best-so-far configuration:
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
 | |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-|x|          9|         33|         72|     11.57200000|         33|00:25:13|   NA|  NA|    NA|
-|x|          3|         33|         72|     66.43450000|         63|00:20:15|+0.19|0.60|0.9650|
-|x|          1|         33|         45|     50.15900000|         93|00:20:13|+0.07|0.38|0.9340|
-|x|          4|         33|         45|     64.32875000|        123|00:20:18|+0.22|0.41|0.8190|
-|-|          2|         13|         45|     80.04060000|        153|00:20:17|-0.11|0.11|1.0169|
-|=|          5|         13|         45|     73.74783333|        163|00:10:03|-0.04|0.13|0.9841|
-|=|          6|         13|         45|     64.02828571|        173|00:10:05|+0.01|0.15|0.9490|
-|=|          7|         13|         44|     62.77112500|        183|00:10:03|+0.03|0.15|0.9169|
-|=|          8|         13|         45|     76.76544444|        193|00:10:04|+0.04|0.14|0.9131|
-|=|         10|         13|         45|     70.83510000|        206|00:10:05|+0.02|0.12|0.9145|
+|x|          7|         40|         77|     117.4050000|         40|00:25:29|   NA|  NA|    NA|
+|x|          5|         40|         81|     88.59250000|         77|00:25:19|+0.28|0.64|0.8053|
+|x|          1|         40|         61|     64.16033333|        114|00:25:16|+0.19|0.46|0.8833|
+|x|          4|         40|         61|     68.37300000|        151|00:25:19|+0.22|0.42|0.8606|
+|-|          6|         15|         61|     66.71120000|        188|00:25:17|-0.04|0.16|1.0271|
+|=|          2|         15|         61|     60.90350000|        200|00:10:04|+0.01|0.18|0.9636|
+|=|          3|         15|         61|     61.88700000|        212|00:10:04|+0.03|0.17|0.9507|
+|=|          8|         15|         61|     76.63587500|        227|00:10:06|+0.08|0.19|0.9064|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-Best-so-far configuration:          45    mean value:      70.83510000
+Best-so-far configuration:          61    mean value:      76.63587500
 Description of the best-so-far configuration:
    .ID.        bandit reward learningrate epsilon .PARENT.
-45   45 epsilongreedy     r2       0.2495  0.0214        2
+61   61 epsilongreedy     r2       0.1861   7e-04       16
 
-# 2025-07-14 04:19:19 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+# 2025-07-15 20:50:42 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
           bandit reward learningrate epsilon
-45 epsilongreedy     r2       0.2495  0.0214
-44 epsilongreedy     r2       0.8254  0.0056
-70 epsilongreedy     r2       0.3619  0.0239
-# 2025-07-14 04:19:19 CEST: Iteration 3 of 3
-# experimentsUsed: 443
-# remainingBudget: 357
-# currentBudget: 357
-# nbConfigurations: 35
+61 epsilongreedy     r2       0.1861  0.0007
+52 epsilongreedy     r2       0.6245  0.0292
+67 epsilongreedy     r2       0.3895  0.0197
+# 2025-07-15 20:50:42 CEST: Iteration 3 of 3
+# experimentsUsed: 491
+# remainingBudget: 309
+# currentBudget: 309
+# nbConfigurations: 37
 # Markers:
      x No test is performed.
      c Configurations are discarded only due to capping.
@@ -119,46 +115,32 @@ Description of the best-so-far configuration:
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
 | |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-|x|         11|         35|         95|     49.93200000|         35|00:25:13|   NA|  NA|    NA|
-|x|          2|         35|         76|     90.73200000|         67|00:20:21|+0.16|0.58|0.5452|
-|x|         10|         35|        106|     66.70766667|         99|00:20:15|-0.14|0.24|0.9073|
-|x|          1|         35|         88|     54.60825000|        131|00:20:15|-0.05|0.21|0.9130|
-|=|          9|         35|         98|     46.52180000|        163|00:20:17|-0.05|0.16|0.9607|
-|=|          5|         35|         98|     44.70083333|        195|00:20:17|-0.01|0.16|0.9329|
-|=|          7|         35|        100|     56.61728571|        227|00:20:14|+0.02|0.16|0.8651|
-|=|          3|         35|         98|     59.66137500|        259|00:20:18|+0.01|0.13|0.9220|
-|=|          6|         35|         94|     50.69211111|        291|00:20:18|+0.02|0.13|0.9285|
-|=|          4|         35|        106|     57.13950000|        323|00:20:23|+0.03|0.13|0.9334|
-|=|          8|         35|        106|     68.57172727|        355|00:20:17|+0.03|0.12|0.9463|
+|x|          9|         37|         91|     46.91600000|         37|00:25:16|   NA|  NA|    NA|
+|x|          7|         37|        104|     83.84650000|         71|00:25:13|+0.20|0.60|0.9688|
+|x|          8|         37|        104|     112.2276667|        105|00:25:11|+0.29|0.53|0.9683|
+|x|          1|         37|        104|     85.13800000|        139|00:25:12|+0.20|0.40|0.9489|
+|-|          6|         14|        104|     81.59120000|        173|00:25:12|-0.04|0.17|0.9395|
+|=|          3|         14|        104|     80.38616667|        184|00:10:03|-0.05|0.13|0.9677|
+|=|          2|         14|        104|     74.42214286|        195|00:10:05|-0.03|0.12|0.9636|
+|=|          4|         14|        104|     75.37075000|        206|00:10:05|-0.02|0.11|0.9565|
+|=|          5|         14|         61|     74.95444444|        217|00:10:05|-0.01|0.10|0.9508|
+|=|         10|         14|        110|     66.57440000|        231|00:10:06|-0.00|0.10|0.9532|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-Best-so-far configuration:         106    mean value:      68.57172727
+Best-so-far configuration:         110    mean value:      66.57440000
 Description of the best-so-far configuration:
     .ID.        bandit reward learningrate epsilon .PARENT.
-106  106 epsilongreedy     r2       0.8464  0.0168       44
+110  110 epsilongreedy     r2        0.203   1e-04       61
 
-# 2025-07-14 08:07:34 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+# 2025-07-15 23:47:17 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
            bandit reward learningrate epsilon
-106 epsilongreedy     r2       0.8464  0.0168
-44  epsilongreedy     r2       0.8254  0.0056
-84  epsilongreedy     r2       0.8081  0.0087
-# 2025-07-14 08:07:34 CEST: Stopped because there is not enough budget left to race more than the minimum (3).
-# You may either increase the budget or set 'minNbSurvival' to a lower value.
-# Iteration: 4
-# nbIterations: 4
-# experimentsUsed: 798
-# timeUsed: 0
-# remainingBudget: 2
-# currentBudget: 2
-# number of elites: 3
-# nbConfigurations: 3
-# Total CPU user time: 230562.8, CPU sys time: 10273.15, Wall-clock time: 33414.06
-# 2025-07-14 08:07:34 CEST: Starting post-selection:
-# Configurations selected: 106, 44.
-# Pending instances: 0, 0.
-# 2025-07-14 08:07:35 CEST: seed: 1086986710
-# Configurations: 2
-# Available experiments: 2
-# minSurvival: 1
+110 epsilongreedy     r2       0.2030  0.0001
+61  epsilongreedy     r2       0.1861  0.0007
+104 epsilongreedy     r2       0.3929  0.0149
+# 2025-07-15 23:47:17 CEST: Iteration 4 of 4
+# experimentsUsed: 722
+# remainingBudget: 78
+# currentBudget: 78
+# nbConfigurations: 9
 # Markers:
      x No test is performed.
      c Configurations are discarded only due to capping.
@@ -170,52 +152,64 @@ Description of the best-so-far configuration:
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
 | |   Instance|      Alive|       Best|       Mean best| Exp so far|  W time|  rho|KenW|  Qvar|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-|.|          3|          2|         44|     123.9270000|          0|00:00:00|   NA|  NA|    NA|
-|.|          4|          2|         44|     115.5800000|          0|00:00:00|+1.00|1.00|0.0000|
-|.|          8|          2|         44|     139.7126667|          0|00:00:00|-0.33|0.11|0.6667|
-|.|         10|          2|         44|     108.9775000|          0|00:00:00|-0.33|0.00|0.6667|
-|.|         11|          2|         44|     97.88340000|          0|00:00:00|-0.20|0.04|0.6000|
-|.|          5|          2|         44|     88.25533333|          0|00:00:00|-0.07|0.11|0.5333|
-|.|          2|          2|         44|     96.83842857|          0|00:00:00|-0.14|0.02|0.5714|
-|.|          7|          2|         44|     91.66800000|          0|00:00:00|-0.07|0.06|0.5357|
-|.|          1|          2|         44|     82.19733333|          0|00:00:00|-0.11|0.01|0.5556|
-|.|          6|          2|         44|     74.13250000|          0|00:00:00|-0.07|0.04|0.5333|
-|.|          9|          2|         44|     69.12963636|          0|00:00:00|-0.09|0.01|0.5455|
-|=|         12|          2|         44|     66.55391667|          2|00:05:01|-0.06|0.03|0.5303|
+|x|         11|          9|        116|     165.1750000|          9|00:10:03|   NA|  NA|    NA|
+|x|          4|          9|        118|     124.4845000|         15|00:05:06|-0.62|0.19|1.4891|
+|x|          6|          9|        110|     101.1540000|         21|00:05:02|-0.21|0.20|1.0630|
+|x|          7|          9|        121|     110.2960000|         27|00:05:03|-0.02|0.23|0.9262|
+|=|          3|          9|        110|     99.76120000|         33|00:05:02|+0.10|0.28|0.7899|
+|=|          9|          9|        110|     92.46366667|         39|00:05:02|+0.02|0.18|0.8709|
+|=|         10|          9|        110|     79.56371429|         45|00:05:03|+0.07|0.20|0.8617|
+|=|          8|          9|        110|     92.23625000|         51|00:05:03|+0.08|0.19|0.8589|
+|=|          1|          9|        110|     82.45222222|         57|00:05:02|+0.11|0.21|0.8239|
+|=|          2|          9|        110|     78.05360000|         63|00:05:02|+0.06|0.15|0.8550|
+|=|          5|          9|        110|     76.38645455|         69|00:05:03|+0.00|0.10|0.9013|
+|=|         12|          9|        119|     72.18825000|         78|00:10:03|-0.01|0.07|0.9075|
 +-+-----------+-----------+-----------+----------------+-----------+--------+-----+----+------+
-Best-so-far configuration:          44    mean value:      66.55391667
+Best-so-far configuration:         119    mean value:      72.18825000
 Description of the best-so-far configuration:
-   .ID.        bandit reward learningrate epsilon .PARENT.
-44   44 epsilongreedy     r2       0.8254  0.0056       NA
+    .ID.        bandit reward learningrate epsilon .PARENT.
+119  119 epsilongreedy     r2       0.2075  0.0055      110
 
-# 2025-07-14 08:12:36 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
+# 2025-07-16 00:57:57 CEST: Elite configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
            bandit reward learningrate epsilon
-44  epsilongreedy     r2       0.8254  0.0056
-106 epsilongreedy     r2       0.8464  0.0168
-# Total CPU user time: 231306.8, CPU sys time: 10304.7, Wall-clock time: 33715.55
+119 epsilongreedy     r2       0.2075  0.0055
+110 epsilongreedy     r2       0.2030  0.0001
+120 epsilongreedy     r2       0.2055  0.0061
+# 2025-07-16 00:57:57 CEST: Stopped because budget is exhausted
+# Iteration: 5
+# nbIterations: 4
+# experimentsUsed: 800
+# timeUsed: 0
+# remainingBudget: 0
+# currentBudget: 78
+# number of elites: 3
+# nbConfigurations: 9
+# Total CPU user time: 232713.4, CPU sys time: 10815.16, Wall-clock time: 35165.75
 # Best configurations (first number is the configuration ID; listed from best to worst according to the sum of ranks):
            bandit reward learningrate epsilon
-44  epsilongreedy     r2       0.8254  0.0056
-106 epsilongreedy     r2       0.8464  0.0168
+119 epsilongreedy     r2       0.2075  0.0055
+110 epsilongreedy     r2       0.2030  0.0001
+120 epsilongreedy     r2       0.2055  0.0061
 # Best configurations as commandlines (first number is the configuration ID; listed from best to worst according to the sum of ranks):
-44  --bandit epsilongreedy --reward r2 -lr 0.8254 -e 0.0056
-106 --bandit epsilongreedy --reward r2 -lr 0.8464 -e 0.0168
+119 --bandit epsilongreedy --reward r2 -lr 0.2075 -e 0.0055
+110 --bandit epsilongreedy --reward r2 -lr 0.203 -e 0.0001
+120 --bandit epsilongreedy --reward r2 -lr 0.2055 -e 0.0061
 
 
 # Testing of elite configurations: 1 
 # Testing iteration configurations: FALSE 
-# 2025-07-14 08:12:36 CEST: No test instances, skip testing
+# 2025-07-16 00:57:57 CEST: No test instances, skip testing
 
 Resources Used
 
-Total Memory used                        - MEM              : 209GiB
-Total CPU Time                           - CPU_Time         : 3-02:56:08
-Execution Time                           - Wall_Time        : 09:22:01
-total programme cpu time                 - Total_CPU        : 2-19:06:58
-Total_CPU / CPU_Time  (%)                - ETA              : 89%
+Total Memory used                        - MEM              : 201GiB
+Total CPU Time                           - CPU_Time         : 3-06:20:08
+Execution Time                           - Wall_Time        : 09:47:31
+total programme cpu time                 - Total_CPU        : 2-19:39:27
+Total_CPU / CPU_Time  (%)                - ETA              : 86%
 Number of alloc CPU                      - NCPUS            : 8
 Number of Mobilized Resources per Job    - NCPUS_EQUIV_PJOB : 128
-Mobilized Resources x Execution Time     - R_Wall_Time      : 49-22:58:08
+Mobilized Resources x Execution Time     - R_Wall_Time      : 52-05:22:08
 CPU_Time / R_Wall_Time (%)               - ALPHA            : 6%
 Energy (Joules)                                             : unknown
 

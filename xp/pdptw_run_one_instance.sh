@@ -15,13 +15,13 @@ par_string=""
 
 # Results of the irace fine tuning
 if [ "$bandit" = "epsilongreedy" ] && [ "$reward" = "r1" ]; then
-    par_string=" -lr 0.1664 -mfw 0.4774 -ew 0.3024 -sw 0.7345 -e 0.0861 "
+    par_string=" -lr 0.5225 -mfw 0.4637 -ew 0.2431 -sw 0.5015 -e 0.0045 "
 elif [ "$bandit" = "epsilongreedy" ] && [ "$reward" = "r2" ]; then
-    par_string=" -lr 0.8254 -e 0.0056 "
+    par_string=" -lr 0.5061 -e 0.0058 "
 elif [ "$bandit" = "ucb" ] && [ "$reward" = "r1" ]; then
-    par_string=" -lr 0.717 -mfw 0.9835 -ew 0.6747 -sw 0.5507 -c 1.2658 "
+    par_string=" -lr 0.6184 -mfw 0.2398 -ew 0.4172 -sw 0.6568 -c 4.5627 "
 elif [ "$bandit" = "ucb" ] && [ "$reward" = "r2" ]; then
-    par_string=" -lr 0.2267 -c 3.7874 "
+    par_string=" -lr 0.9669 -c 0.3947 "
 elif [ "$bandit" = "dqn" ]; then
   par_string=" --learningRate 0.0167 --epsilon 0.0644 --batchSize 117 --ddqn false --clipping 10.0"
   #par_string=" --learningRate 0.005 --epsilon 0.1 --batchSize 128 --ddqn true --clipping 5.0" # Previous best parameters
@@ -33,7 +33,7 @@ output=`$launch_solver --problem pdptw --input ${instance} --timeout ${timeout} 
 # post process to extract only the relevant information
 unroutedNodes=$(echo "$output" | grep 'Unrouted nodes' | awk -F': ' '{print $2}')
 nVehicles=$(echo "$output" | grep 'Number of used vehicles' | awk -F': ' '{print $2}')
-travelLength=$(echo "$output" | grep 'travelLength' | awk -F': ' '{print $2}')
+travelLength=$(echo "$output" | grep 'Total route length' | awk -F': ' '{print $2}')
 objective=$(echo "$output" | grep 'bestObj' | awk -F'=' '{print $2}')
 integralPrimalGap=$(echo "$output" | grep 'integralPrimalGap' | awk -F'=' '{print $2}')
 solOverTime=$(echo "$output" | grep 'solOverTime' | awk -F'=' '{print $2}')

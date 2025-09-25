@@ -19,34 +19,36 @@ class ObjectiveRecorder(objective: Objective, getRealObjective: Function[Long, O
   private var previousBestValue = objective.value // last best value observed
   private val initTimeNano =
     System.nanoTime() // time at which the object was created, used to compute the elapsed time
+  private var t : Long = 0;
   // time is recorded in seconds, as a Double (more precision should not be necessary for plots)
 
   // objective improvements over time, where the objective is the one described in the oscar model
   // only absolute improvements are recorded (so the absolute best found solution)
-  val oscarObjectiveTimeStamp: ArrayBuffer[(Double, Long)] =
-    new ArrayBuffer[(Double, Long)]()
+  val oscarObjectiveTimeStamp: ArrayBuffer[(Double, Long, Long)] =
+    new ArrayBuffer[(Double, Long, Long)]()
 
   // objective improvements over time, where the objective is the real one of the problem
   // only absolute improvements are recorded (so the absolute best found solution)
-  val realObjectiveTimeStamp: ArrayBuffer[(Double, Double)] =
-    new ArrayBuffer[(Double, Double)]()
+  val realObjectiveTimeStamp: ArrayBuffer[(Double, Long, Double)] =
+    new ArrayBuffer[(Double, Long, Double)]()
 
   /** Notifies that a move has been performed, possibly recording the best objective value if the
     * objective has been improved
     */
   def notifyMove(): Unit = {
+    t += 1;
     val currentValue = objective.value
     if (currentValue < previousBestValue) {
       previousBestValue = currentValue
       val currentTimeNano    = System.nanoTime()
       val elapsedTimeNano    = currentTimeNano - initTimeNano
       val elapsedTimeSeconds = elapsedTimeNano.toDouble / 1_000_000_000.0
-      oscarObjectiveTimeStamp.append((elapsedTimeSeconds, currentValue))
+      oscarObjectiveTimeStamp.append((elapsedTimeSeconds, t, currentValue))
       val realObjective = getRealObjective(currentValue)
       realObjective match {
         case Some(value) => {
-          if (realObjectiveTimeStamp.isEmpty || value < realObjectiveTimeStamp.last._2)
-            realObjectiveTimeStamp.append((elapsedTimeSeconds, value))
+          if (realObjectiveTimeStamp.isEmpty || value < realObjectiveTimeStamp.last._3)
+            realObjectiveTimeStamp.append((elapsedTimeSeconds, t, value))
         }
         case None        =>
       }
@@ -90,8 +92,8 @@ class ObjectiveRecorder(objective: Objective, getRealObjective: Function[Long, O
     */
   def primalGapOverTime(bestKnownSolution: Double, until: Double): ArrayBuffer[(Double, Double)] = {
     realObjectiveTimeStamp
-      .takeWhile { case (time, _) => time <= until }
-      .map { case (time, v) => (time, primalGap(bestKnownSolution, Some(v))) }
+      .takeWhile { case (time, _iter, _) => time <= until }
+      .map { case (time, _iter, v) => (time, primalGap(bestKnownSolution, Some(v))) }
   }
 
   /** Computes the primal gap compared to a best known solution. The primal gap is a value defined
@@ -148,7 +150,7 @@ class ObjectiveRecorder(objective: Objective, getRealObjective: Function[Long, O
 
   override def toString: String = {
     val timeStampString = oscarObjectiveTimeStamp
-      .map(e => f"(t:${e._1}%.3f-v:${e._2})")
+      .map(e => f"(t:${e._1}%.3f-t:${e._2}-v:${e._3})")
       .mkString("[", "-", "]")
     s"obj=$timeStampString"
   }

@@ -32,8 +32,9 @@ class OriginalRewardModel(
   /** weight rewarding small execution time */
   wEff: Double = 0.2,
   /** weight rewarding the slope */
-  wSlope: Double = 0.4
-) extends NormalizedWindowedSlope(30) {
+  wSlope: Double = 0.4,
+  slopeWidth: Int = 30
+) extends NormalizedWindowedSlope(slopeWidth) {
   private var maxRunTimeNano: Long = 1 // max run time experienced by a neighborhood
 
   /** Gives a reward in [0, 1] based on finding a move. 1 means that a move was found, 0 otherwise
@@ -97,10 +98,12 @@ class SlopeReward extends RewardModel {
   *   number of past slopes retained for computing the maximum slope
   */
 class NormalizedWindowedSlope(windowSize: Int) extends RewardModel {
-  private val window: mutable.Queue[Double] = mutable.Queue.empty
+  private val window: mutable.Queue[Double] = mutable.Queue.empty // only hold non zero slope
 
   override def slopeReward(runStat: NeighborhoodStats): Double = {
     val slope = Math.abs(runStat.slope)
+    if (slope == 0) // slope of zero are ignored
+      return 0;
     window.enqueue(slope)
     maxSlope = Math.max(maxSlope, slope)
     if (window.size > windowSize) {
@@ -109,6 +112,7 @@ class NormalizedWindowedSlope(windowSize: Int) extends RewardModel {
         maxSlope = window.max
       }
     }
+    // println("current slope = " + slope + " maxslope = " + maxSlope)
     if (maxSlope == 0) {
       0
     } else {
@@ -131,7 +135,7 @@ sealed abstract class NormalizedGain extends RewardModel {
 
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
-    val gain     = profiler._lastCallGain
+    val gain     = if (runStat.foundMove) profiler._lastCallGain else 0
     this.update(gain)
     this.normalize(gain)
   }
@@ -207,7 +211,7 @@ class NormalizedWindowedMeanGain(windowSize: Int) extends NormalizedGain {
 class LogGain extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
-    if (profiler._lastCallGain == 0) {
+    if (!runStat.foundMove) {
       0
     } else if (profiler._lastCallGain > 0) {
       math.log10(profiler._lastCallGain.toDouble)
@@ -234,8 +238,13 @@ class LogGain extends RewardModel {
   */
 class Gain extends RewardModel {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
-    val profiler = NeighborhoodUtils.getProfiler(neighborhood)
-    profiler._lastCallGain.toDouble
+    if (runStat.foundMove) {
+      val profiler = NeighborhoodUtils.getProfiler(neighborhood)
+      profiler._lastCallGain.toDouble
+    } else {
+      0
+    }
+
   }
 
   override def apply(prevObj: Long, newObj: Long): Double = {

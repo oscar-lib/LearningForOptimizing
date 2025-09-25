@@ -42,7 +42,7 @@ class EpsilonGreedyBanditNew(l: List[Neighborhood], in: SolverInput, rewardModel
     */
   override def getNextNeighborhood: Option[Neighborhood] = {
     t += 1
-    val epsilon_t: Double = epsilon * Math.sqrt(l.length.toDouble / t)
+    val epsilon_t: Double = epsilon // * Math.sqrt(l.length.toDouble / t)
     val prob_t: Double    = Random.nextDouble()
     if (prob_t > epsilon_t) { // gives the best neighborhood
       getBestNeighborhood
