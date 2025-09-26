@@ -54,28 +54,12 @@ case class Solver(oscarModel: Model, in: SolverInput) {
         )
       case "r2" => new Gain()
       case "r3" => new LogGain()
-    }
-
-    // set the bandit according to the user input
-    var search: Neighborhood = in.bandit.toLowerCase() match {
-      case "epsilongreedy" =>
-        new EpsilonGreedyBanditNew(neighList, in)
-      case "random" =>
-        // new RandomCombinator(neighList)
-        new RandomSelector(neighList)
-      case "ucb" =>
-        new UCBNew(neighList, in)
-      case "bestslopefirst" =>
-        bestSlopeFirst(neighList)
-      // new BestSlopeFirstNew(neighList)
-      case "roundrobin" =>
-        // roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
-        new RoundRobinSelector(neighList)
       case _ =>
         throw new IllegalArgumentException(
           s"Unknown reward type: ${in.rewardType}. Supported types are: r1, r2, r3."
         )
     }
+
     // set the bandit according to the user input
     var search: Neighborhood = in.bandit.toLowerCase() match {
       case "epsilongreedy"  => new EpsilonGreedyBanditNew(neighList, in, rewardModel)

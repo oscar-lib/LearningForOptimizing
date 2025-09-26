@@ -29,6 +29,9 @@ class Args(tap.TypedArgs):
     load_from: Optional[str] = tap.arg("--load-from", help="Path to load the model from", default=None)
     no_train: bool = tap.arg("--no-train", help="Whether to train the model or not", default=False)
     seed: int = tap.arg("--seed", help="Random seed for reproducibility", default=0)
+    with_distance_matrix: bool = tap.arg(
+        "--with-distance-matrix", help="Whether to compute and use the distance matrix as node attribute for PDPTW or TSP", default=False
+    )
 
     @property
     def clipping(self) -> Optional[float]:

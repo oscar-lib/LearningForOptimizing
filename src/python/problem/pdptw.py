@@ -1,38 +1,43 @@
-from dataclasses import dataclass
-import numpy as np
+from typing import Optional
 import orjson
 import torch
+import logging
 from torch_geometric.data import Data
 
-from .problem import Problem
+from .vrp import VRP, VRPNode
 
 
-@dataclass
-class Node:
-    num: int
-    x: float
-    y: float
-    earliest_arrival: int
-    latest_arrival: int
-    duration: int
+class PDPTWNode(VRPNode):
+    earliest_arrival: float
+    latest_arrival: float
+    duration: float
     """The time it takes to visit this node (pickup or delivery)."""
-    delta_load: int
+    delta_load: float
     """How much the vehicle load changes when visiting this node (negative for delivery, positive for pickups)."""
-    is_depot: bool
+    delivery: list[float]
+    """One-hot encoding of the delivery ID associated with this node. All zeros for depots."""
 
-    def get_data(self, t_max: int, xmax: float, ymax: float, vehicle_capacity: int, n_vehicles: int, delivery_ids: dict[int, int]):
-        one_hot = [0] * len(delivery_ids)
-        if not self.is_depot:
-            delivery_id = delivery_ids[self.num - n_vehicles]
-            one_hot[delivery_id] = 1
-        return [
-            self.x / xmax,
-            self.y / ymax,
-            self.earliest_arrival / t_max,
-            self.latest_arrival / t_max,
-            self.duration / t_max,
-            self.delta_load / vehicle_capacity,
-        ] + one_hot
+    def __init__(
+        self,
+        index: int,
+        coords: tuple[float, ...],
+        distance_vector: list[float],
+        earliest_arrival: float,
+        latest_arrival: float,
+        duration: float,
+        delta_load: float,
+        one_hot_delivery_id: list[float],
+    ):
+        super().__init__(index, coords, distance_vector)
+        self.earliest_arrival = earliest_arrival
+        self.latest_arrival = latest_arrival
+        self.duration = duration
+        self.delta_load = delta_load
+        self.delivery = one_hot_delivery_id
+
+    @property
+    def attrs(self):
+        return [*super().attrs, self.latest_arrival, self.earliest_arrival, self.duration, self.delta_load, *self.delivery]
 
     @property
     def is_source(self):
@@ -42,116 +47,77 @@ class Node:
     def is_destination(self):
         return self.delta_load < 0
 
-    def distance(self, other: "Node") -> float:
-        return ((self.x - other.x) ** 2 + (self.y - other.y) ** 2) ** 0.5
 
-
-@dataclass
-class PDPTW(Problem[Data]):
-    n_vehicles: int
+class PDPTW(VRP[PDPTWNode]):
     vehicle_capacity: int
-    nodes: list[Node]
     t_max: int
     n_actions: int
-    node_data: torch.Tensor
-    n_node_features: int
-    n_nodes: int
 
-    def __init__(self, n_vehicles: int, vehicle_capacity: int, nodes: list[Node], n_actions: int, delivery_ids: dict[int, int]):
-        self.n_vehicles = n_vehicles
+    def __init__(self, n_vehicles: int, vehicle_capacity: int, nodes: list[PDPTWNode], n_actions: int):
+        super().__init__(n_vehicles, nodes, n_actions)
         self.vehicle_capacity = vehicle_capacity
-        self.nodes = nodes
-        self.n_actions = n_actions
-        self.t_max = self._compute_t_max(nodes)
-        xmax = max(n.x for n in nodes)
-        ymax = max(n.y for n in nodes)
-        self.node_data = torch.tensor(
-            [node.get_data(self.t_max, xmax, ymax, self.vehicle_capacity, n_vehicles, delivery_ids) for node in self.nodes]
-        )
-        self.n_node_features = self.node_data.size(1)
-        self.n_nodes = len(self.nodes)
 
     @classmethod
     def parse(cls, bdata: bytes) -> "PDPTW":
         """
         Parse the static data of a PDPTW problem in a JSON format.
         """
-        data = orjson.loads(bdata)
+        data: dict = orjson.loads(bdata)
         problem = data["problem"]["liLimProblem"]
-        n_vehicles = len(problem["vehicles"])
-        vehicle_capacity = problem["vehicles"][0]["capacity"]
-        n_actions = data["nActions"]
-        del data
-        delivery_ids = dict[int, int]()  # map each node to the corresponding delivery ID
-        for i, delivery in enumerate(problem["demands"]):
-            source = delivery["fromNodeId"]
-            destination = delivery["toNodeId"]
-            delivery_ids[source] = i
-            delivery_ids[destination] = i
-        nodes = []
-        for node in problem["nodes"]:
-            # Since each vehicle has its own depot with the id of the vehicle, we need to add the number of vehicles to the node id
-            node_id = node["nodeId"] + n_vehicles
-            nodes.append(
-                Node(
-                    num=node_id,
-                    x=node["positionXY"][0],
-                    y=node["positionXY"][1],
-                    earliest_arrival=node["earliestArrival"],
-                    latest_arrival=node["latestArrival"],
-                    duration=node["duration"],
-                    delta_load=node["quantity"],
-                    is_depot=False,
-                )
-            )
-        t_max = cls._compute_t_max(nodes)
-        # Add the depot nodes at the front of the node list
-        # TODO: déplacer les noeuds pour que le dépot soit d'office en 0, 0
-        depots = [
-            Node(num=i, x=0.0, y=0.0, earliest_arrival=0, latest_arrival=t_max, duration=0, delta_load=0, is_depot=True)
-            for i in range(n_vehicles)
-        ]
+        n_actions: int = data["nActions"]
+        vehicle_capacities = [vehicle["capacity"] for vehicle in problem["vehicles"]]
+        assert all(capacity == vehicle_capacities[0] for capacity in vehicle_capacities), "All vehicles must have the same capacity"
+        capacity = vehicle_capacities[0]
+        t_max: int = max(node["latestArrival"] + node["duration"] for node in problem["nodes"])
+        delivery_coords = [node["positionXY"] for node in problem["nodes"]]
+        depots_coords = [vehicle["depot"]["positionXY"] for vehicle in problem["vehicles"]]
+        if all(depots_coords[0] == depot for depot in depots_coords):
+            logging.info("All depots are the same, keeping only one for the distance matrix computation.")
+            depots_coords = [depots_coords[0]]  # If all depots are the same, keep only one for the distance matrix computation
 
-        return PDPTW(
-            n_vehicles=n_vehicles,
-            vehicle_capacity=vehicle_capacity,
-            nodes=depots + nodes,
-            n_actions=n_actions,
-            delivery_ids=delivery_ids,
-        )
+        coords = VRP.normalize_coords(delivery_coords + depots_coords)
+        dist_matrix = VRP.compute_distance_matrix(coords)
+        deliveries = dict[int, int]()  # map each node to the corresponding delivery ID
+        for delivery, delivery in enumerate(problem["demands"]):
+            deliveries[delivery["fromNodeId"] - 1] = delivery
+            deliveries[delivery["toNodeId"] - 1] = delivery
+
+        nodes = list[PDPTWNode]()
+        # Add actual nodes
+        for node in problem["nodes"]:
+            node_id = node["nodeId"] - 1
+            delivery = [0.0] * len(deliveries)
+            delivery[node_id] = 1.0
+            node = PDPTWNode(
+                node_id,
+                coords[node_id],
+                dist_matrix[node_id],
+                node["earliestArrival"] / t_max,
+                node["latestArrival"] / t_max,
+                node["duration"] / t_max,
+                node["quantity"] / capacity,
+                delivery,
+            )
+            nodes.append(node)
+        # Add depots
+        for num_depot in range(len(depots_coords)):
+            index = num_depot + len(delivery_coords)
+            node = PDPTWNode(index, coords[index], dist_matrix[index], 0, 0, 0, 0, [0.0] * len(deliveries))
+            nodes.append(node)
+        return PDPTW(len(problem["vehicles"]), capacity, nodes, n_actions)
 
     def build_agent_input(self, data: dict, device: torch.device) -> Data:
-        """
-        Params:
-          - `routes` contains, for each vehicle, the list of nodes (id) in the order it visits them.
-        """
-        routes = data["state"]
-        edges = self._compute_edges(routes)
-        edge_attrs = self._compute_edge_attributes(routes)
-        graph = Data(self.node_data, edges, edge_attr=edge_attrs)
-        graph.validate()
-        return graph.to(device.index, non_blocking=True)
+        data["state"] = [[n - 1 for n in route] for route in data["state"]]  # Convert to zero-based indexing
+        return super().build_agent_input(data, device)
 
-    @staticmethod
-    def _compute_edges(routes: list[list[int]]) -> torch.Tensor:
-        """
-        Compute the sources and the destinations of each edge in the graph.
-
-        For instance, if a vehicle route is [1, 10, 15], the sources will be [1, 10, 15] and the corresponding destinations will be [10, 15, 1].
-        """
-        sources, destinations = [], []
-        for vehicle_route in routes:
-            vehicle_id = vehicle_route[0]
-            sources.extend(vehicle_route)
-            destinations.extend(vehicle_route[1:] + [vehicle_id])
-        return torch.tensor([sources, destinations], dtype=torch.long)
-
-    def _compute_edge_attributes(self, routes: list[list[int]]) -> torch.Tensor:
+    def compute_edge_attributes(self, routes: list[list[int]]):
         """
         Compute the edge attributes, i.e.:
             - the time at which src was left
             - the time at which dst was reached
             - the load of the vehicle while traveling from src to dst
+
+        **IMPORTANT**: routes assume a 0-based indexing for the nodes.
         """
         attributes = []
         for route in routes:
@@ -159,37 +125,23 @@ class PDPTW(Problem[Data]):
             current_time = 0
             src = depot = self.nodes[route[0]]
             for node_num in route[1:]:
-                edge_attributes = [current_time / self.t_max]  # time we left src
+                start = current_time
                 dst = self.nodes[node_num]
-                current_time += dst.distance(src)
+                current_time += dst.distance_vector[src.index]
                 if current_time < dst.earliest_arrival:
                     current_time = dst.earliest_arrival
-                # Time we reach dst and load during the travel between src and dst
-                edge_attributes.extend([current_time / self.t_max, current_load / self.vehicle_capacity])
-                attributes.append(edge_attributes)
+                attributes.append([start, current_time, current_load])
                 current_load += dst.delta_load
                 src = dst
             # Add the last edge (from the last node of the route to the depot)
-            edge_attributes = [current_time / self.t_max]
-            current_time += src.distance(depot)
-            edge_attributes.extend([current_time / self.t_max, current_load / self.vehicle_capacity])
-            attributes.append(edge_attributes)
+            attributes.append([current_time, current_time + src.distance_vector[depot.index], current_load])
         return torch.tensor(attributes)
-
-    @staticmethod
-    def _compute_t_max(nodes: list[Node]) -> int:
-        latest_arrival_index = np.argmax([node.latest_arrival for node in nodes])
-        latest_node = nodes[latest_arrival_index]
-        latest_arrival = latest_node.latest_arrival
-        duration = latest_node.duration
-        time_to_depot = round(latest_node.x**2 + latest_node.y**2) ** 0.5
-        return latest_arrival + duration + time_to_depot
 
     @property
     def n_edge_features(self):
-        # - current time (normalized)
-        # - current vehicle load (normalized)
-        # - current time (normalized)
+        # - time of leaving src (normalized)
+        # - vehicle load from src to dst (normalized)
+        # - time of reaching dst (normalized)
         return 3
 
     def __eq__(self, other) -> bool:
@@ -200,8 +152,6 @@ class PDPTW(Problem[Data]):
         if self.vehicle_capacity != other.vehicle_capacity:
             return False
         if self.n_actions != other.n_actions:
-            return False
-        if self.t_max != other.t_max:
             return False
         if self.n_nodes != other.n_nodes:
             return False
