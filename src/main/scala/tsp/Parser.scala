@@ -54,8 +54,6 @@ object Parser {
       }
     }
 
-    // Construct the Problem object
-    throw new NotImplementedError("XML parser does not support coordinates")
     Problem(Array.empty, distances, multiplierFactor)
   }
 
@@ -81,8 +79,7 @@ object Parser {
       }
 
       // Build and return the Problem
-      throw new NotImplementedError("Txt parser does not support coordinates")
-      // Problem(Array.empty, distances, multiplier)
+      Problem(Array.empty, distances, multiplier)
 
     } finally {
       source.close()
@@ -129,12 +126,10 @@ object Parser {
       fillMatrixCoordinates(lines, nCities, edgeWeightType, distances)
     }
 
-    val coordsSectionIdx = lines.indexWhere(_.toUpperCase == "NODE_COORD_SECTION")
-    if (coordsSectionIdx < 0) {
-      throw new NotImplementedError("NODE_COORD_SECTION not found")
-    }
-    val coords: Array[Array[Double]] =
-      lines
+    val coordsSectionIdx             = lines.indexWhere(_.toUpperCase == "NODE_COORD_SECTION")
+    var coords: Array[Array[Double]] = Array.empty;
+    if (coordsSectionIdx > 0) {
+      coords = lines
         .slice(coordsSectionIdx + 1, coordsSectionIdx + 1 + nCities)
         .map { line =>
           val parts = line.split("\\s+").map(_.trim).drop(1).map(_.toDouble)
@@ -143,7 +138,7 @@ object Parser {
           parts
         }
         .toArray
-
+    }
     // --- 3) Return the resulting Problem ---
     Problem(coords, distances, multiplierFactor)
   }

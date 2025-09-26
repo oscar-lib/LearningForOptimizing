@@ -50,17 +50,23 @@ class Bridge(protected val input: InputStream, protected val output: OutputStrea
   }
 
   def sendActionData(problem: SerializableModel, availabeActions: Array[Boolean]) = {
-    val jsonState  = problem.getJSONState()
-    val jsonAvail  = upickle.default.write(availabeActions)
-    val jsonString = s"""{"state":$jsonState,"available":$jsonAvail}"""
-    val message    = Message.create(MessageType.INFERENCE_REQ, jsonString.getBytes())
+    val jsonState = problem.getJSONState()
+    val jsonAvail = upickle.default.write(availabeActions)
+    val jsonString =
+      s"""{"state":$jsonState,"available":$jsonAvail}"""
+    val message = Message.create(MessageType.INFERENCE_REQ, jsonString.getBytes())
     this.output.write(message.toBytes())
   }
 
-  def sendReward(reward: Double): Unit = {
+  def sendReward(reward: Double, objValue: Double): Unit = {
     val rewardBytes =
       ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putFloat(reward.toFloat).array()
-    val msg = Message.create(MessageType.REWARD, rewardBytes)
+    val objBytes = ByteBuffer
+      .allocate(8)
+      .order(ByteOrder.BIG_ENDIAN)
+      .putDouble(objValue)
+      .array()
+    val msg = Message.create(MessageType.REWARD, rewardBytes ++ objBytes)
     this.output.write(msg.toBytes())
   }
   def sendEpisodeEnded(): Unit = {

@@ -34,7 +34,7 @@ class OptimEnv[T]:
     def reset(self):
         return self.observation()
 
-    def step(self, action: int) -> tuple[Observation, float]:
+    def step(self, action: int):
         self.bridge.send(Message.inference_resp(action).to_bytes())
         req = self.bridge.recv()
         if req.type == MessageType.END_EPISODE:
@@ -43,9 +43,10 @@ class OptimEnv[T]:
             raise RegisterTransition(orjson.loads(req.body))
         if req.type != MessageType.REWARD:
             raise ValueError(f"Expected message of type {MessageType.REWARD.name} from the client, got {req.type.name}")
-        reward = struct.unpack(">f", req.body)[0]
+        reward = struct.unpack(">f", req.body[:4])[0]
+        obj = struct.unpack(">q", req.body[4:12])[0]
         obs_ = self.observation()
-        return obs_, reward
+        return obs_, reward, obj
 
     def observation(self):
         req = self.bridge.recv()

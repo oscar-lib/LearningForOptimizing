@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Any, Self
+from typing import Self
 
 import numpy as np
 import torch
@@ -22,7 +22,9 @@ class Algo(ABC):
         """Called when the episode ends."""
 
     @abstractmethod
-    def learn(self, time_step: int, obs: Observation, action: int, reward: float, next_obs: Observation) -> dict[str, float]:
+    def learn(
+        self, time_step: int, obs: Observation, action: int, reward: float, next_obs: Observation, next_obs_value: float
+    ) -> dict[str, float]:
         """
         Called after each interaction with the environment.
 

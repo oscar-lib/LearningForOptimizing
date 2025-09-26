@@ -47,6 +47,13 @@ class PDPTWNode(VRPNode):
     def is_destination(self):
         return self.delta_load < 0
 
+    @staticmethod
+    def depot(vehicle_id: int, coords: tuple[float, ...], distance_vector: list[float], n_deliveries: int) -> "PDPTWNode":
+        """
+        Create a depot node with no delivery.
+        """
+        return PDPTWNode(vehicle_id, coords, distance_vector, 0.0, 1.0, 0.0, 0.0, [0.0] * n_deliveries)
+
 
 class PDPTW(VRP[PDPTWNode]):
     vehicle_capacity: int
@@ -56,6 +63,7 @@ class PDPTW(VRP[PDPTWNode]):
     def __init__(self, n_vehicles: int, vehicle_capacity: int, nodes: list[PDPTWNode], n_actions: int):
         super().__init__(n_vehicles, nodes, n_actions)
         self.vehicle_capacity = vehicle_capacity
+        self.n_depots = len([node for node in nodes if node.delta_load == 0])
 
     @classmethod
     def parse(cls, bdata: bytes) -> "PDPTW":
@@ -63,31 +71,37 @@ class PDPTW(VRP[PDPTWNode]):
         Parse the static data of a PDPTW problem in a JSON format.
         """
         data: dict = orjson.loads(bdata)
-        problem = data["problem"]["liLimProblem"]
+        problem: dict = data["problem"]["liLimProblem"]
         n_actions: int = data["nActions"]
+        n_vehicles = len(problem["vehicles"])
+        n_deliveries = len(problem["demands"])
         vehicle_capacities = [vehicle["capacity"] for vehicle in problem["vehicles"]]
         assert all(capacity == vehicle_capacities[0] for capacity in vehicle_capacities), "All vehicles must have the same capacity"
         capacity = vehicle_capacities[0]
         t_max: int = max(node["latestArrival"] + node["duration"] for node in problem["nodes"])
         delivery_coords = [node["positionXY"] for node in problem["nodes"]]
         depots_coords = [vehicle["depot"]["positionXY"] for vehicle in problem["vehicles"]]
-        if all(depots_coords[0] == depot for depot in depots_coords):
-            logging.info("All depots are the same, keeping only one for the distance matrix computation.")
-            depots_coords = [depots_coords[0]]  # If all depots are the same, keep only one for the distance matrix computation
+        # if all(depots_coords[0] == depot for depot in depots_coords):
+        #    logging.info("All depots are the same, keeping only one for the distance matrix computation.")
+        #    depots_coords = [depots_coords[0]]  # If all depots are the same, keep only one for the distance matrix computation
 
-        coords = VRP.normalize_coords(delivery_coords + depots_coords)
-        dist_matrix = VRP.compute_distance_matrix(coords)
+        coords = cls.normalize_coords(depots_coords + delivery_coords)
+        dist_matrix = cls.compute_distance_matrix(coords)
         deliveries = dict[int, int]()  # map each node to the corresponding delivery ID
-        for delivery, delivery in enumerate(problem["demands"]):
-            deliveries[delivery["fromNodeId"] - 1] = delivery
-            deliveries[delivery["toNodeId"] - 1] = delivery
+        for delivery_id, delivery in enumerate(problem["demands"]):
+            deliveries[delivery["fromNodeId"] - 1 + n_vehicles] = delivery_id
+            deliveries[delivery["toNodeId"] - 1 + n_vehicles] = delivery_id
 
         nodes = list[PDPTWNode]()
+        for vehicle_id in range(n_vehicles):
+            nodes.append(PDPTWNode.depot(vehicle_id, coords[vehicle_id], dist_matrix[vehicle_id], n_deliveries))
+
         # Add actual nodes
         for node in problem["nodes"]:
-            node_id = node["nodeId"] - 1
-            delivery = [0.0] * len(deliveries)
-            delivery[node_id] = 1.0
+            node_id = len(nodes)
+            delivery = [0.0] * n_deliveries
+            delivery_id = deliveries[node_id]
+            delivery[delivery_id] = 1.0
             node = PDPTWNode(
                 node_id,
                 coords[node_id],
@@ -99,16 +113,7 @@ class PDPTW(VRP[PDPTWNode]):
                 delivery,
             )
             nodes.append(node)
-        # Add depots
-        for num_depot in range(len(depots_coords)):
-            index = num_depot + len(delivery_coords)
-            node = PDPTWNode(index, coords[index], dist_matrix[index], 0, 0, 0, 0, [0.0] * len(deliveries))
-            nodes.append(node)
-        return PDPTW(len(problem["vehicles"]), capacity, nodes, n_actions)
-
-    def build_agent_input(self, data: dict, device: torch.device) -> Data:
-        data["state"] = [[n - 1 for n in route] for route in data["state"]]  # Convert to zero-based indexing
-        return super().build_agent_input(data, device)
+        return PDPTW(n_vehicles, capacity, nodes, n_actions)
 
     def compute_edge_attributes(self, routes: list[list[int]]):
         """
@@ -116,8 +121,6 @@ class PDPTW(VRP[PDPTWNode]):
             - the time at which src was left
             - the time at which dst was reached
             - the load of the vehicle while traveling from src to dst
-
-        **IMPORTANT**: routes assume a 0-based indexing for the nodes.
         """
         attributes = []
         for route in routes:
@@ -125,6 +128,7 @@ class PDPTW(VRP[PDPTWNode]):
             current_time = 0
             src = depot = self.nodes[route[0]]
             for node_num in route[1:]:
+                # Problem: the route node IDs do not match the ones in self.nodes !
                 start = current_time
                 dst = self.nodes[node_num]
                 current_time += dst.distance_vector[src.index]

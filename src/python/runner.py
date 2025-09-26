@@ -21,10 +21,10 @@ def do_run(agent: Algo, env: OptimEnv, logger: Logger, train: bool):
         action, action_data = agent.select_action(obs)
         logs = {"action": action, **{f"action-{i}": x for i, x in enumerate(action_data)}}
         try:
-            next_obs, reward = env.step(action)
-            logs["reward"] = reward
+            next_obs, reward, new_obj = env.step(action)
+            logs = logs | {"reward": reward, "obj": new_obj}
             if train:
-                logs.update(agent.learn(t, obs, action, reward, next_obs))
+                logs = logs | agent.learn(t, obs, action, reward, next_obs, new_obj)
             logger.log(logs, t)
             obs = next_obs
         except EpisodeEndException:

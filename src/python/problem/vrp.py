@@ -1,3 +1,4 @@
+import logging
 from typing import Self
 import torch
 import numpy as np
@@ -117,6 +118,8 @@ class VRP[N: VRPNode](Problem[Data]):
 
     @staticmethod
     def normalize_coords(locations: list[Coord]):
+        if len(locations) == 0:
+            return locations
         n_coords = len(locations[0])
         locations = locations + [(0.0,) * n_coords]
         locations = VRP.ensure_positive(locations)

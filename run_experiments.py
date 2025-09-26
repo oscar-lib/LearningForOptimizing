@@ -217,6 +217,8 @@ def multiple_runs(args: MultipleArgs):
     if args.output_file is not None:
         os.makedirs(os.path.dirname(args.output_file), exist_ok=True)
         results_file = open(args.output_file, "w")
+    if args.n_jobs == 1:
+        return [single_run(single_args) for single_args in args.single_args()]
 
     with mp.Pool(args.n_jobs) as pool:
         handles = [pool.apply_async(single_run, (single_args,)) for single_args in args.single_args()]

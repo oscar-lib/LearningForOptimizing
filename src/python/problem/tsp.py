@@ -22,13 +22,10 @@ class TSP(VRP[VRPNode]):
         coords = problem["cityCoords"]
         distance_matrix = VRP.normalize_dist_matrix(np.array(problem["distances"]))
         n_cities = len(distance_matrix)
-        if len(coords) != n_cities:
-            coords = None
-        else:
-            coords = VRP.normalize_coords(coords)
+        coords = VRP.normalize_coords(coords)
         nodes = list[VRPNode]()
         for i in range(n_cities):
-            if coords is None:
+            if len(coords) == 0:
                 coord = ()
             else:
                 coord = coords[i]

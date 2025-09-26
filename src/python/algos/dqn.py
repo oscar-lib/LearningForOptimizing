@@ -1,4 +1,3 @@
-from copy import deepcopy
 from dataclasses import dataclass
 from typing import Optional
 import os
@@ -7,8 +6,7 @@ import torch
 from torch_geometric.data import Data
 from optimenv import Observation
 from policies import EpsilonGreedy
-from qtarget_updater import HardUpdate
-from replay_memory.replay_memory import Batch, ReplayMemory
+from replay_memory.replay_memory import ReplayMemory
 
 from .algo import Algo
 
@@ -38,7 +36,7 @@ class DQN(Algo):
         super().__init__()
         self.device = device
         self.qnetwork = qnetwork.to(device, non_blocking=True)
-        self.qtarget = deepcopy(qnetwork).to(device, non_blocking=True)
+        # self.qtarget = deepcopy(qnetwork).to(device, non_blocking=True)
         self.memory = memory
         self.gamma = gamma
         self.batch_size = batch_size
@@ -48,7 +46,7 @@ class DQN(Algo):
         self.optimiser = torch.optim.Adam(self.qnetwork.parameters(), lr=lr)
         # Parameters and optimiser
         self.grad_norm_clipping = grad_norm_clipping
-        self.target_updater = HardUpdate(update_period=100)
+        # self.target_updater = HardUpdate(update_period=100)
 
     def select_action(self, obs: Observation[torch.Tensor | Data]):
         with torch.no_grad():
@@ -64,28 +62,36 @@ class DQN(Algo):
     def notify_episode_end(self):
         self.memory.end_episode()
 
-    def learn(self, time_step: int, obs: Observation[torch.Tensor], action: int, reward: float, next_obs: Observation):
-        self.memory.add(obs, action, reward, next_obs)
+    def learn(
+        self,
+        time_step: int,
+        obs: Observation[torch.Tensor],
+        action: int,
+        reward: float,
+        next_obs: Observation,
+        next_obs_value: float,
+    ) -> dict[str, float]:
+        self.memory.add(obs, action, reward, next_obs, next_obs_value)
         if not self._can_update():
             return {}
         logs, td_error = self.optimise_qnetwork()
-        logs = logs | self.target_updater.update(time_step)
+        # logs = logs | self.target_updater.update(time_step)
         return logs
 
     def _can_update(self):
         return self.memory.can_sample(self.batch_size)
 
-    def _next_state_value(self, batch: Batch):
-        # We use the all_obs_ to handle the case of recurrent qnetworks that require the first element of the sequence.
-        next_qvalues = self.qtarget.forward(batch.next_obs)
-        # For double q-learning, we use the qnetwork to select the best action. Otherwise, we use the target qnetwork.
-        if self.double_qlearning:
-            qvalues_for_index = self.qnetwork.forward(batch.next_obs)
-        else:
-            qvalues_for_index = next_qvalues
-        indices = torch.argmax(qvalues_for_index, dim=-1, keepdim=True)
-        next_values = torch.gather(next_qvalues, -1, indices).squeeze(-1)
-        return next_values
+    # def _next_state_value(self, batch: Batch):
+    #    # We use the all_obs_ to handle the case of recurrent qnetworks that require the first element of the sequence.
+    #    next_qvalues = self.qtarget.forward(batch.next_obs)
+    #    # For double q-learning, we use the qnetwork to select the best action. Otherwise, we use the target qnetwork.
+    #    if self.double_qlearning:
+    #        qvalues_for_index = self.qnetwork.forward(batch.next_obs)
+    #    else:
+    #        qvalues_for_index = next_qvalues
+    #    indices = torch.argmax(qvalues_for_index, dim=-1, keepdim=True)
+    #    next_values = torch.gather(next_qvalues, -1, indices).squeeze(-1)
+    #    return next_values
 
     def optimise_qnetwork(self):
         # Sample a batch from the memory
@@ -96,8 +102,8 @@ class DQN(Algo):
         qvalues = qvalues.squeeze(-1)
 
         # Next state value computation
-        # We use the all_obs_ to handle the case of recurrent qnetworks that require the first element of the sequence.
-        next_values = self._next_state_value(batch)
+        # next_values = self._next_state_value(batch)
+        next_values = batch.next_values
         qtargets = batch.rewards + self.gamma * next_values * (~batch.dones)
         # Compute the loss
         td_error = qvalues - qtargets.detach()
@@ -115,7 +121,7 @@ class DQN(Algo):
     def to(self, device: torch.device):
         self.device = device
         self.qnetwork = self.qnetwork.to(device, non_blocking=True)
-        self.qtarget = self.qtarget.to(device, non_blocking=True)
+        # self.qtarget = self.qtarget.to(device, non_blocking=True)
         return self
 
     def save(self, directory: str):

@@ -17,6 +17,7 @@ class Batch[T: torch.Tensor | Data]:
         dones: torch.Tensor,
         next_obs: T,
         next_available_actions: torch.Tensor,
+        next_values: torch.Tensor,
     ):
         self.obs = obs
         self.available_actions = available_actions
@@ -25,17 +26,19 @@ class Batch[T: torch.Tensor | Data]:
         self.dones = dones
         self.next_obs = next_obs
         self.next_available_actions = next_available_actions
+        self.next_values = next_values
         self.size = len(rewards)
 
     def to(self, device: torch.device) -> "Batch":
         return Batch(
-            obs=self.obs.to(device, non_blocking=True),  # type: ignore
+            obs=self.obs.to(device.index, non_blocking=True),
             available_actions=self.available_actions.to(device),
             actions=self.actions.to(device, non_blocking=True),
             rewards=self.rewards.to(device, non_blocking=True),
             dones=self.dones.to(device, non_blocking=True),
-            next_obs=self.next_obs.to(device, non_blocking=True),  # type: ignore
+            next_obs=self.next_obs.to(device.index, non_blocking=True),
             next_available_actions=self.next_available_actions.to(device, non_blocking=True),
+            next_values=self.next_values.to(device, non_blocking=True),
         )
 
     def __len__(self):
@@ -51,14 +54,16 @@ class ReplayMemory[T: torch.Tensor](ABC):
         self._obs = deque[Observation](maxlen=max_size)
         self._next_obs = deque[Observation](maxlen=max_size)
         self._dones = deque[bool](maxlen=max_size)
+        self._next_values = deque[float](maxlen=max_size)
 
-    def add(self, obs: Observation, action: int, reward: float, next_obs: Observation):
+    def add(self, obs: Observation, action: int, reward: float, next_obs: Observation, next_value: float):
         """Add an item (transition, episode, ...) to the memory"""
         self._obs.append(obs)
         self._next_obs.append(next_obs)
         self._actions.append(action)
         self._rewards.append(reward)
         self._dones.append(False)
+        self._next_values.append(next_value)
 
     def end_episode(self):
         self._dones[-1] = True
@@ -88,6 +93,7 @@ class ReplayMemory[T: torch.Tensor](ABC):
         self._next_obs.clear()
         self._actions.clear()
         self._rewards.clear()
+        self._next_values.clear()
 
     @property
     def is_full(self):

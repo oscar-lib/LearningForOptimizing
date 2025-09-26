@@ -13,4 +13,5 @@ class LinearMemory(ReplayMemory[torch.Tensor]):
             dones=torch.tensor([self._dones[i] for i in indices], dtype=torch.bool),
             next_obs=torch.stack([self._next_obs[i].data for i in indices], dim=0),
             next_available_actions=torch.stack([self._next_obs[i].available_actions for i in indices]),
+            next_values=torch.tensor([self._next_values[i] for i in indices], dtype=torch.float32),
         )

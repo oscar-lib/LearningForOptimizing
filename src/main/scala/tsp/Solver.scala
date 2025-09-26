@@ -19,7 +19,6 @@ import java.nio.file.Paths
 import scala.concurrent.duration.Duration
 import combinator.OriginalRewardModel
 import combinator.Gain
-import bridge.MessageType.REWARD
 import oscar.cbls.business.routing.display
 import combinator.LogGain
 import combinator.StatefulCombinator
