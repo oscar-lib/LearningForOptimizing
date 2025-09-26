@@ -259,9 +259,9 @@ def main():
         bandit="dqn",
         problems_file="csp",
         reward="r2",
-        n_repeats=5,
-        timeout=2,
-        n_jobs=1,
+        n_repeats=2,
+        timeout=900,
+        n_jobs=3,
     )
     multiple_runs(args)
 

@@ -236,7 +236,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     val realSolutionOverTime = recorder.realObjectiveTimeStamp
     println(
       f"solOverTime=" + realSolutionOverTime
-        .map(e => f"(t:${e._1}%.3f-t:${e._2}-v:${e._3})")
+        .map(e => f"(t:${e._1}%.3f-step:${e._2}-v:${e._3})")
         .mkString("[", "-", "]")
     )
     val currentDirectory = System.getProperty("user.dir")
