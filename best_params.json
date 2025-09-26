@@ -1,5 +1,9 @@
 {
     "csp": {
+        "random": {
+            "r1": "",
+            "r2": ""
+        },
         "epsilongreedy": {
             "r1": " -lr 0.0479 -mfw 0.7958 -ew 0.3777 -sw 0.4522 -epsilon 0.8495 ",
             "r2": "-lr 0.7446 -epsilon 0.2997"
@@ -27,6 +31,7 @@
     },
     "pdptw": {
         "dqn": {
+            "r1": "--learningRate 0.002  --batchSize 17 --epsilon 0.38 --clipping 30",
             "r3": "--learningRate 0.0001 --batchSize 236 --epsilon 0.03 --ddqn --clipping=0.55"
         }
     },
