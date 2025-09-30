@@ -59,15 +59,9 @@ class Args(tap.TypedArgs):
         n_devices = torch.cuda.device_count()
         if n_devices == 0:
             return torch.device("cpu")
-        try:
-            with open("device", "r") as f:
-                device_num = int(f.read().strip()) % n_devices
-        except Exception:
-            device_num = 0
-        next_device = (device_num + 1) % n_devices
-        with open("device", "w") as f:
-            f.write(f"{next_device}")
-        device = torch.device(device_num)
+        from utils import gpu
+
+        device = gpu.get_device("auto", fit_strategy="scatter", estimated_memory_MB=2048)
         logging.info(f"Using device: {device}")
         return device
 

@@ -3,15 +3,17 @@ import multiprocessing as mp
 import os
 import re
 import subprocess
-from dataclasses import dataclass
 import time
+from dataclasses import dataclass
 from datetime import datetime
+from multiprocessing.pool import AsyncResult
 from typing import Any, Literal, Optional
 
 import dotenv
 import orjson
 import torch
 
+N_DEVICES = torch.cuda.device_count()
 EXECUTABLE = "java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
 with open("best_params.json", "rb") as f:
     BEST_PARAMS = orjson.loads(f.read())
@@ -32,7 +34,7 @@ class SingleArgs:
         bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"],
         problem_path: str,
         reward: Literal["r1", "r2", "r3"],
-        device: str,
+        device: str = "auto",
         timeout: int = 300,
         seed: int = 0,
         args: Optional[dict[str, Any]] = None,
@@ -82,7 +84,7 @@ class MultipleArgs:
     n_repeats: int
     timeout: int
     seed: int
-    problems: list[str]
+    problems: list[Literal["csp", "tsp", "pdptw"]]
     args: Optional[dict[str, Any]]
 
     def __init__(
@@ -103,7 +105,7 @@ class MultipleArgs:
         else:
             self.problems_file = problems_file
         self.reward = reward
-        self.problems = self._load_problems()
+        self.problems = self._load_problems()  # type: ignore
         if output_file == "auto":
             output_file = os.path.join("results", f"{datetime.now().isoformat().replace(':', '-')}-{self.problem}.csv")
         self.output_file = output_file
@@ -124,10 +126,14 @@ class MultipleArgs:
             return [line.strip() for line in f if line.strip()]
 
     def single_args(self):
-        device_num = 0
-        device_count = torch.cuda.device_count()
+        job_num = 0
         for seed in range(self.seed, self.seed + self.n_repeats):
             for problem in self.problems:
+                # The first n_jobs runs are given a specific GPU
+                if job_num < self.n_jobs:
+                    device = f"cuda:{job_num % N_DEVICES}"
+                else:
+                    device = "auto"
                 yield SingleArgs(
                     bandit=self.bandit,
                     problem_path=problem,
@@ -135,9 +141,9 @@ class MultipleArgs:
                     timeout=self.timeout,
                     seed=seed,
                     args=self.args,
-                    device=f"cuda:{device_num % device_count}" if torch.cuda.is_available() else "cpu",
+                    device=device,
                 )
-                device_num += 1
+                job_num += 1
 
 
 @dataclass
@@ -211,6 +217,9 @@ def single_run(args: SingleArgs):
 
 
 def multiple_runs(args: MultipleArgs):
+    if N_DEVICES == 0:
+        logging.error("No GPU devices found for multiple runs. Exiting.")
+        exit()
     results = list[RunResult]()
     results_file = None
     csv_columns = None
@@ -255,14 +264,7 @@ def multiple_runs(args: MultipleArgs):
 
 
 def main():
-    args = MultipleArgs(
-        bandit="dqn",
-        problems_file="csp",
-        reward="r2",
-        n_repeats=2,
-        timeout=900,
-        n_jobs=3,
-    )
+    args = MultipleArgs(bandit="dqn", problems_file="csp", reward="r2", n_repeats=5, timeout=900, n_jobs=8, seed=0)
     multiple_runs(args)
 
 
