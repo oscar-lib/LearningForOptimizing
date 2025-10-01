@@ -283,6 +283,6 @@ class Model(val liLimProblem: LiLimProblem) extends SerializableModel {
     // Normalize by the maximal distance between two cities *  the number of vehicles
     val maxDistance = this.distanceAndTimeMatrix.flatten.max
     val factor      = maxDistance * this.liLimProblem.vehicles.length
-    return factor.toFloat * this.liLimProblem.multiplierFactor.toFloat
+    return 1.0f / factor.toFloat * this.liLimProblem.multiplierFactor.toFloat
   }
 }
