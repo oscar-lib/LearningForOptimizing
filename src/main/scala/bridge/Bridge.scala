@@ -164,7 +164,8 @@ object NamedPipeBridge {
     device: String,
     loadFrom: Option[String],
     saveTo: Option[String],
-    training: Boolean
+    training: Boolean,
+    useTarget: Boolean
   ): NamedPipeBridge = {
     val pythonBinary       = this.findPythonPath()
     val pythonSrcDirectory = this.findPythonSourcesDirectory()
@@ -188,6 +189,7 @@ object NamedPipeBridge {
       command :+= f"--epsilon=$epsilon%.4f"
       command :+= f"--clipping=$clipping%.4f"
       command :+= f"--batch-size=$batchSize"
+      command :+= f"--use-target=${useTarget}"
       if (ddqn) {
         command :+= f"--ddqn"
       }

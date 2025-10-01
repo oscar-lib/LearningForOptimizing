@@ -1,12 +1,13 @@
 from dataclasses import dataclass
 from typing import Optional
 import os
-
+from copy import deepcopy
 import torch
 from torch_geometric.data import Data
 from optimenv import Observation
 from policies import EpsilonGreedy
-from replay_memory.replay_memory import ReplayMemory
+from ..qtarget_updater import HardUpdate
+from replay_memory.replay_memory import Batch, ReplayMemory
 
 from .algo import Algo
 
@@ -32,11 +33,12 @@ class DQN(Algo):
         epsilon: float = 0.1,
         grad_norm_clipping: Optional[float] = None,
         double_qlearning: bool = False,
+        use_target: bool = False,
     ):
         super().__init__()
         self.device = device
         self.qnetwork = qnetwork.to(device, non_blocking=True)
-        # self.qtarget = deepcopy(qnetwork).to(device, non_blocking=True)
+        self.qtarget = deepcopy(qnetwork).to(device, non_blocking=True)
         self.memory = memory
         self.gamma = gamma
         self.batch_size = batch_size
@@ -46,7 +48,8 @@ class DQN(Algo):
         self.optimiser = torch.optim.Adam(self.qnetwork.parameters(), lr=lr)
         # Parameters and optimiser
         self.grad_norm_clipping = grad_norm_clipping
-        # self.target_updater = HardUpdate(update_period=100)
+        self.target_updater = HardUpdate(update_period=100)
+        self.use_target = use_target
 
     def select_action(self, obs: Observation[torch.Tensor | Data]):
         with torch.no_grad():
@@ -75,23 +78,24 @@ class DQN(Algo):
         if not self._can_update():
             return {}
         logs, td_error = self.optimise_qnetwork()
-        # logs = logs | self.target_updater.update(time_step)
+        if self.use_target:
+            logs = logs | self.target_updater.update(time_step)
         return logs
 
     def _can_update(self):
         return self.memory.can_sample(self.batch_size)
 
-    # def _next_state_value(self, batch: Batch):
-    #    # We use the all_obs_ to handle the case of recurrent qnetworks that require the first element of the sequence.
-    #    next_qvalues = self.qtarget.forward(batch.next_obs)
-    #    # For double q-learning, we use the qnetwork to select the best action. Otherwise, we use the target qnetwork.
-    #    if self.double_qlearning:
-    #        qvalues_for_index = self.qnetwork.forward(batch.next_obs)
-    #    else:
-    #        qvalues_for_index = next_qvalues
-    #    indices = torch.argmax(qvalues_for_index, dim=-1, keepdim=True)
-    #    next_values = torch.gather(next_qvalues, -1, indices).squeeze(-1)
-    #    return next_values
+    def _next_state_value(self, batch: Batch):
+        # We use the all_obs_ to handle the case of recurrent qnetworks that require the first element of the sequence.
+        next_qvalues = self.qtarget.forward(batch.next_obs)
+        # For double q-learning, we use the qnetwork to select the best action. Otherwise, we use the target qnetwork.
+        if self.double_qlearning:
+            qvalues_for_index = self.qnetwork.forward(batch.next_obs)
+        else:
+            qvalues_for_index = next_qvalues
+        indices = torch.argmax(qvalues_for_index, dim=-1, keepdim=True)
+        next_values = torch.gather(next_qvalues, -1, indices).squeeze(-1)
+        return next_values
 
     def optimise_qnetwork(self):
         # Sample a batch from the memory
@@ -102,8 +106,10 @@ class DQN(Algo):
         qvalues = qvalues.squeeze(-1)
 
         # Next state value computation
-        # next_values = self._next_state_value(batch)
-        next_values = batch.next_values
+        if self.use_target:
+            next_values = self._next_state_value(batch)
+        else:
+            next_values = batch.next_values
         qtargets = batch.rewards + self.gamma * next_values * (~batch.dones)
         # Compute the loss
         td_error = qvalues - qtargets.detach()

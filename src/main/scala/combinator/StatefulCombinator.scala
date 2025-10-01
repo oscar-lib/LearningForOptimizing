@@ -35,6 +35,7 @@ class StatefulCombinator(
   loadFrom: Option[String],
   training: Boolean,
   rewardModel: RewardModel,
+  useTarget: Boolean,
   saveTo: Option[String] = None,
   seed: Int = 42
 ) extends BanditSelector(
@@ -58,7 +59,8 @@ class StatefulCombinator(
       device,
       loadFrom,
       saveTo,
-      training
+      training,
+      useTarget
     )
   bridge.sendStaticProblemData(model, this.nActions)
   var justReset = false

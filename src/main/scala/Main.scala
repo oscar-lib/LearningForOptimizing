@@ -53,7 +53,8 @@ object Main extends App {
     loadFrom: Option[String] = None,
     saveTo: Option[String] = None,
     training: Boolean = true,
-    device: String = "auto"
+    device: String = "auto",
+    useTarget: Boolean = false
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -260,6 +261,14 @@ object Main extends App {
           .action((x, c) => {
             c match {
               case conf: SolveInstanceConfig => conf.copy(ddqn = true)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          }),
+        opt[Unit]("useTarget")
+          .text("Use a target network for DQN")
+          .action((x, c) => {
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(useTarget = true)
               case _                         => throw new Error("Unexpected Error")
             }
           }),
@@ -650,7 +659,8 @@ object Main extends App {
             ddqn = i.ddqn,
             batchSize = i.batchSize,
             clipping = i.clipping,
-            printHistory = i.printHistory
+            printHistory = i.printHistory,
+            useTarget = i.useTarget
           )
           i.problem match {
             case "csp" =>

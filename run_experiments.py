@@ -264,8 +264,7 @@ def multiple_runs(args: MultipleArgs):
 
 
 def main():
-    args = MultipleArgs(bandit="dqn", problems_file="csp", reward="r2", n_repeats=5, timeout=900, n_jobs=8, seed=0)
-    multiple_runs(args)
+    multiple_runs(MultipleArgs(bandit="dqn", problems_file="csp", reward="r2", n_repeats=5, timeout=900, n_jobs=8, seed=0))
 
 
 if __name__ == "__main__":

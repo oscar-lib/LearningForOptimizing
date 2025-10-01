@@ -83,7 +83,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           loadFrom = in.loadFrom,
           saveTo = in.saveTo,
           training = in.training,
-          rewardModel = rewardModel
+          rewardModel = rewardModel,
+          useTarget = in.useTarget
         )
       case _ => throw new IllegalArgumentException(s"Unknown bandit type: ${in.bandit}.")
     }

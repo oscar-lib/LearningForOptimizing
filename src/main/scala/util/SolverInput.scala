@@ -63,5 +63,6 @@ case class SolverInput(
   ddqn: Boolean,
   clipping: Double,
   printHistory: Boolean = false,
-  device: String
+  device: String,
+  useTarget: Boolean
 )
