@@ -36,9 +36,12 @@ class Model(val problem: Problem) extends SerializableModel {
   val routeLengthInvariant: CBLSIntVar =
     RouteLength(tsp.routes, n, 1, (from, to) => distanceMatrix(from)(to))(0)
   // invariant keeping the number of unrouted nodes
-  val nUnroutedInvariant = cardinality(tsp.unrouted)
-
+  val nUnroutedInvariant                = cardinality(tsp.unrouted)
   lazy val objectiveFunction: Objective = generateObjectiveFunction(tsp: VRP)
+  // Normalize by the maximal distance between two cities
+  override def getNormalizationFactor(): Float = {
+    return 1 / (this.distanceMatrix.flatten.max.toFloat / this.problem.multiplierFactor.toFloat)
+  }
 
   /** Generates an objective function, minimizing the number of unrouted nodes and the traveled
     * distance
@@ -59,6 +62,10 @@ class Model(val problem: Problem) extends SerializableModel {
     obj
   }
 
+  override def hasObjectivePenalty(): Boolean = {
+    nUnroutedInvariant.value > 0
+  }
+
   override def toString: String = {
     s"\n\nResult\n" +
       s"=======\n" +
@@ -73,13 +80,10 @@ class Model(val problem: Problem) extends SerializableModel {
   }
 
   override def getJSONState(): String = {
-    var routes: List[List[Int]] = List.empty
-    for (vehicle <- 0 until this.tsp.v) {
-      val routeOfV = this.tsp.getRouteOfVehicle(vehicle)
-      if (routeOfV.length > 1) {
-        routes = routes :+ routeOfV
-      }
-    }
+    val routes: List[List[Int]] = (0 until this.tsp.v)
+      .map(vehicle => this.tsp.getRouteOfVehicle(vehicle))
+      .filter(_.length > 1)
+      .toList
     return upickle.default.write(routes)
   }
 

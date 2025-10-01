@@ -51,8 +51,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           wEff = in.efficiencyWeight,
           wSlope = in.slopeWeight
         )
-      case "r2" => new Gain()
-      case "r3" => new LogGain()
+      case "r2" => new Gain(oscarModel.getNormalizationFactor())
+      case "r3" => new LogGain(oscarModel.getNormalizationFactor())
       case _ =>
         throw new IllegalArgumentException(
           s"Unknown reward type: ${in.rewardType}. Supported types are: r1, r2, r3."

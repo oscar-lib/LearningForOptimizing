@@ -107,14 +107,18 @@ class Model(val instance: CarSeqProblem) extends SerializableModel {
 
   store.close()
 
-  def getJSONStaticProblemData(): String = {
+  override def getJSONStaticProblemData(): String = {
     write(this)
   }
 
-  def getJSONState(): String = {
+  override def getJSONState(): String = {
     val s = carSequence.map(_.value.intValue()).toList
     write(s)
   }
 
-  def getProblemCode(): MessageType.Value = MessageType.STATIC_DATA_CSP
+  override def getProblemCode(): MessageType.Value = MessageType.STATIC_DATA_CSP
+
+  override def hasObjectivePenalty(): Boolean = false
+
+  override def getNormalizationFactor(): Float = 1.0f
 }

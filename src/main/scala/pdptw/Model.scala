@@ -226,6 +226,10 @@ class Model(val liLimProblem: LiLimProblem) extends SerializableModel {
     return upickle.default.write(routes)
   }
 
+  override def hasObjectivePenalty(): Boolean = {
+    this.pdpProblem.unrouted.value.size > 0
+  }
+
   override def getJSONStaticProblemData(): String = {
     // s"""{"vehicles":${liLimProblem.vehicles},"nodes":${liLimProblem.nodes}}"""
     write(this)
@@ -275,4 +279,10 @@ class Model(val liLimProblem: LiLimProblem) extends SerializableModel {
 //      movingVehiclesInvariant.value.toList.map(vehicle => pdpProblem.getRouteOfVehicle(vehicle).drop(1).map(x => x - v + 1).mkString(" ")).mkString("\n")
   }
 
+  override def getNormalizationFactor(): Float = {
+    // Normalize by the maximal distance between two cities *  the number of vehicles
+    val maxDistance = this.distanceAndTimeMatrix.flatten.max
+    val factor      = maxDistance * this.liLimProblem.vehicles.length
+    return factor.toFloat * this.liLimProblem.multiplierFactor.toFloat
+  }
 }

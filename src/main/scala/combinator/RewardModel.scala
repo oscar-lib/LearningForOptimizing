@@ -4,13 +4,13 @@ import oscar.cbls.core.search.Neighborhood
 
 import scala.collection.mutable
 
-sealed abstract class RewardModel {
+sealed abstract class RewardModel(normalizationFactor: Float) {
   protected var maxSlope: Double = 1.0 // stores (and updates) the maximum slope ever observed
 
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
   def apply(prevObj: Long, newObj: Long): Double
 
-  def transformObjective(obj: Long): Double = obj.toDouble
+  def transformObjective(obj: Long): Double = obj.toDouble * normalizationFactor
 
   /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
     * one
@@ -82,7 +82,7 @@ class OriginalRewardModel(
   }
 }
 
-class SlopeReward extends RewardModel {
+class SlopeReward extends RewardModel(1.0f) {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     slopeReward(runStat)
   }
@@ -99,7 +99,7 @@ class SlopeReward extends RewardModel {
   * @param windowSize
   *   number of past slopes retained for computing the maximum slope
   */
-class NormalizedWindowedSlope(windowSize: Int) extends RewardModel {
+class NormalizedWindowedSlope(windowSize: Int) extends RewardModel(1.0f) {
   private val window: mutable.Queue[Double] = mutable.Queue.empty // only hold non zero slope
 
   override def slopeReward(runStat: NeighborhoodStats): Double = {
@@ -133,7 +133,7 @@ class NormalizedWindowedSlope(windowSize: Int) extends RewardModel {
   }
 }
 
-sealed abstract class NormalizedGain extends RewardModel {
+sealed abstract class NormalizedGain extends RewardModel(1.0f) {
 
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
@@ -210,16 +210,17 @@ class NormalizedWindowedMeanGain(windowSize: Int) extends NormalizedGain {
 /** Returns the log_10 of the gain of the last move. In the case of negative gains, returns
   * -log_10(-gain) to have a consistent negative reward.
   */
-class LogGain extends RewardModel {
+class LogGain(normalizationFactor: Float) extends RewardModel(normalizationFactor) {
+
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     val profiler = NeighborhoodUtils.getProfiler(neighborhood)
     if (!runStat.foundMove) {
       0
     } else if (profiler._lastCallGain > 0) {
-      math.log10(profiler._lastCallGain.toDouble)
+      math.log10(profiler._lastCallGain.toDouble * normalizationFactor)
     } else {
       // The new solution is worse
-      -math.log10(-profiler._lastCallGain.toDouble)
+      -math.log10(-profiler._lastCallGain.toDouble * normalizationFactor)
     }
   }
 
@@ -240,11 +241,11 @@ class LogGain extends RewardModel {
 
 /** Difference in objective from the previous solution to the new one.
   */
-class Gain extends RewardModel {
+class Gain(normalizationFactor: Float) extends RewardModel(normalizationFactor) {
   override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
     if (runStat.foundMove) {
       val profiler = NeighborhoodUtils.getProfiler(neighborhood)
-      profiler._lastCallGain.toDouble
+      profiler._lastCallGain.toDouble * normalizationFactor
     } else {
       0
     }
@@ -252,6 +253,6 @@ class Gain extends RewardModel {
   }
 
   override def apply(prevObj: Long, newObj: Long): Double = {
-    return (newObj - prevObj).toDouble
+    return (newObj - prevObj).toDouble * normalizationFactor
   }
 }

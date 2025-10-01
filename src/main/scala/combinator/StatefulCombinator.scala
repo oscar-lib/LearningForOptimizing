@@ -46,7 +46,8 @@ class StatefulCombinator(
       learningRate = 0.0 // Not used
     ) {
 
-  private val nActions = neighborhoods.length
+  private var lastMoveWasRandom = false
+  private val nActions          = neighborhoods.length
   private val bridge =
     NamedPipeBridge(
       algo,
@@ -76,7 +77,11 @@ class StatefulCombinator(
   override def getNextNeighborhood: Option[Neighborhood] = {
     if (this.nTabu == this.nNeighbors) {
       return None
+    } else if (this.model.hasObjectivePenalty()) {
+      this.lastMoveWasRandom = true
+      return this.getRandomNeighborhood
     }
+    this.lastMoveWasRandom = false
     val action = this.bridge.askAction(this.model, this.authorizedNeighborhood)
     Some(this.neighborhoods(action))
   }
@@ -86,9 +91,14 @@ class StatefulCombinator(
     if (searchResult == NoMoveFound) {
       this.setTabu(neighborhood)
     }
+    if (this.lastMoveWasRandom) {
+      println("Random move, no reward sent")
+      return
+    }
     val stats  = NeighborhoodStats(searchResult, neighborhood)
     val reward = this.rewardModel(stats, neighborhood)
-    val obj    = this.rewardModel.transformObjective(this.objective.value)
+    println(s"Reward: $reward")
+    val obj = this.rewardModel.transformObjective(this.objective.value)
     this.bridge.sendReward(reward, obj)
   }
 
