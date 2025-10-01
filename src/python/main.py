@@ -30,9 +30,6 @@ class Args(tap.TypedArgs):
     no_train: bool = tap.arg("--no-train", help="Whether to train the model or not", default=False)
     seed: int = tap.arg("--seed", help="Random seed for reproducibility", default=0)
     use_target: bool = tap.arg("--use-target", help="Whether to use a target network for DQN", default=False)
-    with_distance_matrix: bool = tap.arg(
-        "--with-distance-matrix", help="Whether to compute and use the distance matrix as node attribute for PDPTW or TSP", default=False
-    )
 
     @property
     def clipping(self) -> Optional[float]:

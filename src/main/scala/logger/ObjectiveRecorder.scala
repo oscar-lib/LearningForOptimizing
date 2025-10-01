@@ -17,9 +17,8 @@ import scala.io.Source
 class ObjectiveRecorder(objective: Objective, getRealObjective: Function[Long, Option[Double]]) {
 
   private var previousBestValue = objective.value // last best value observed
-  private val initTimeNano =
-    System.nanoTime() // time at which the object was created, used to compute the elapsed time
-  private var t : Long = 0;
+  private var initTimeNano      = 0L;             // Not initialized until the first move
+  private var step              = 0L;
   // time is recorded in seconds, as a Double (more precision should not be necessary for plots)
 
   // objective improvements over time, where the objective is the one described in the oscar model
@@ -36,21 +35,24 @@ class ObjectiveRecorder(objective: Objective, getRealObjective: Function[Long, O
     * objective has been improved
     */
   def notifyMove(): Unit = {
-    t += 1;
+    if (this.step == 0) {
+      this.initTimeNano = System.nanoTime();
+    }
+    this.step += 1;
     val currentValue = objective.value
     if (currentValue < previousBestValue) {
       previousBestValue = currentValue
       val currentTimeNano    = System.nanoTime()
       val elapsedTimeNano    = currentTimeNano - initTimeNano
       val elapsedTimeSeconds = elapsedTimeNano.toDouble / 1_000_000_000.0
-      oscarObjectiveTimeStamp.append((elapsedTimeSeconds, t, currentValue))
+      oscarObjectiveTimeStamp.append((elapsedTimeSeconds, step, currentValue))
       val realObjective = getRealObjective(currentValue)
       realObjective match {
         case Some(value) => {
           if (realObjectiveTimeStamp.isEmpty || value < realObjectiveTimeStamp.last._3)
-            realObjectiveTimeStamp.append((elapsedTimeSeconds, t, value))
+            realObjectiveTimeStamp.append((elapsedTimeSeconds, step, value))
         }
-        case None        =>
+        case None =>
       }
     }
   }
@@ -150,7 +152,7 @@ class ObjectiveRecorder(objective: Objective, getRealObjective: Function[Long, O
 
   override def toString: String = {
     val timeStampString = oscarObjectiveTimeStamp
-      .map(e => f"(t:${e._1}%.3f-t:${e._2}-v:${e._3})")
+      .map(e => f"(t:${e._1}%.3f-step:${e._2}-v:${e._3})")
       .mkString("[", "-", "]")
     s"obj=$timeStampString"
   }

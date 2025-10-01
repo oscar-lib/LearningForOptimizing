@@ -46,7 +46,7 @@ def run(args: "Args"):
         logging.info("Waiting for a new connection")
         try:
             bridge = args.make_bridge()
-            new_problem = _retrieve_problem_data(bridge, logger, args.with_distance_matrix)
+            new_problem = _retrieve_problem_data(bridge, logger)
             if problem is None:
                 problem = new_problem
             else:
@@ -72,7 +72,7 @@ def run(args: "Args"):
                 agent.save(args.save_to)
 
 
-def _retrieve_problem_data(bridge: Bridge, logger: Logger, with_distance_matrix: bool) -> Problem:
+def _retrieve_problem_data(bridge: Bridge, logger: Logger) -> Problem:
     req = bridge.recv()
     match req.type:
         case MessageType.STATIC_DATA_PDPTW:
