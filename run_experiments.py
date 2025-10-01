@@ -6,14 +6,12 @@ import subprocess
 import time
 from dataclasses import dataclass
 from datetime import datetime
-from multiprocessing.pool import AsyncResult
 from typing import Any, Literal, Optional
 
 import dotenv
 import orjson
 import torch
 
-N_DEVICES = torch.cuda.device_count()
 EXECUTABLE = "java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
 with open("best_params.json", "rb") as f:
     BEST_PARAMS = orjson.loads(f.read())
@@ -127,11 +125,12 @@ class MultipleArgs:
 
     def single_args(self):
         job_num = 0
+        n_devices = torch.cuda.device_count()
         for seed in range(self.seed, self.seed + self.n_repeats):
             for problem in self.problems:
                 # The first n_jobs runs are given a specific GPU
                 if job_num < self.n_jobs:
-                    device = f"cuda:{job_num % N_DEVICES}"
+                    device = f"cuda:{job_num % n_devices}"
                 else:
                     device = "auto"
                 yield SingleArgs(
@@ -217,7 +216,8 @@ def single_run(args: SingleArgs):
 
 
 def multiple_runs(args: MultipleArgs):
-    if N_DEVICES == 0:
+    n_devices = torch.cuda.device_count()
+    if n_devices == 0:
         logging.error("No GPU devices found for multiple runs. Exiting.")
         exit()
     results = list[RunResult]()

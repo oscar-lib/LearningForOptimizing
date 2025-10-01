@@ -3,6 +3,7 @@ import os
 import dotenv
 import optuna
 import logging
+import subprocess
 from run_experiments import multiple_runs, MultipleArgs
 
 
@@ -11,9 +12,9 @@ def run(trial: optuna.Trial):
         bandit="dqn",
         problems_file="examples/csp/training_subset.txt",
         reward="r2",
-        n_jobs=24,
-        timeout=10,
-        n_repeats=2,
+        n_jobs=20,
+        timeout=300,
+        n_repeats=3,
         output_file="auto",
         args={
             "learningRate": trial.suggest_float("lr", 1e-5, 1e-2, log=True),
@@ -35,5 +36,6 @@ if __name__ == "__main__":
         format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
         handlers=[logging.StreamHandler(), logging.FileHandler(f"{datetime.now().isoformat()}.log")],
     )
+    subprocess.run("sbt assembly", shell=True, check=True)
     study = optuna.create_study(direction="minimize", study_name="CSP - r2 - no target", storage="sqlite:///tuning.db", load_if_exists=True)
     study.optimize(run, n_trials=50)
