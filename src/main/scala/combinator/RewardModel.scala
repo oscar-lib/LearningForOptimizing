@@ -10,6 +10,8 @@ sealed abstract class RewardModel {
   def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double
   def apply(prevObj: Long, newObj: Long): Double
 
+  def transformObjective(obj: Long): Double = obj.toDouble
+
   /** Gives a reward in [0, 1] based on the slope. 0 is the worst slope being found, 1 is the best
     * one
     *
@@ -232,6 +234,8 @@ class LogGain extends RewardModel {
     }
     return math.log10(gain.toDouble)
   }
+
+  override def transformObjective(obj: Long): Double = math.log10(obj.toDouble)
 }
 
 /** Difference in objective from the previous solution to the new one.

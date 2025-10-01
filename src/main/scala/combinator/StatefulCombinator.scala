@@ -86,7 +86,7 @@ class StatefulCombinator(
     }
     val stats  = NeighborhoodStats(searchResult, neighborhood)
     val reward = this.rewardModel(stats, neighborhood)
-    val obj    = math.log10(this.objective.value.toDouble)
+    val obj    = this.rewardModel.transformObjective(this.objective.value)
     this.bridge.sendReward(reward, obj)
   }
 
