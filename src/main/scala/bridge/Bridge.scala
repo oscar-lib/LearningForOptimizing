@@ -61,11 +61,8 @@ class Bridge(protected val input: InputStream, protected val output: OutputStrea
   def sendReward(reward: Double, objValue: Double): Unit = {
     val rewardBytes =
       ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putFloat(reward.toFloat).array()
-    val objBytes = ByteBuffer
-      .allocate(8)
-      .order(ByteOrder.BIG_ENDIAN)
-      .putDouble(objValue)
-      .array()
+    val objBytes =
+      ByteBuffer.allocate(4).order(ByteOrder.BIG_ENDIAN).putFloat(objValue.toFloat).array()
     val msg = Message.create(MessageType.REWARD, rewardBytes ++ objBytes)
     this.output.write(msg.toBytes())
   }
@@ -141,7 +138,8 @@ object NamedPipeBridge {
       Paths.get("python3")
     )
     possiblePaths.find(_.toFile.exists()).getOrElse {
-      throw new Exception("Python executable not found")
+      val pathsStr = possiblePaths.map(_.toString()).mkString(", ")
+      throw new Exception(f"Python executable not found in any of the expected paths ($pathsStr)")
     }
   }
 
@@ -189,7 +187,9 @@ object NamedPipeBridge {
       command :+= f"--epsilon=$epsilon%.4f"
       command :+= f"--clipping=$clipping%.4f"
       command :+= f"--batch-size=$batchSize"
-      command :+= f"--use-target=${useTarget}"
+      if (useTarget) {
+        command :+= f"--use-target"
+      }
       if (ddqn) {
         command :+= f"--ddqn"
       }

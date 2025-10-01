@@ -6,7 +6,7 @@ import torch
 from torch_geometric.data import Data
 from optimenv import Observation
 from policies import EpsilonGreedy
-from ..qtarget_updater import HardUpdate
+from qtarget_updater import HardUpdate
 from replay_memory.replay_memory import Batch, ReplayMemory
 
 from .algo import Algo

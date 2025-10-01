@@ -44,7 +44,7 @@ class OptimEnv[T]:
         if req.type != MessageType.REWARD:
             raise ValueError(f"Expected message of type {MessageType.REWARD.name} from the client, got {req.type.name}")
         reward = struct.unpack(">f", req.body[:4])[0]
-        obj = struct.unpack(">q", req.body[4:12])[0]
+        obj = struct.unpack(">f", req.body[4:8])[0]
         obs_ = self.observation()
         return obs_, reward, obj
 
