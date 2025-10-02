@@ -54,7 +54,8 @@ object Main extends App {
     saveTo: Option[String] = None,
     training: Boolean = true,
     device: String = "auto",
-    useTarget: Boolean = false
+    useTarget: Boolean = false,
+    logdir: Option[String] = None
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -338,6 +339,14 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(device = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[String]("logdir")
+          .text("Set the log directory (default: logs/<timestamp>)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(logdir = Some(x))
               case _                         => throw new Error("Unexpected Error")
             }
           ),
@@ -660,7 +669,9 @@ object Main extends App {
             batchSize = i.batchSize,
             clipping = i.clipping,
             printHistory = i.printHistory,
-            useTarget = i.useTarget
+            useTarget = i.useTarget,
+            logdir = i.logdir,
+            seed = i.seed.toInt
           )
           i.problem match {
             case "csp" =>

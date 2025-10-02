@@ -1,27 +1,13 @@
-from typing import Optional
-from datetime import datetime
+import os
 from .abstract_logger import AbstractLogger
 from .csv_logger import CSVLogger
 
 
 class Logger(AbstractLogger):
-    def __init__(
-        self,
-        logdir: Optional[str] = None,
-        csv: bool | CSVLogger = False,
-        quiet=False,
-    ) -> None:
-        if logdir is None:
-            logdir = datetime.now().strftime("logs/%Y-%m-%d_%H-%M-%S")
+    def __init__(self, logdir: str, quiet=False) -> None:
         self.loggers = list[AbstractLogger]()
-        if not csv:
-            Logger.warning("No logger is provided.")
         super().__init__(logdir, quiet)
-        if csv:
-            if isinstance(csv, CSVLogger):
-                self.loggers.append(csv)
-            else:
-                self.loggers.append(CSVLogger(logdir + "/log.csv", quiet))
+        self.loggers.append(CSVLogger(os.path.join(self.logdir, "metrics.csv"), quiet))
 
     def log(self, data: dict[str, float], time_step: int):
         for logger in self.loggers:

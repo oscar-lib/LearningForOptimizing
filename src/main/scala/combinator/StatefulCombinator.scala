@@ -36,8 +36,9 @@ class StatefulCombinator(
   training: Boolean,
   rewardModel: RewardModel,
   useTarget: Boolean,
-  saveTo: Option[String] = None,
-  seed: Int = 42
+  logdir: Option[String],
+  seed: Int,
+  saveTo: Option[String] = None
 ) extends BanditSelector(
       neighborhoods: List[Neighborhood],
       learningScheme = AfterEveryMove, // Not used
@@ -61,7 +62,9 @@ class StatefulCombinator(
       loadFrom,
       saveTo,
       training,
-      useTarget
+      useTarget,
+      logdir,
+      seed
     )
   bridge.sendStaticProblemData(model, this.nActions)
   var justReset = false

@@ -9,6 +9,7 @@ import logging
 import dotenv
 import os
 from datetime import datetime
+from functools import cached_property
 
 
 class Args(tap.TypedArgs):
@@ -30,6 +31,17 @@ class Args(tap.TypedArgs):
     no_train: bool = tap.arg("--no-train", help="Whether to train the model or not", default=False)
     seed: int = tap.arg("--seed", help="Random seed for reproducibility", default=0)
     use_target: bool = tap.arg("--use-target", help="Whether to use a target network for DQN", default=False)
+    _logdir: Optional[str] = tap.arg("--logdir", help="Directory to save logs", default=None)
+
+    @cached_property
+    def creation_time(self) -> str:
+        return datetime.now().isoformat().replace(":", "-")
+
+    @property
+    def logdir(self) -> str:
+        if self._logdir is None:
+            return os.path.join("logs", self.creation_time)
+        return self._logdir
 
     @property
     def clipping(self) -> Optional[float]:
@@ -78,6 +90,13 @@ class Args(tap.TypedArgs):
 
 
 def main(args: Args):
+    os.makedirs(args.logdir, exist_ok=True)
+    dotenv.load_dotenv()
+    logging.basicConfig(
+        level=os.getenv("LOG_LEVEL", "INFO").upper(),
+        format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
+        handlers=[logging.StreamHandler(), logging.FileHandler(f"{args.logdir}/output-{args.seed}.log")],
+    )
     logging.info(f"Starting the runner with arguments {args}:")
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
@@ -86,13 +105,6 @@ def main(args: Args):
 
 
 if __name__ == "__main__":
-    os.makedirs("logs", exist_ok=True)
-    dotenv.load_dotenv()
-    logging.basicConfig(
-        level=os.getenv("LOG_LEVEL", "INFO").upper(),
-        format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler(), logging.FileHandler(f"logs/{datetime.now().isoformat()}.log")],
-    )
     try:
         tap.Parser(Args).bind(main).run()
     except Exception as e:

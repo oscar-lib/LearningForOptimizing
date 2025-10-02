@@ -122,8 +122,7 @@ class CNN1D(torch.nn.Module):
         """
         solution: Tensor of shape (batch_size, n_cars, n_options)
         """
-        batch_size, n_options, n_cars = solution.shape
-        solution = solution.view(batch_size, n_options, n_cars)
+        batch_size, *_ = solution.shape
         x = self.cnn(solution)
         options_data = self.options_data.repeat(batch_size, 1)
         x = torch.cat((x, options_data), dim=1)  # Concatenate

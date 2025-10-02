@@ -17,6 +17,17 @@ with open("best_params.json", "rb") as f:
     BEST_PARAMS = orjson.loads(f.read())
 
 
+def dict2arg(d: dict[str, Any]) -> str:
+    args_str = ""
+    for key, value in d.items():
+        if isinstance(value, bool):
+            if value:
+                args_str += f"--{key} "
+        else:
+            args_str += f"--{key} {value} "
+    return args_str.strip()
+
+
 @dataclass
 class SingleArgs:
     bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"]
@@ -26,6 +37,7 @@ class SingleArgs:
     timeout: int
     seed: int
     device: str
+    logdir: Optional[str] = None
 
     def __init__(
         self,
@@ -36,6 +48,8 @@ class SingleArgs:
         timeout: int = 300,
         seed: int = 0,
         args: Optional[dict[str, Any]] = None,
+        extra_args: Optional[dict[str, Any]] = None,
+        logdir: Optional[str] = None,
     ):
         self.bandit = bandit
         self.problem_path = problem_path
@@ -43,20 +57,17 @@ class SingleArgs:
         self.timeout = timeout
         self.seed = seed
         self.device = device
+        self.logdir = logdir
         if args is None:
             try:
                 args_str = BEST_PARAMS[self.problem][self.bandit][self.reward]
             except KeyError:
-                raise ValueError(f"No arguments provided and there is no BEST_PARAMS for {self.problem}, {self.bandit}, {self.reward}")
+                raise KeyError(f"No arguments provided and there is no BEST_PARAMS for {self.problem}, {self.bandit}, {self.reward}")
         else:
-            args_str = ""
-            for key, value in args.items():
-                if isinstance(value, bool):
-                    if value:
-                        args_str += f"--{key} "
-                else:
-                    args_str += f"--{key} {value} "
-        self.args = args_str.strip()
+            args_str = dict2arg(args)
+        if extra_args is not None:
+            args_str += " " + dict2arg(extra_args)
+        self.args = args_str
 
     @property
     def problem(self):
@@ -66,7 +77,10 @@ class SingleArgs:
 
     @property
     def params(self):
-        return f"--problem {self.problem} --input {self.problem_path} --bandit {self.bandit} --reward {self.reward} --timeout {self.timeout} {self.args} --seed {self.seed} --device={self.device}"
+        params = f"--problem {self.problem} --input {self.problem_path} --bandit {self.bandit} --reward {self.reward} --timeout {self.timeout} {self.args} --seed {self.seed} --device={self.device}"
+        if self.logdir is not None:
+            params += f" --logdir {self.logdir}"
+        return params
 
     def as_csv(self):
         return f"{self.problem_path},{self.bandit},{self.reward},{self.timeout}"
@@ -77,25 +91,31 @@ class MultipleArgs:
     bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"]
     problems_file: str
     reward: Literal["r1", "r2", "r3"]
-    output_filename: Optional[str]
+    output_filename: Optional[str | Literal["auto"]]
     n_jobs: int
     n_repeats: int
     timeout: int
     seed: int
-    problems: list[Literal["csp", "tsp", "pdptw"]]
+    instance_filenames: list[str]
     args: Optional[dict[str, Any]]
+    extra_args: Optional[dict[str, Any]]
+    require_gpu: bool
+    logdir: str
 
     def __init__(
         self,
         bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"],
         problems_file: Literal["csp", "tsp", "pdptw"] | str,
         reward: Literal["r1", "r2", "r3"],
-        output_filename: Optional[str] = "auto",
+        logdir: str,
+        output_filename: Optional[str | Literal["auto"]] = "auto",
         n_jobs: int = 1,
         n_repeats: int = 20,
         timeout: int = 300,
         seed: int = 0,
         args: Optional[dict[str, Any]] = None,
+        extra_args: Optional[dict[str, Any]] = None,
+        require_gpu: bool = True,
     ):
         self.bandit = bandit
         if problems_file in ("csp", "tsp", "pdptw"):
@@ -103,7 +123,7 @@ class MultipleArgs:
         else:
             self.problems_file = problems_file
         self.reward = reward
-        self.problems = self._load_problems()  # type: ignore
+        self.instance_filenames = self._load_problem_instances()
         if output_filename == "auto":
             output_filename = os.path.join("results", f"{datetime.now().isoformat().replace(':', '-')}-{self.problem}.csv")
         self.output_filename = output_filename
@@ -112,35 +132,46 @@ class MultipleArgs:
         self.timeout = timeout
         self.seed = seed
         self.args = args
+        self.extra_args = extra_args
+        self.require_gpu = require_gpu
+        self.logdir = logdir
+        with open(os.path.join(self.logdir, "config.json"), "wb") as f:
+            f.write(orjson.dumps(self, option=orjson.OPT_INDENT_2))
 
     @property
     def problem(self):
-        parts = self.problems[0].split("/")
+        parts = self.instance_filenames[0].split("/")
         assert parts[0] == "examples"
         return parts[1]
 
-    def _load_problems(self):
+    def _load_problem_instances(self):
         with open(self.problems_file, "r") as f:
             return [line.strip() for line in f if line.strip()]
 
     def single_args(self):
         job_num = 0
         n_devices = torch.cuda.device_count()
+        logdirs = dict[str, str]()
         for seed in range(self.seed, self.seed + self.n_repeats):
-            for problem in self.problems:
+            for instance in self.instance_filenames:
+                if instance not in logdirs:
+                    logdirs[instance] = os.path.join(self.logdir, f"{self.problem}-{os.path.basename(instance)}")
+
                 # The first n_jobs runs are given a specific GPU
-                if job_num < self.n_jobs:
+                if self.require_gpu and job_num < self.n_jobs:
                     device = f"cuda:{job_num % n_devices}"
                 else:
                     device = "auto"
                 yield SingleArgs(
                     bandit=self.bandit,
-                    problem_path=problem,
+                    problem_path=instance,
                     reward=self.reward,
                     timeout=self.timeout,
                     seed=seed,
                     args=self.args,
                     device=device,
+                    logdir=logdirs[instance],
+                    extra_args=self.extra_args,
                 )
                 job_num += 1
 
@@ -216,8 +247,7 @@ def single_run(args: SingleArgs):
 
 
 def multiple_runs(args: MultipleArgs):
-    n_devices = torch.cuda.device_count()
-    if n_devices == 0:
+    if args.require_gpu and torch.cuda.device_count() == 0:
         logging.error("No GPU devices found for multiple runs. Exiting.")
         exit()
     results = list[RunResult]()
@@ -264,27 +294,19 @@ def multiple_runs(args: MultipleArgs):
 
 
 def main():
-    multiple_runs(
-        MultipleArgs(
-            bandit="dqn",
-            problems_file="csp",
-            reward="r2",
-            n_repeats=10,
-            timeout=900,
-            n_jobs=8,
-            seed=0,
-            output_filename="results/csp-r2-dqn-no-target.csv",
-        )
-    )
-
-
-if __name__ == "__main__":
     dotenv.load_dotenv()
+    isodate = datetime.now().isoformat().replace(":", "-")
+    logdir = os.path.join("logs", isodate)
+    os.makedirs(logdir, exist_ok=True)
     logging.basicConfig(
         level=os.getenv("LOG_LEVEL", "INFO").upper(),
         format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler(), logging.FileHandler(f"{datetime.now().isoformat()}.log")],
+        handlers=[logging.StreamHandler(), logging.FileHandler(os.path.join(logdir, "messages.log"))],
     )
+    multiple_runs(MultipleArgs("dqn", "csp", "r2", logdir, n_jobs=2, timeout=10, n_repeats=3, require_gpu=False))
+
+
+if __name__ == "__main__":
     try:
         main()
     except Exception as e:

@@ -163,7 +163,9 @@ object NamedPipeBridge {
     loadFrom: Option[String],
     saveTo: Option[String],
     training: Boolean,
-    useTarget: Boolean
+    useTarget: Boolean,
+    logdir: Option[String],
+    seed: Int
   ): NamedPipeBridge = {
     val pythonBinary       = this.findPythonPath()
     val pythonSrcDirectory = this.findPythonSourcesDirectory()
@@ -187,6 +189,7 @@ object NamedPipeBridge {
       command :+= f"--epsilon=$epsilon%.4f"
       command :+= f"--clipping=$clipping%.4f"
       command :+= f"--batch-size=$batchSize"
+      command :+= f"--seed=$seed"
       if (useTarget) {
         command :+= f"--use-target"
       }
@@ -202,6 +205,9 @@ object NamedPipeBridge {
       }
       if (!training) {
         command :+= "--no-train"
+      }
+      if (logdir.isDefined) {
+        command :+= f"--logdir=${logdir.get}"
       }
       val pb = new ProcessBuilder(command: _*)
       println(String.join(" ", pb.command()))

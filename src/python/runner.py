@@ -1,10 +1,11 @@
 import logging
+import os
 from typing import Literal, TYPE_CHECKING
 
 from algos import DQN, PPO, Algo
 from bridge import Bridge
 from bridge.protocol.message import Message, MessageType
-from logger import Logger
+from logger import CSVLogger
 from optimenv import EpisodeEndException, OptimEnv
 from problem import CSP, PDPTW, TSP, Problem
 from replay_memory import GraphReplayMemory, LinearMemory
@@ -13,7 +14,7 @@ if TYPE_CHECKING:
     from main import Args
 
 
-def do_run(agent: Algo, env: OptimEnv, logger: Logger, train: bool):
+def do_run(agent: Algo, env: OptimEnv, logger: CSVLogger, train: bool):
     t = 0
     obs = env.reset()
     while True:
@@ -35,7 +36,7 @@ def do_run(agent: Algo, env: OptimEnv, logger: Logger, train: bool):
 
 
 def run(args: "Args"):
-    logger = Logger(csv=True)
+    logger = CSVLogger(os.path.join(args.logdir, f"metrics-{args.seed}.csv"))
     device = args.device
     logger.info("Starting runner")
     problem = None
@@ -72,7 +73,7 @@ def run(args: "Args"):
                 agent.save(args.save_to)
 
 
-def _retrieve_problem_data(bridge: Bridge, logger: Logger) -> Problem:
+def _retrieve_problem_data(bridge: Bridge, logger: CSVLogger) -> Problem:
     req = bridge.recv()
     match req.type:
         case MessageType.STATIC_DATA_PDPTW:

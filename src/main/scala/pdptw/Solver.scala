@@ -183,7 +183,9 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           saveTo = in.saveTo,
           training = in.training,
           rewardModel = rewardModel,
-          useTarget = in.useTarget
+          useTarget = in.useTarget,
+          logdir = in.logdir,
+          seed = in.seed
         )
       case "ucb"            => new UCBNew(neighList, in, rewardModel)
       case "bestslopefirst" => bestSlopeFirst(neighList)
