@@ -265,7 +265,7 @@ object Main extends App {
             }
           }),
         opt[Unit]("useTarget")
-          .text("Use a target network for DQN")
+          .text("Use a target network for DQN instead of the actual objective value")
           .action((x, c) => {
             c match {
               case conf: SolveInstanceConfig => conf.copy(useTarget = true)

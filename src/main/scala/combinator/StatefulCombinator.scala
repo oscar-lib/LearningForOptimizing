@@ -92,18 +92,16 @@ class StatefulCombinator(
       this.setTabu(neighborhood)
     }
     if (this.lastMoveWasRandom) {
-      println("Random move, no reward sent")
       return
     }
     val stats  = NeighborhoodStats(searchResult, neighborhood)
     val reward = this.rewardModel(stats, neighborhood)
-    println(s"Reward: $reward")
-    val obj = this.rewardModel.transformObjective(this.objective.value)
+    val obj    = this.rewardModel.transformObjective(this.objective.value)
     this.bridge.sendReward(reward, obj)
   }
 
   override def reset(): Unit = {
-    if (!this.justReset) {
+    if (!this.justReset && !this.lastMoveWasRandom) {
       this.bridge.sendEpisodeEnded()
     }
     super.reset()

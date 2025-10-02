@@ -66,8 +66,7 @@ class ReplayMemory[T: torch.Tensor](ABC):
         self._next_values.append(next_value)
 
     def end_episode(self):
-        if len(self._dones) > 0:
-            self._dones[-1] = True
+        self._dones[-1] = True
 
     @abstractmethod
     def _get_batch(self, indices: np.ndarray) -> Batch[T]:

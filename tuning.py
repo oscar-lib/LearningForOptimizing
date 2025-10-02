@@ -10,17 +10,18 @@ from run_experiments import multiple_runs, MultipleArgs
 def run(trial: optuna.Trial):
     args = MultipleArgs(
         bandit="dqn",
-        problems_file="examples/csp/training_subset.txt",
+        problems_file="examples/pdptw/training_subset.txt",
         reward="r2",
         n_jobs=20,
         timeout=300,
         n_repeats=3,
-        output_file="auto",
+        output_filename=None,
         args={
             "learningRate": trial.suggest_float("lr", 1e-5, 1e-2, log=True),
-            "batchSize": trial.suggest_int("batchSize", 16, 256),
-            "epsilon": trial.suggest_float("epsilon", 0.01, 1.0),
+            "batchSize": trial.suggest_int("batchSize", 32, 256),
+            "epsilon": trial.suggest_float("epsilon", 0.01, 1.0, log=True),
             "clipping": trial.suggest_float("clipping", 0.5, 50.0),
+            "useTarget": False,
         },
     )
     logging.info(args)
@@ -37,5 +38,7 @@ if __name__ == "__main__":
         handlers=[logging.StreamHandler(), logging.FileHandler(f"{datetime.now().isoformat()}.log")],
     )
     subprocess.run("sbt assembly", shell=True, check=True)
-    study = optuna.create_study(direction="minimize", study_name="CSP - r2 - no target", storage="sqlite:///tuning.db", load_if_exists=True)
-    study.optimize(run, n_trials=50)
+    study = optuna.create_study(
+        direction="minimize", study_name="PDPTW-r2-no_target-only_feasible", storage="sqlite:///tuning.db", load_if_exists=True
+    )
+    study.optimize(run, n_trials=100)

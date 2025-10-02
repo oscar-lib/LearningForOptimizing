@@ -77,7 +77,7 @@ class MultipleArgs:
     bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"]
     problems_file: str
     reward: Literal["r1", "r2", "r3"]
-    output_file: Optional[str]
+    output_filename: Optional[str]
     n_jobs: int
     n_repeats: int
     timeout: int
@@ -90,7 +90,7 @@ class MultipleArgs:
         bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"],
         problems_file: Literal["csp", "tsp", "pdptw"] | str,
         reward: Literal["r1", "r2", "r3"],
-        output_file: str = "auto",
+        output_filename: Optional[str] = "auto",
         n_jobs: int = 1,
         n_repeats: int = 20,
         timeout: int = 300,
@@ -104,9 +104,9 @@ class MultipleArgs:
             self.problems_file = problems_file
         self.reward = reward
         self.problems = self._load_problems()  # type: ignore
-        if output_file == "auto":
-            output_file = os.path.join("results", f"{datetime.now().isoformat().replace(':', '-')}-{self.problem}.csv")
-        self.output_file = output_file
+        if output_filename == "auto":
+            output_filename = os.path.join("results", f"{datetime.now().isoformat().replace(':', '-')}-{self.problem}.csv")
+        self.output_filename = output_filename
         self.n_jobs = n_jobs
         self.n_repeats = n_repeats
         self.timeout = timeout
@@ -223,9 +223,9 @@ def multiple_runs(args: MultipleArgs):
     results = list[RunResult]()
     results_file = None
     csv_columns = None
-    if args.output_file is not None:
-        os.makedirs(os.path.dirname(args.output_file), exist_ok=True)
-        results_file = open(args.output_file, "w")
+    if args.output_filename is not None:
+        os.makedirs(os.path.dirname(args.output_filename), exist_ok=True)
+        results_file = open(args.output_filename, "w")
     if args.n_jobs == 1:
         return [single_run(single_args) for single_args in args.single_args()]
 
@@ -259,12 +259,23 @@ def multiple_runs(args: MultipleArgs):
             time.sleep(0.1)  # Avoid busy waiting
     if results_file is not None:
         results_file.close()
-        logging.info(f"Results written to {args.output_file}")
+        logging.info(f"Results written to {args.output_filename}")
     return results
 
 
 def main():
-    multiple_runs(MultipleArgs(bandit="dqn", problems_file="csp", reward="r2", n_repeats=5, timeout=900, n_jobs=8, seed=0))
+    multiple_runs(
+        MultipleArgs(
+            bandit="dqn",
+            problems_file="csp",
+            reward="r2",
+            n_repeats=10,
+            timeout=900,
+            n_jobs=8,
+            seed=0,
+            output_filename="results/csp-r2-dqn-no-target.csv",
+        )
+    )
 
 
 if __name__ == "__main__":
