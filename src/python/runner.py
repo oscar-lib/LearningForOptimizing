@@ -115,7 +115,6 @@ def _create_agent(problem: Problem, algo: Literal["dqn", "ppo"], args: "Args") -
                 lr=args.lr,
                 epsilon=args.epsilon,
                 batch_size=args.batch_size,
-                device=args.device,
                 no_target=args.no_target,
             )
         case "ppo":

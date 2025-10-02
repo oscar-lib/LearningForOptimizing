@@ -11,6 +11,7 @@ from typing import Any, Literal, Optional
 import dotenv
 import orjson
 import torch
+import threading
 
 EXECUTABLE = "java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
 with open("best_params.json", "rb") as f:
@@ -118,8 +119,16 @@ class MultipleArgs:
         args: Optional[dict[str, Any]] = None,
         require_gpu: bool = True,
     ):
-        if logdir is None:
+        if logdir is None or len(logdir) == 0:
             logdir = os.path.join("logs", datetime.now().isoformat().replace(":", "-"))
+        elif not logdir.startswith("logs"):
+            logdir = os.path.join("logs", logdir)
+        os.makedirs(logdir, exist_ok=False)
+        logging.basicConfig(
+            level=os.getenv("LOG_LEVEL", "INFO").upper(),
+            format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
+            handlers=[logging.StreamHandler(), logging.FileHandler(os.path.join(logdir, "output.log"))],
+        )
         self.logdir = logdir
         self.bandit = bandit
         if problems_file in ("csp", "tsp", "pdptw"):
@@ -297,22 +306,12 @@ def multiple_runs(args: MultipleArgs):
 
 def main():
     dotenv.load_dotenv()
-    isodate = datetime.now().isoformat().replace(":", "-")
-    logdir = os.path.join("logs", isodate)
-    os.makedirs(logdir, exist_ok=True)
-    logging.basicConfig(
-        level=os.getenv("LOG_LEVEL", "INFO").upper(),
-        format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
-        handlers=[logging.StreamHandler(), logging.FileHandler(os.path.join(logdir, "messages.log"))],
-    )
-
     multiple_runs(
         MultipleArgs(
-            "dqn-no-target",
+            "dqn",
             "examples/csp/testingall-100.txt",
             "r2",
-            logdir,
-            n_jobs=2,
+            n_jobs=16,
             timeout=150,
             n_repeats=10,
             require_gpu=False,
@@ -322,6 +321,17 @@ def main():
 
 if __name__ == "__main__":
     try:
+
+        def get_input(result):
+            result.append(input("Do you want to recompile ? (y/n): ").strip().lower())
+
+        result = []
+        input_thread = threading.Thread(target=get_input, args=(result,))
+        input_thread.daemon = True
+        input_thread.start()
+        input_thread.join(timeout=3)
+        if len(result) == 0 or result[0] not in ("n", ""):
+            subprocess.run("sbt assembly", shell=True, check=True)
         main()
     except Exception as e:
         logging.error(f"An error occurred: {e}", exc_info=True)

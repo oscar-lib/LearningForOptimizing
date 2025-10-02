@@ -26,7 +26,6 @@ class DQN(Algo):
         self,
         qnetwork: torch.nn.Module,
         memory: ReplayMemory,
-        device: torch.device,
         gamma: float = 0.99,
         batch_size: int = 64,
         lr: float = 1e-4,
@@ -36,9 +35,9 @@ class DQN(Algo):
         no_target: bool = False,
     ):
         super().__init__()
-        self.device = device
-        self.qnetwork = qnetwork.to(device, non_blocking=True)
-        self.qtarget = deepcopy(qnetwork).to(device, non_blocking=True)
+        self.device = torch.device("cpu")
+        self.qnetwork = qnetwork
+        self.qtarget = deepcopy(qnetwork)
         self.memory = memory
         self.gamma = gamma
         self.batch_size = batch_size
@@ -127,7 +126,7 @@ class DQN(Algo):
     def to(self, device: torch.device):
         self.device = device
         self.qnetwork = self.qnetwork.to(device, non_blocking=True)
-        # self.qtarget = self.qtarget.to(device, non_blocking=True)
+        self.qtarget = self.qtarget.to(device, non_blocking=True)
         return self
 
     def save(self, directory: str):
