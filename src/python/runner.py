@@ -37,7 +37,6 @@ def do_run(agent: Algo, env: OptimEnv, logger: CSVLogger, train: bool):
 
 def run(args: "Args"):
     logger = CSVLogger(os.path.join(args.logdir, f"metrics-{args.seed}.csv"))
-    device = args.device
     logger.info("Starting runner")
     problem = None
     agent = None
@@ -53,11 +52,11 @@ def run(args: "Args"):
             else:
                 assert problem.is_compatible_with(new_problem)
             if agent is None:
-                agent = _create_agent(problem, args.algorithm, args).to(device)
+                agent = _create_agent(problem, args.algorithm, args).to(args.device)
                 if args.load_from is not None:
                     logging.info(f"Loading agent from {args.load_from}")
                     agent.load(args.load_from)
-            env = OptimEnv(problem, bridge, device)
+            env = OptimEnv(problem, bridge, args.device)
             do_run(agent, env, logger, args.train)
         except ConnectionResetError:
             logging.info("Connection with remote closed")

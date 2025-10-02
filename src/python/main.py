@@ -62,7 +62,7 @@ class Args(tap.TypedArgs):
     def train(self):
         return not self.no_train
 
-    @property
+    @cached_property
     def device(self) -> torch.device:
         if self._device != "auto":
             return torch.device(self._device)
