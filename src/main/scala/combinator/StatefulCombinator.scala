@@ -35,7 +35,7 @@ class StatefulCombinator(
   loadFrom: Option[String],
   training: Boolean,
   rewardModel: RewardModel,
-  useTarget: Boolean,
+  noTarget: Boolean,
   logdir: Option[String],
   seed: Int,
   saveTo: Option[String] = None
@@ -62,7 +62,7 @@ class StatefulCombinator(
       loadFrom,
       saveTo,
       training,
-      useTarget,
+      noTarget,
       logdir,
       seed
     )

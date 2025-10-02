@@ -94,7 +94,7 @@ case class Solver(cspModel: Model, in: SolverInput) {
           saveTo = in.saveTo,
           training = in.training,
           rewardModel = rewardModel,
-          useTarget = in.useTarget,
+          noTarget = in.noTarget,
           logdir = in.logdir,
           seed = in.seed
         )

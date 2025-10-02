@@ -30,7 +30,7 @@ def dict2arg(d: dict[str, Any]) -> str:
 
 @dataclass
 class SingleArgs:
-    bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"]
+    bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo", "dqn-no-target"]
     problem_path: str
     reward: Literal["r1", "r2", "r3"]
     args: str
@@ -41,14 +41,13 @@ class SingleArgs:
 
     def __init__(
         self,
-        bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"],
+        bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo", "dqn-no-target"],
         problem_path: str,
         reward: Literal["r1", "r2", "r3"],
         device: str = "auto",
         timeout: int = 300,
         seed: int = 0,
         args: Optional[dict[str, Any]] = None,
-        extra_args: Optional[dict[str, Any]] = None,
         logdir: Optional[str] = None,
     ):
         self.bandit = bandit
@@ -65,8 +64,6 @@ class SingleArgs:
                 raise KeyError(f"No arguments provided and there is no BEST_PARAMS for {self.problem}, {self.bandit}, {self.reward}")
         else:
             args_str = dict2arg(args)
-        if extra_args is not None:
-            args_str += " " + dict2arg(extra_args)
         self.args = args_str
 
     @property
@@ -77,7 +74,13 @@ class SingleArgs:
 
     @property
     def params(self):
-        params = f"--problem {self.problem} --input {self.problem_path} --bandit {self.bandit} --reward {self.reward} --timeout {self.timeout} {self.args} --seed {self.seed} --device={self.device}"
+        params = "--bandit "
+        if self.bandit == "dqn-no-target":
+            params += "dqn --noTarget"
+        else:
+            params += f"{self.bandit}"
+        params += f" --problem {self.problem} --input {self.problem_path} --reward {self.reward} --timeout {self.timeout} {self.args} --seed {self.seed} --device={self.device}"
+
         if self.logdir is not None:
             params += f" --logdir {self.logdir}"
         return params
@@ -88,7 +91,7 @@ class SingleArgs:
 
 @dataclass
 class MultipleArgs:
-    bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"]
+    bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo", "dqn-no-target"]
     problems_file: str
     reward: Literal["r1", "r2", "r3"]
     output_filename: Optional[str | Literal["auto"]]
@@ -98,25 +101,26 @@ class MultipleArgs:
     seed: int
     instance_filenames: list[str]
     args: Optional[dict[str, Any]]
-    extra_args: Optional[dict[str, Any]]
     require_gpu: bool
     logdir: str
 
     def __init__(
         self,
-        bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"],
+        bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo", "dqn-no-target"],
         problems_file: Literal["csp", "tsp", "pdptw"] | str,
         reward: Literal["r1", "r2", "r3"],
-        logdir: str,
+        logdir: Optional[str] = None,
         output_filename: Optional[str | Literal["auto"]] = "auto",
         n_jobs: int = 1,
         n_repeats: int = 20,
         timeout: int = 300,
         seed: int = 0,
         args: Optional[dict[str, Any]] = None,
-        extra_args: Optional[dict[str, Any]] = None,
         require_gpu: bool = True,
     ):
+        if logdir is None:
+            logdir = os.path.join("logs", datetime.now().isoformat().replace(":", "-"))
+        self.logdir = logdir
         self.bandit = bandit
         if problems_file in ("csp", "tsp", "pdptw"):
             self.problems_file = os.path.join("examples", problems_file, "testingall.txt")
@@ -125,16 +129,14 @@ class MultipleArgs:
         self.reward = reward
         self.instance_filenames = self._load_problem_instances()
         if output_filename == "auto":
-            output_filename = os.path.join("results", f"{datetime.now().isoformat().replace(':', '-')}-{self.problem}.csv")
+            output_filename = os.path.join(self.logdir, "results.csv")
         self.output_filename = output_filename
         self.n_jobs = n_jobs
         self.n_repeats = n_repeats
         self.timeout = timeout
         self.seed = seed
         self.args = args
-        self.extra_args = extra_args
         self.require_gpu = require_gpu
-        self.logdir = logdir
         with open(os.path.join(self.logdir, "config.json"), "wb") as f:
             f.write(orjson.dumps(self, option=orjson.OPT_INDENT_2))
 
@@ -155,7 +157,8 @@ class MultipleArgs:
         for seed in range(self.seed, self.seed + self.n_repeats):
             for instance in self.instance_filenames:
                 if instance not in logdirs:
-                    logdirs[instance] = os.path.join(self.logdir, f"{self.problem}-{os.path.basename(instance)}")
+                    instance_name, *_ = os.path.basename(instance).split(".")
+                    logdirs[instance] = os.path.join(self.logdir, f"{self.problem}-{instance_name}")
 
                 # The first n_jobs runs are given a specific GPU
                 if self.require_gpu and job_num < self.n_jobs:
@@ -171,7 +174,6 @@ class MultipleArgs:
                     args=self.args,
                     device=device,
                     logdir=logdirs[instance],
-                    extra_args=self.extra_args,
                 )
                 job_num += 1
 
@@ -179,7 +181,7 @@ class MultipleArgs:
 @dataclass
 class RunResult:
     metrics: dict
-    bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo"]
+    bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo", "dqn-no-target"]
     instance: str
     reward: Literal["r1", "r2", "r3"]
     timeout: int
@@ -303,7 +305,19 @@ def main():
         format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
         handlers=[logging.StreamHandler(), logging.FileHandler(os.path.join(logdir, "messages.log"))],
     )
-    multiple_runs(MultipleArgs("dqn", "csp", "r2", logdir, n_jobs=2, timeout=10, n_repeats=3, require_gpu=False))
+
+    multiple_runs(
+        MultipleArgs(
+            "dqn-no-target",
+            "examples/csp/testingall-100.txt",
+            "r2",
+            logdir,
+            n_jobs=2,
+            timeout=150,
+            n_repeats=10,
+            require_gpu=False,
+        )
+    )
 
 
 if __name__ == "__main__":

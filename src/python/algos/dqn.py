@@ -33,7 +33,7 @@ class DQN(Algo):
         epsilon: float = 0.1,
         grad_norm_clipping: Optional[float] = None,
         double_qlearning: bool = False,
-        use_target: bool = False,
+        no_target: bool = False,
     ):
         super().__init__()
         self.device = device
@@ -49,7 +49,7 @@ class DQN(Algo):
         # Parameters and optimiser
         self.grad_norm_clipping = grad_norm_clipping
         self.target_updater = HardUpdate(update_period=100)
-        self.use_target = use_target
+        self.use_target = not no_target
 
     def select_action(self, obs: Observation[torch.Tensor | Data]):
         with torch.no_grad():

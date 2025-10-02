@@ -30,7 +30,7 @@ class Args(tap.TypedArgs):
     load_from: Optional[str] = tap.arg("--load-from", help="Path to load the model from", default=None)
     no_train: bool = tap.arg("--no-train", help="Whether to train the model or not", default=False)
     seed: int = tap.arg("--seed", help="Random seed for reproducibility", default=0)
-    use_target: bool = tap.arg("--use-target", help="Whether to use a target network for DQN", default=False)
+    no_target: bool = tap.arg("--no-target", help="Whether to use a target network for DQN", default=False)
     _logdir: Optional[str] = tap.arg("--logdir", help="Directory to save logs", default=None)
 
     @cached_property

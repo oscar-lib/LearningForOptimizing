@@ -54,7 +54,7 @@ object Main extends App {
     saveTo: Option[String] = None,
     training: Boolean = true,
     device: String = "auto",
-    useTarget: Boolean = false,
+    noTarget: Boolean = false,
     logdir: Option[String] = None
   ) extends Config
 
@@ -265,11 +265,11 @@ object Main extends App {
               case _                         => throw new Error("Unexpected Error")
             }
           }),
-        opt[Unit]("useTarget")
+        opt[Unit]("noTarget")
           .text("Use a target network for DQN instead of the actual objective value")
           .action((x, c) => {
             c match {
-              case conf: SolveInstanceConfig => conf.copy(useTarget = true)
+              case conf: SolveInstanceConfig => conf.copy(noTarget = true)
               case _                         => throw new Error("Unexpected Error")
             }
           }),
@@ -669,7 +669,7 @@ object Main extends App {
             batchSize = i.batchSize,
             clipping = i.clipping,
             printHistory = i.printHistory,
-            useTarget = i.useTarget,
+            noTarget = i.noTarget,
             logdir = i.logdir,
             seed = i.seed.toInt
           )

@@ -64,7 +64,7 @@ case class SolverInput(
   clipping: Double,
   printHistory: Boolean = false,
   device: String,
-  useTarget: Boolean,
+  noTarget: Boolean,
   logdir: Option[String],
   seed: Int
 )

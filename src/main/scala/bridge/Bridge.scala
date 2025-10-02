@@ -163,7 +163,7 @@ object NamedPipeBridge {
     loadFrom: Option[String],
     saveTo: Option[String],
     training: Boolean,
-    useTarget: Boolean,
+    noTarget: Boolean,
     logdir: Option[String],
     seed: Int
   ): NamedPipeBridge = {
@@ -190,8 +190,8 @@ object NamedPipeBridge {
       command :+= f"--clipping=$clipping%.4f"
       command :+= f"--batch-size=$batchSize"
       command :+= f"--seed=$seed"
-      if (useTarget) {
-        command :+= f"--use-target"
+      if (noTarget) {
+        command :+= f"--no-target"
       }
       if (ddqn) {
         command :+= f"--ddqn"

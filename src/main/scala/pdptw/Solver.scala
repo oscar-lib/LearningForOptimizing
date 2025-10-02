@@ -183,7 +183,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           saveTo = in.saveTo,
           training = in.training,
           rewardModel = rewardModel,
-          useTarget = in.useTarget,
+          noTarget = in.noTarget,
           logdir = in.logdir,
           seed = in.seed
         )
