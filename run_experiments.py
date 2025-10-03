@@ -31,7 +31,7 @@ def dict2arg(d: dict[str, Any]) -> str:
 
 @dataclass
 class SingleArgs:
-    bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo", "dqn-no-target"]
+    bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target"]
     problem_path: str
     reward: Literal["r1", "r2", "r3"]
     args: str
@@ -42,7 +42,7 @@ class SingleArgs:
 
     def __init__(
         self,
-        bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo", "dqn-no-target"],
+        bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target"],
         problem_path: str,
         reward: Literal["r1", "r2", "r3"],
         device: str = "auto",
@@ -92,7 +92,7 @@ class SingleArgs:
 
 @dataclass
 class MultipleArgs:
-    bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo", "dqn-no-target"]
+    bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target"]
     problems_file: str
     reward: Literal["r1", "r2", "r3"]
     output_filename: Optional[str | Literal["auto"]]
@@ -102,12 +102,12 @@ class MultipleArgs:
     seed: int
     instance_filenames: list[str]
     args: Optional[dict[str, Any]]
-    require_gpu: bool
+    _require_gpu: bool
     logdir: str
 
     def __init__(
         self,
-        bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo", "dqn-no-target"],
+        bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target"],
         problems_file: Literal["csp", "tsp", "pdptw"] | str,
         reward: Literal["r1", "r2", "r3"],
         logdir: Optional[str] = None,
@@ -119,11 +119,12 @@ class MultipleArgs:
         args: Optional[dict[str, Any]] = None,
         require_gpu: bool = True,
     ):
+        logdir_is_none = logdir is None
         if logdir is None or len(logdir) == 0:
             logdir = os.path.join("logs", datetime.now().isoformat().replace(":", "-"))
         elif not logdir.startswith("logs"):
             logdir = os.path.join("logs", logdir)
-        os.makedirs(logdir, exist_ok=False)
+        os.makedirs(logdir, exist_ok=not logdir_is_none)
         logging.basicConfig(
             level=os.getenv("LOG_LEVEL", "INFO").upper(),
             format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
@@ -145,8 +146,29 @@ class MultipleArgs:
         self.timeout = timeout
         self.seed = seed
         self.args = args
-        self.require_gpu = require_gpu
-        with open(os.path.join(self.logdir, "config.json"), "wb") as f:
+        self._require_gpu = require_gpu
+        self._write_config()
+
+    def _write_config(self):
+        IGNORED_KEYS = ("require_gpu", "n_repeats", "seed")
+        config_path = os.path.join(self.logdir, "config.json")
+        self_config_str = orjson.dumps(self)
+        self_config: dict = orjson.loads(self_config_str)
+        if os.path.exists(config_path):
+            with open(config_path, "rb") as f:
+                existing = orjson.loads(f.read())
+            for key, value in self_config.items():
+                if key in IGNORED_KEYS:
+                    continue
+                if key not in existing:
+                    logging.error(f"Key {key} not in existing config")
+                    raise ValueError(f"Existing config at {config_path} does not match the current configuration. Key {key} is missing.")
+                if existing[key] != value:
+                    logging.error(f"Value for key {key} differs: {existing[key]} != {value}")
+                    raise ValueError(
+                        f"Existing config at {config_path} does not match the current configuration. Key {key} differs ({existing[key]} != {value})."
+                    )
+        with open(config_path, "wb") as f:
             f.write(orjson.dumps(self, option=orjson.OPT_INDENT_2))
 
     @property
@@ -170,7 +192,7 @@ class MultipleArgs:
                     logdirs[instance] = os.path.join(self.logdir, f"{self.problem}-{instance_name}")
 
                 # The first n_jobs runs are given a specific GPU
-                if self.require_gpu and job_num < self.n_jobs:
+                if self._require_gpu and job_num < self.n_jobs:
                     device = f"cuda:{job_num % n_devices}"
                 else:
                     device = "auto"
@@ -190,7 +212,7 @@ class MultipleArgs:
 @dataclass
 class RunResult:
     metrics: dict
-    bandit: Literal["epsilongreedy", "random", "ucb1", "dqn", "ppo", "dqn-no-target"]
+    bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target"]
     instance: str
     reward: Literal["r1", "r2", "r3"]
     timeout: int
@@ -258,7 +280,7 @@ def single_run(args: SingleArgs):
 
 
 def multiple_runs(args: MultipleArgs):
-    if args.require_gpu and torch.cuda.device_count() == 0:
+    if args._require_gpu and torch.cuda.device_count() == 0:
         logging.error("No GPU devices found for multiple runs. Exiting.")
         exit()
     results = list[RunResult]()
@@ -266,9 +288,15 @@ def multiple_runs(args: MultipleArgs):
     csv_columns = None
     if args.output_filename is not None:
         os.makedirs(os.path.dirname(args.output_filename), exist_ok=True)
-        results_file = open(args.output_filename, "w")
-    if args.n_jobs == 1:
-        return [single_run(single_args) for single_args in args.single_args()]
+        if os.path.exists(args.output_filename):
+            mode = "a"
+            with open(args.output_filename, "r") as f:
+                first_line = f.readline().strip()
+                assert first_line.startswith("bandit,instance,reward,timeout,seed")  # Basic check
+                csv_columns = first_line.split(",")
+        else:
+            mode = "w"
+        results_file = open(args.output_filename, mode)
 
     with mp.Pool(args.n_jobs) as pool:
         handles = [pool.apply_async(single_run, (single_args,)) for single_args in args.single_args()]
@@ -306,31 +334,38 @@ def multiple_runs(args: MultipleArgs):
 
 def main():
     dotenv.load_dotenv()
-    multiple_runs(
-        MultipleArgs(
-            "dqn",
-            "examples/csp/testingall-100.txt",
-            "r2",
-            n_jobs=16,
-            timeout=150,
-            n_repeats=10,
-            require_gpu=False,
+    for bandit in ("epsilongreedy", "random", "ucb"):
+        multiple_runs(
+            MultipleArgs(
+                bandit,
+                "examples/csp/testingall-100.txt",
+                "r2",
+                logdir=f"{bandit}-r2-csp_100",
+                n_jobs=32,
+                timeout=300,
+                n_repeats=20,
+            )
         )
-    )
+
+
+def ask_recompile_with_countdown() -> bool:
+    def get_input(result):
+        try:
+            result.append(input("Do you want to recompile ? (y/n): ").strip().lower())
+        except OSError:  # Happens when input is not available, e.g. with nohup
+            pass
+
+    result = []
+    input_thread = threading.Thread(target=get_input, args=(result,))
+    input_thread.daemon = True
+    input_thread.start()
+    input_thread.join(timeout=3)
+    return len(result) == 0 or result[0] not in ("n", "")
 
 
 if __name__ == "__main__":
     try:
-
-        def get_input(result):
-            result.append(input("Do you want to recompile ? (y/n): ").strip().lower())
-
-        result = []
-        input_thread = threading.Thread(target=get_input, args=(result,))
-        input_thread.daemon = True
-        input_thread.start()
-        input_thread.join(timeout=3)
-        if len(result) == 0 or result[0] not in ("n", ""):
+        if ask_recompile_with_countdown():
             subprocess.run("sbt assembly", shell=True, check=True)
         main()
     except Exception as e:

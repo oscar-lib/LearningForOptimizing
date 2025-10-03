@@ -4,12 +4,16 @@
             "r1": "",
             "r2": ""
         },
+        "roundrobin": {
+            "r1": "",
+            "r3": ""
+        },
         "epsilongreedy": {
-            "r1": " -lr 0.0479 -mfw 0.7958 -ew 0.3777 -sw 0.4522 -epsilon 0.8495 ",
-            "r2": "-lr 0.7446 -epsilon 0.2997"
+            "r1": " -lr 0.0978 -mfw 0.3624 -ew 0.0591 -sw 0.7699 -e 0.5199 ",
+            "r2": " -lr 0.8294 -e 0.4052 "
         },
         "ucb": {
-            "r1": " -lr 0.2879 -mfw 0.8656 -ew 0.344 -sw 0.0752 -c 3.1753 ",
+            "r1": " -lr 0.5904 -mfw 0.2387 -ew 0.5773 -sw 0.1954 -c 1.4807 ",
             "r2": "-lr 0.8245 -c 3.5174 "
         },
         "dqn": {
@@ -33,6 +37,22 @@
         }
     },
     "pdptw": {
+        "roundrobin": {
+            "r1": "",
+            "r3": ""
+        },
+        "random": {
+            "r1": "",
+            "r3": ""
+        },
+        "epsilongreedy": {
+            "r1": " -lr 0.5225 -mfw 0.4637 -ew 0.2431 -sw 0.5015 -e 0.0045 ",
+            "r3": " -lr 0.5061 -e 0.0058 "
+        },
+        "ucb": {
+            "r1": " -lr 0.6184 -mfw 0.2398 -ew 0.4172 -sw 0.6568 -c 4.5627 ",
+            "r3": " -lr 0.9669 -c 0.3947 "
+        },
         "dqn": {
             "r1": "--learningRate 0.002  --batchSize 17 --epsilon 0.38 --clipping 30",
             "r3": "--learningRate 0.0001 --batchSize 236 --epsilon 0.03 --ddqn --clipping=0.55"
