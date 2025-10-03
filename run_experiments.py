@@ -334,18 +334,18 @@ def multiple_runs(args: MultipleArgs):
 
 def main():
     dotenv.load_dotenv()
-    for bandit in ("epsilongreedy", "random", "ucb"):
-        multiple_runs(
-            MultipleArgs(
-                bandit,
-                "examples/csp/testingall-100.txt",
-                "r2",
-                logdir=f"{bandit}-r2-csp_100",
-                n_jobs=32,
-                timeout=300,
-                n_repeats=20,
-            )
+    multiple_runs(
+        MultipleArgs(
+            "dqn-no-target",
+            "examples/csp/testingall-100.txt",
+            "r2",
+            logdir=None,
+            n_jobs=1,
+            timeout=300,
+            n_repeats=20,
+            require_gpu=False,
         )
+    )
 
 
 def ask_recompile_with_countdown() -> bool:

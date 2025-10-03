@@ -8,6 +8,7 @@ from optimenv import Observation
 from policies import EpsilonGreedy
 from qtarget_updater import HardUpdate
 from replay_memory.replay_memory import Batch, ReplayMemory
+import random
 
 from .algo import Algo
 
@@ -42,24 +43,29 @@ class DQN(Algo):
         self.gamma = gamma
         self.batch_size = batch_size
         self.double_qlearning = double_qlearning
-        self.policy = EpsilonGreedy.constant(epsilon)
+        # self.policy = EpsilonGreedy.constant(epsilon)
+        self.epsilon = epsilon
         self.lr = lr
         self.optimiser = torch.optim.Adam(self.qnetwork.parameters(), lr=lr)
         # Parameters and optimiser
         self.grad_norm_clipping = grad_norm_clipping
         self.target_updater = HardUpdate(update_period=100)
         self.use_target = not no_target
+        self.parameters = list(self.qnetwork.parameters())
 
     def select_action(self, obs: Observation[torch.Tensor | Data]):
+        # Avoid forward pass if we take a random action
+        if random.random() < self.epsilon:
+            available = [i for i, v in enumerate(obs.available_actions) if v]
+            return random.choice(available), []
         with torch.no_grad():
             if isinstance(obs.data, torch.Tensor):
                 data = obs.data.unsqueeze(0)  # Add batch dimension
             else:
                 data = obs.data
-            qvalues = self.qnetwork.forward(data).squeeze(0).numpy(force=True)  # Squeeze the batch dimension
-            saved_qvalues = qvalues.copy()  # Save the original qvalues for logging
-            action = self.policy.get_action(qvalues, obs.available_actions.numpy(force=True))
-            return action, saved_qvalues
+            qvalues: torch.Tensor = self.qnetwork.forward(data).squeeze(0)  # Squeeze the batch dimension
+            action = int(qvalues.argmax())
+            return action, qvalues.tolist()
 
     def notify_episode_end(self):
         self.memory.end_episode()
@@ -118,7 +124,7 @@ class DQN(Algo):
         self.optimiser.zero_grad()
         loss.backward()
         if self.grad_norm_clipping is not None:
-            grad_norm = torch.nn.utils.clip_grad_norm_(self.qnetwork.parameters(), self.grad_norm_clipping)
+            grad_norm = torch.nn.utils.clip_grad_norm_(self.parameters, self.grad_norm_clipping)
             logs["grad_norm"] = grad_norm.item()
         self.optimiser.step()
         return logs, td_error

@@ -37,26 +37,28 @@ class OptimEnv[T]:
     def step(self, action: int):
         self.bridge.send(Message.inference_resp(action).to_bytes())
         req = self.bridge.recv()
+        # Put the most common case first
+        if req.type == MessageType.REWARD:
+            reward = struct.unpack(">f", req.body[:4])[0]
+            obj = struct.unpack(">f", req.body[4:8])[0]
+            obs_ = self.observation()
+            return obs_, reward, obj
         if req.type == MessageType.END_EPISODE:
             raise EpisodeEndException()
         if req.type == MessageType.TRANSITION:
             raise RegisterTransition(orjson.loads(req.body))
-        if req.type != MessageType.REWARD:
-            raise ValueError(f"Expected message of type {MessageType.REWARD.name} from the client, got {req.type.name}")
-        reward = struct.unpack(">f", req.body[:4])[0]
-        obj = struct.unpack(">f", req.body[4:8])[0]
-        obs_ = self.observation()
-        return obs_, reward, obj
+        raise ValueError(f"Expected message of type {MessageType.REWARD.name} from the client, got {req.type.name}")
 
     def observation(self):
         req = self.bridge.recv()
+        # Put the most common case first
+        if req.type == MessageType.ACTION_REQ:
+            data = orjson.loads(req.body)
+            available_actions = data["available"]
+            data = self.problem.build_agent_input(data, self.device)
+            return Observation(data=data, available_actions=torch.tensor(available_actions, dtype=torch.bool, device=self.device))
         if req.type == MessageType.END_EPISODE:
             raise EpisodeEndException()
         if req.type == MessageType.TRANSITION:
             raise RegisterTransition(orjson.loads(req.body))
-        if req.type != MessageType.ACTION_REQ:
-            raise ValueError(f"Expected message of type {MessageType.ACTION_REQ.name} from the client, got {req.type.name}")
-        data = orjson.loads(req.body)
-        available_actions = data["available"]
-        data = self.problem.build_agent_input(data, self.device)
-        return Observation(data=data, available_actions=torch.tensor(available_actions, dtype=torch.bool, device=self.device))
+        raise ValueError(f"Expected message of type {MessageType.ACTION_REQ.name} from the client, got {req.type.name}")

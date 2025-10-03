@@ -125,15 +125,14 @@ class CNN1D(torch.nn.Module):
         batch_size, *_ = solution.shape
         x = self.cnn(solution)
         options_data = self.options_data.repeat(batch_size, 1)
-        x = torch.cat((x, options_data), dim=1)  # Concatenate
+        x = torch.cat((x, options_data), dim=1)
         qvalues = self.linear(x)
         return qvalues
 
-    def to(self, device: torch.device, *args, **kwargs):
+    def to(self, device: torch.device, *args, non_blocking: bool = True, **kwargs):
         """Override to ensure the CNN is moved to the correct device."""
-        self.options_data = self.options_data.to(device, non_blocking=True)
-        kwargs.pop("non_blocking", None)  # Remove non_blocking from kwargs to avoid issues
-        return super().to(device, non_blocking=True, *args, **kwargs)
+        self.options_data = self.options_data.to(device, non_blocking=non_blocking)
+        return super().to(device, non_blocking=non_blocking, *args, **kwargs)
 
 
 class CNN(torch.nn.Module):

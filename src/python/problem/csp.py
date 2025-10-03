@@ -90,10 +90,9 @@ class CSP(Problem[torch.Tensor]):
         The current state of the problem is represented by the sequence of options to make.
         """
         sequence = data["state"]
-        busy_options = torch.zeros(self.n_options, self.n_cars, dtype=torch.float32)
-        for i, car_num in enumerate(sequence):
-            busy_options[:, i] = self._cars_data[car_num]
-        return busy_options.to(device)
+        sequence = torch.tensor(sequence, dtype=torch.long, device=device)
+        busy_options = self._cars_data[sequence].T
+        return busy_options
 
     @property
     def n_car_configs(self) -> int:

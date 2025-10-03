@@ -51,12 +51,12 @@ class ReplayMemory[T: torch.Tensor](ABC):
     def __init__(self, max_size: Optional[int]):
         self._actions = deque[int](maxlen=max_size)
         self._rewards = deque[float](maxlen=max_size)
-        self._obs = deque[Observation](maxlen=max_size)
-        self._next_obs = deque[Observation](maxlen=max_size)
+        self._obs = deque[Observation[T]](maxlen=max_size)
+        self._next_obs = deque[Observation[T]](maxlen=max_size)
         self._dones = deque[bool](maxlen=max_size)
         self._next_values = deque[float](maxlen=max_size)
 
-    def add(self, obs: Observation, action: int, reward: float, next_obs: Observation, next_value: float):
+    def add(self, obs: Observation[T], action: int, reward: float, next_obs: Observation[T], next_value: float):
         """Add an item (transition, episode, ...) to the memory"""
         self._obs.append(obs)
         self._next_obs.append(next_obs)
