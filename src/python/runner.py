@@ -1,7 +1,7 @@
 import logging
 import os
 from typing import Literal, TYPE_CHECKING
-
+import torch
 from algos import DQN, PPO, Algo
 from bridge import Bridge
 from bridge.protocol.message import Message, MessageType
@@ -48,7 +48,7 @@ def run(args: "Args"):
         logging.info("Waiting for a new connection")
         try:
             bridge = args.make_bridge()
-            new_problem = _retrieve_problem_data(bridge, logger)
+            new_problem = _retrieve_problem_data(bridge, args.device)
             if problem is None:
                 problem = new_problem
             else:
@@ -74,18 +74,18 @@ def run(args: "Args"):
                 agent.save(args.save_to)
 
 
-def _retrieve_problem_data(bridge: Bridge, logger: CSVLogger) -> Problem:
+def _retrieve_problem_data(bridge: Bridge, device: torch.device) -> Problem:
     req = bridge.recv()
     match req.type:
         case MessageType.STATIC_DATA_PDPTW:
             problem = PDPTW.parse(req.body)
         case MessageType.STATIC_DATA_CSP:
-            problem = CSP.parse(req.body)
+            problem = CSP.parse(req.body, device)
         case MessageType.STATIC_DATA_TSP:
             problem = TSP.parse(req.body)
         case other:
             error = f"Expected message of type {[MessageType.STATIC_DATA_PDPTW, MessageType.STATIC_DATA_CSP, MessageType.STATIC_DATA_TSP]}  from the client, got {other}"
-            logger.error(error)
+            logging.error(error)
             bridge.send(Message.error(error).to_bytes())
             raise Exception(error)
     bridge.send(Message.ack().to_bytes())
@@ -117,6 +117,7 @@ def _create_agent(problem: Problem, algo: Literal["dqn", "ppo"], args: "Args") -
                 epsilon=args.epsilon,
                 batch_size=args.batch_size,
                 no_target=args.no_target,
+                enable_logs=not args.disable_training_logs,
             )
         case "ppo":
             assert isinstance(problem, PDPTW)

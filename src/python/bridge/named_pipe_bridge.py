@@ -1,5 +1,4 @@
 import os
-
 from .bridge import Bridge
 
 
@@ -15,8 +14,8 @@ class NamedPipeBridge(Bridge):
             os.mkfifo(input_filename)
         self.input_stream = open(input_filename, "rb")
 
-    def read(self, nbytes: int) -> bytes:
-        return self.input_stream.read(nbytes)
+    def read(self, n_bytes: int) -> bytes:
+        return self.input_stream.read(n_bytes)
 
     def send(self, bytes):
         bytes_written = self.output_stream.write(bytes)

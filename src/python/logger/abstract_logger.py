@@ -46,3 +46,6 @@ class AbstractLogger(ABC):
 
     def close(self):
         """Close the logger"""
+
+    def __del__(self):
+        self.close()

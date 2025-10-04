@@ -34,6 +34,7 @@ class DQN(Algo):
         grad_norm_clipping: Optional[float] = None,
         double_qlearning: bool = False,
         no_target: bool = False,
+        enable_logs: bool = True,
     ):
         super().__init__()
         self.device = torch.device("cpu")
@@ -52,20 +53,20 @@ class DQN(Algo):
         self.target_updater = HardUpdate(update_period=100)
         self.use_target = not no_target
         self.parameters = list(self.qnetwork.parameters())
+        self.enable_logs = enable_logs
 
     def select_action(self, obs: Observation[torch.Tensor | Data]):
         # Avoid forward pass if we take a random action
         if random.random() < self.epsilon:
             available = [i for i, v in enumerate(obs.available_actions) if v]
             return random.choice(available), []
-        with torch.no_grad():
-            if isinstance(obs.data, torch.Tensor):
-                data = obs.data.unsqueeze(0)  # Add batch dimension
-            else:
-                data = obs.data
-            qvalues: torch.Tensor = self.qnetwork.forward(data).squeeze(0)  # Squeeze the batch dimension
-            action = int(qvalues.argmax())
-            return action, qvalues.tolist()
+        if isinstance(obs.data, torch.Tensor):
+            data = obs.data.unsqueeze(0)  # Add batch dimension
+        else:
+            data = obs.data
+        qvalues: torch.Tensor = self.qnetwork.forward(data).squeeze(0)  # Squeeze the batch dimension
+        action = int(qvalues.argmax())
+        return action, qvalues.tolist()
 
     def notify_episode_end(self):
         self.memory.end_episode()
@@ -112,20 +113,23 @@ class DQN(Algo):
 
         # Next state value computation
         if self.use_target:
-            next_values = self._next_state_value(batch)
+            next_values = self._next_state_value(batch).detach()
         else:
             next_values = batch.next_values
         qtargets = batch.rewards + self.gamma * next_values * (~batch.dones)
         # Compute the loss
-        td_error = qvalues - qtargets.detach()
+        td_error = qvalues - qtargets
         loss = torch.mean(td_error**2)
         # Optimize
-        logs = {"loss": float(loss.item())}
+        logs = dict[str, float]()
+        if self.enable_logs:
+            logs["loss"] = loss.item()
         self.optimiser.zero_grad()
         loss.backward()
         if self.grad_norm_clipping is not None:
             grad_norm = torch.nn.utils.clip_grad_norm_(self.parameters, self.grad_norm_clipping)
-            logs["grad_norm"] = grad_norm.item()
+            if self.enable_logs:
+                logs["grad_norm"] = grad_norm.item()
         self.optimiser.step()
         return logs, td_error
 

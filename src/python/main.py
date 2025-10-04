@@ -32,6 +32,7 @@ class Args(tap.TypedArgs):
     seed: int = tap.arg("--seed", help="Random seed for reproducibility", default=0)
     no_target: bool = tap.arg("--no-target", help="Whether to use a target network for DQN", default=False)
     _logdir: Optional[str] = tap.arg("--logdir", help="Directory to save logs", default=None)
+    disable_training_logs: bool = tap.arg("--disable-training-logs", help="Disable logging of training metrics", default=False)
 
     @cached_property
     def creation_time(self) -> str:

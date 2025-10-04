@@ -190,6 +190,7 @@ object NamedPipeBridge {
       command :+= f"--clipping=$clipping%.4f"
       command :+= f"--batch-size=$batchSize"
       command :+= f"--seed=$seed"
+      command :+= "--disable-training-logs"
       if (noTarget) {
         command :+= f"--no-target"
       }

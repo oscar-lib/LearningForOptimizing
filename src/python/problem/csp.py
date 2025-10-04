@@ -54,12 +54,12 @@ class CSP(Problem[torch.Tensor]):
     A tensor of shape (n_options, 2) where each row contains the max_seq and seq_len for each option.
     """
 
-    def __init__(self, n_actions: int, options: list[Option], cars: list[CarConfig]):
+    def __init__(self, n_actions: int, options: list[Option], cars: list[CarConfig], device: torch.device):
         super().__init__()
         self.options = options
         self.cars = cars
         self.n_actions = n_actions
-        self._cars_data = torch.stack([car.options for car in cars])
+        self._cars_data = torch.stack([car.options for car in cars]).to(device)
         """
         A tensor of shape (n_cars, n_options) where each row corresponds to the options that a car has.
         """
@@ -67,7 +67,7 @@ class CSP(Problem[torch.Tensor]):
         self.n_cars = sum(car.n_to_make for car in cars)
 
     @staticmethod
-    def parse(bdata: bytes) -> "CSP":
+    def parse(bdata: bytes, device: torch.device) -> "CSP":
         data = orjson.loads(bdata)
         problem = data["problem"]["instance"]
         n_actions = data["nActions"]
@@ -82,7 +82,7 @@ class CSP(Problem[torch.Tensor]):
         cars = list[CarConfig]()
         for recipe in recipes:
             cars.append(CarConfig(recipe["id"], recipe["nCarsWithConf"], recipe["optInConf"]))
-        res = CSP(n_actions, options, cars)
+        res = CSP(n_actions, options, cars, device)
         return res
 
     def build_agent_input(self, data: dict, device: torch.device) -> torch.Tensor:
