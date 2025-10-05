@@ -1,51 +1,14 @@
 from abc import ABC, abstractmethod
 from collections import deque
-from typing import Optional
+from typing import Optional, Sequence
 from torch_geometric.data import Data
 import numpy as np
 import torch
 from optimenv import Observation
+from functools import cached_property
 
 
-class Batch[T: torch.Tensor | Data]:
-    def __init__(
-        self,
-        obs: T,
-        available_actions: torch.Tensor,
-        actions: torch.Tensor,
-        rewards: torch.Tensor,
-        dones: torch.Tensor,
-        next_obs: T,
-        next_available_actions: torch.Tensor,
-        next_values: torch.Tensor,
-    ):
-        self.obs = obs
-        self.available_actions = available_actions
-        self.actions = actions
-        self.rewards = rewards
-        self.dones = dones
-        self.next_obs = next_obs
-        self.next_available_actions = next_available_actions
-        self.next_values = next_values
-        self.size = len(rewards)
-
-    def to(self, device: torch.device) -> "Batch":
-        return Batch(
-            obs=self.obs.to(device.index, non_blocking=True),
-            available_actions=self.available_actions.to(device),
-            actions=self.actions.to(device, non_blocking=True),
-            rewards=self.rewards.to(device, non_blocking=True),
-            dones=self.dones.to(device, non_blocking=True),
-            next_obs=self.next_obs.to(device.index, non_blocking=True),
-            next_available_actions=self.next_available_actions.to(device, non_blocking=True),
-            next_values=self.next_values.to(device, non_blocking=True),
-        )
-
-    def __len__(self):
-        return self.size
-
-
-class ReplayMemory[T: torch.Tensor](ABC):
+class ReplayMemory[T: torch.Tensor | Data](ABC):
     max_size: int
 
     def __init__(self, max_size: Optional[int]):
@@ -69,18 +32,13 @@ class ReplayMemory[T: torch.Tensor](ABC):
         self._dones[-1] = True
 
     @abstractmethod
-    def _get_batch(self, indices: np.ndarray) -> Batch[T]:
+    def _get_batch(self, indices: Sequence[int]) -> "Batch[T]":
         """Retrieve a `Batch` from the memory given a list of indices"""
 
-    def sample(self, batch_size: int) -> Batch[T]:
+    def sample(self, batch_size: int) -> "Batch[T]":
         """Randomly sample the memory to retrieve a `Batch`"""
         indices = np.random.randint(0, len(self), batch_size)
-        return self._get_batch(indices)
-
-    def get_all(self):
-        """Return all items in the memory as a `Batch`"""
-        indices = np.arange(len(self))
-        return self._get_batch(indices)
+        return self._get_batch(indices.tolist())
 
     def can_sample(self, batch_size: int) -> bool:
         """Return whether the memory contains enough items to sample a batch of the given size"""
@@ -100,3 +58,55 @@ class ReplayMemory[T: torch.Tensor](ABC):
 
     def __len__(self) -> int:
         return len(self._dones)
+
+
+class Batch[T: torch.Tensor | Data]:
+    def __init__(self, memory: ReplayMemory[T], indices: Sequence[int], device: torch.device):
+        self.memory = memory
+        self.indices = indices
+        self.device = device
+        self.size = len(indices)
+
+    def to(self, device: torch.device):
+        """Send the tensors to the given device"""
+        self.device = device
+        for key, value in self.__dict__.items():
+            if isinstance(value, torch.Tensor):
+                value = value.to(device, non_blocking=True)
+                setattr(self, key, value)
+        return self
+
+    def __len__(self):
+        return self.size
+
+    @cached_property
+    @abstractmethod
+    def obs(self) -> T: ...
+
+    @cached_property
+    @abstractmethod
+    def next_obs(self) -> T: ...
+
+    @cached_property
+    def available_actions(self):
+        return torch.stack([self.memory._obs[i].available_actions for i in self.indices]).to(self.device)
+
+    @cached_property
+    def actions(self):
+        return torch.tensor([self.memory._actions[i] for i in self.indices], dtype=torch.long).unsqueeze(-1).to(self.device)
+
+    @cached_property
+    def rewards(self):
+        return torch.tensor([self.memory._rewards[i] for i in self.indices], dtype=torch.float32).to(self.device)
+
+    @cached_property
+    def dones(self):
+        return torch.tensor([self.memory._dones[i] for i in self.indices], dtype=torch.bool).to(self.device)
+
+    @cached_property
+    def next_available_actions(self):
+        return torch.stack([self.memory._next_obs[i].available_actions for i in self.indices]).to(self.device)
+
+    @cached_property
+    def next_values(self):
+        return torch.tensor([self.memory._next_values[i] for i in self.indices], dtype=torch.float32).to(self.device)

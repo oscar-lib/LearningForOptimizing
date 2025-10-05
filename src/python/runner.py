@@ -9,13 +9,11 @@ from logger import CSVLogger
 from optimenv import EpisodeEndException, OptimEnv
 from problem import CSP, PDPTW, TSP, Problem
 from replay_memory import GraphReplayMemory, LinearMemory
-import pyinstrument
 
 if TYPE_CHECKING:
     from main import Args
 
 
-@pyinstrument.profile()
 def do_run(agent: Algo, env: OptimEnv, logger: CSVLogger, train: bool):
     t = 0
     obs = env.reset()
