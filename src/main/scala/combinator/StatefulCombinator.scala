@@ -1,18 +1,19 @@
 package combinator
 
 import oscar.cbls.core.search.Neighborhood
-import bridge.SocketBridge
 import oscar.cbls.core.computation.Store
 import oscar.cbls.business.routing.model.VRP
 import oscar.cbls.core.search.SearchResult
 import oscar.cbls.core.search.NoMoveFound
-import bridge.NamedPipeBridge
 import oscar.cbls.core.objective.Objective
 import oscar.cbls.core.search.AcceptanceCriterion
 import oscar.cbls.core.search.AcceptAll
 import oscar.cbls.core.search.StrictImprovement
 import bridge.SerializableModel
 import oscar.cbls.core.search.MoveFound
+import bridge.Bridge
+import bridge.NamedPipeBridge
+import bridge.UnixPipeBridge
 
 object RLAlgorithm extends Enumeration {
   final val DQN = Value("dqn")
@@ -49,23 +50,22 @@ class StatefulCombinator(
 
   private var lastMoveWasRandom = false
   private val nActions          = neighborhoods.length
-  private val bridge =
-    NamedPipeBridge(
-      algo,
-      debug,
-      batchSize,
-      epsilon,
-      clipping,
-      lr,
-      ddqn,
-      device,
-      loadFrom,
-      saveTo,
-      training,
-      noTarget,
-      logdir,
-      seed
-    )
+  private val bridge = new UnixPipeBridge(
+    algo,
+    debug,
+    batchSize,
+    epsilon,
+    clipping,
+    lr,
+    ddqn,
+    device,
+    loadFrom,
+    saveTo,
+    training,
+    noTarget,
+    logdir,
+    seed
+  )
   bridge.sendStaticProblemData(model, this.nActions)
   var justReset = false
 

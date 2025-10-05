@@ -20,6 +20,7 @@ class GraphBatch(Batch[Data]):
     @cached_property
     def obs(self):
         # DataLoader([self._obs[i].data for i in indices], batch_size=batch_size, shuffle=False)._get_iterator().__next__()
+        # TODO: check how to move to device efficiently
         return GeoBatch.from_data_list([self.memory._obs[i].data for i in self.indices])
 
     @cached_property

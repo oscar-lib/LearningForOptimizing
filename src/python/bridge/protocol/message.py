@@ -19,19 +19,17 @@ class MessageType(IntEnum):
 
 @dataclass
 class Header:
-    version: int
     nbytes: int
     type: MessageType
 
-    SIZE: ClassVar[int] = 12
+    SIZE: ClassVar[int] = 5
 
     @classmethod
     def from_bytes(cls, data: bytes):
         assert len(data) == Header.SIZE
-        version = int.from_bytes(data[:4], byteorder="big")
-        nbytes = int.from_bytes(data[4:8], byteorder="big")
-        msg_type = MessageType(int.from_bytes(data[8:12], byteorder="big"))
-        return Header(version, nbytes, msg_type)
+        nbytes = int.from_bytes(data[:4], byteorder="big")
+        msg_type = MessageType(int.from_bytes(data[4:8], byteorder="big"))
+        return Header(nbytes, msg_type)
 
     @classmethod
     def recv(cls, conn: socket.socket):
@@ -42,7 +40,7 @@ class Header:
         return header
 
     def to_bytes(self) -> bytes:
-        return self.version.to_bytes(4, byteorder="big") + self.nbytes.to_bytes(4, byteorder="big") + self.type.to_bytes(4, byteorder="big")
+        return self.nbytes.to_bytes(4, byteorder="big") + self.type.to_bytes(1, byteorder="big")
 
 
 @dataclass
@@ -69,14 +67,14 @@ class Message:
 
     @staticmethod
     def error(reason: str) -> "Message":
-        return Message(Header(1, len(reason), MessageType.ERROR), reason.encode())
+        return Message(Header(len(reason), MessageType.ERROR), reason.encode())
 
     @staticmethod
     def ack() -> "Message":
-        return Message(Header(1, 0, MessageType.ACK), b"")
+        return Message(Header(0, MessageType.ACK), b"")
 
     @staticmethod
     def inference_resp(action: int) -> "Message":
         int_bytes = action.to_bytes(4, byteorder="big")
-        header = Header(1, len(int_bytes), MessageType.ACTION_RSP)
+        header = Header(len(int_bytes), MessageType.ACTION_RSP)
         return Message(header, int_bytes)

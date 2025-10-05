@@ -1,7 +1,6 @@
 from .replay_memory import ReplayMemory, Batch
 import torch
 from typing import Sequence
-from functools import cached_property
 
 
 class LinearMemory(ReplayMemory[torch.Tensor]):
@@ -10,10 +9,10 @@ class LinearMemory(ReplayMemory[torch.Tensor]):
 
 
 class LinearBatch(Batch[torch.Tensor]):
-    @cached_property
+    @property
     def obs(self):
         return torch.stack([self.memory._obs[i].data for i in self.indices]).to(self.device)
 
-    @cached_property
+    @property
     def next_obs(self):
         return torch.stack([self.memory._next_obs[i].data for i in self.indices]).to(self.device)

@@ -4,7 +4,7 @@ import random
 import numpy as np
 from runner import run
 import typed_argparse as tap
-from bridge import SocketBridge, NamedPipeBridge, Bridge
+from bridge import SocketBridge, NamedPipeBridge, Bridge, UnixSocketBridge
 import logging
 import dotenv
 import os
@@ -13,7 +13,7 @@ from functools import cached_property
 
 
 class Args(tap.TypedArgs):
-    communication: Literal["socket", "pipe"] = tap.arg("-c", help="Communication method")
+    communication: Literal["socket", "pipe", "unix-socket"] = tap.arg("-c", help="Communication method")
     port: Optional[int] = tap.arg("-p", help="Port number", type=int)
     input_pipe: Optional[str] = tap.arg("-i", help="Input pipe name")
     output_pipe: Optional[str] = tap.arg("-o", help="Output pipe name")
@@ -22,7 +22,7 @@ class Args(tap.TypedArgs):
     epsilon: float = tap.arg("--epsilon", help="Epsilon value", type=float, default=0.1)
     _clipping: str | float = tap.arg("--clipping", help="Clipping value", default=0.0)
     batch_size: int = tap.arg("--batch-size", help="Batch size", default=32)
-    memory_size: int = tap.arg("--memory-size", help="Size of the replay memory", default=1_000)
+    memory_size: int = tap.arg("--memory-size", help="Size of the replay memory", default=10_000)
     ddqn: bool = tap.arg("--ddqn", help="Use Double DQN", default=False)
     lr: float = tap.arg("--lr", help="Learning rate", type=float, default=1e-4)
     keepalive: bool = tap.arg("--keepalive", help="Keep the connection alive", default=False)
@@ -86,6 +86,10 @@ class Args(tap.TypedArgs):
                 if self.input_pipe is None or self.output_pipe is None:
                     raise Exception("Input and output pipes are required for pipe communication")
                 return NamedPipeBridge(self.input_pipe, self.output_pipe)
+            case "unix-socket":
+                if self.input_pipe is None:
+                    raise Exception("Address is required for unix-socket communication with the -i argument")
+                return UnixSocketBridge(self.input_pipe)
             case other:
                 raise Exception(f"Unknown communication method: {other}")
 

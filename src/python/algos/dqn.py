@@ -105,7 +105,7 @@ class DQN(Algo):
 
     def optimise_qnetwork(self):
         # Sample a batch from the memory
-        batch = self.memory.sample(self.batch_size).to(self.device)
+        batch = self.memory.sample(self.batch_size, self.device)
         # Qvalues and qvalues with target network computation
         qvalues = self.qnetwork.forward(batch.obs)
         qvalues = torch.gather(qvalues, dim=-1, index=batch.actions)
@@ -113,10 +113,10 @@ class DQN(Algo):
 
         # Next state value computation
         if self.use_target:
-            next_values = self._next_state_value(batch).detach()
+            next_values = self._next_state_value(batch).detach() * (~batch.dones)
         else:
             next_values = batch.next_values
-        qtargets = batch.rewards + self.gamma * next_values * (~batch.dones)
+        qtargets = batch.rewards + self.gamma * next_values
         # Compute the loss
         td_error = qvalues - qtargets
         loss = torch.mean(td_error**2)

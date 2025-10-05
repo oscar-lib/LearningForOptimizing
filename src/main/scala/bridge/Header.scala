@@ -7,15 +7,14 @@ import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.io.InputStream
 
-class Header(version: Int, payload_nbytes: Int, msg_type: MessageType.Value) {
+class Header(payload_nbytes: Int, msg_type: MessageType.Value) {
   def toBytes(): Array[Byte] = {
     val id = this.msg_type.id
     return ByteBuffer
       .allocate(Header.HEADER_SIZE)
       .order(ByteOrder.BIG_ENDIAN)
-      .putInt(this.version)
       .putInt(this.payload_nbytes)
-      .putInt(this.msg_type.id)
+      .put(this.msg_type.id.toByte)
       .array()
   }
 
@@ -28,16 +27,15 @@ class Header(version: Int, payload_nbytes: Int, msg_type: MessageType.Value) {
   }
 
   override def toString(): String = {
-    return s"Header(version=$version, nbytes=$payload_nbytes, type=$msg_type)"
+    return s"Header(nbytes=$payload_nbytes, type=$msg_type)"
   }
 }
 
 // Companion object for Header (for static methods)
 object Header {
-  final val VERSION_SIZE = 4
   final val N_BYTES_SIZE = 4
-  final val TYPE_SIZE    = 4
-  final val HEADER_SIZE  = VERSION_SIZE + N_BYTES_SIZE + TYPE_SIZE
+  final val TYPE_SIZE    = 1
+  final val HEADER_SIZE  = N_BYTES_SIZE + TYPE_SIZE
 
   @throws[FormatException]
   @throws[VersionException]
@@ -47,24 +45,17 @@ object Header {
         s"Header too short (min $HEADER_SIZE bytes for version number and payload size)"
       )
     }
-    val version = ByteBuffer
-      .wrap(bytes.slice(0, VERSION_SIZE))
-      .order(ByteOrder.BIG_ENDIAN)
-      .getInt()
-    if (version != 1) {
-      throw new VersionException(1, version)
-    }
-
     val nbytes = ByteBuffer
-      .wrap(bytes.slice(VERSION_SIZE, HEADER_SIZE))
+      .wrap(bytes.slice(0, N_BYTES_SIZE))
       .order(ByteOrder.BIG_ENDIAN)
       .getInt()
     val msg_type = ByteBuffer
-      .wrap(bytes.slice(VERSION_SIZE + N_BYTES_SIZE, HEADER_SIZE))
+      .wrap(bytes.slice(N_BYTES_SIZE, HEADER_SIZE))
       .order(ByteOrder.BIG_ENDIAN)
-      .getInt()
+      .get()
+      .toInt
 
-    return new Header(version, nbytes, MessageType(msg_type))
+    return new Header(nbytes, MessageType(msg_type))
   }
 
   def recv(input: InputStream): Header = {

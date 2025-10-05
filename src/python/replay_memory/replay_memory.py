@@ -32,13 +32,13 @@ class ReplayMemory[T: torch.Tensor | Data](ABC):
         self._dones[-1] = True
 
     @abstractmethod
-    def _get_batch(self, indices: Sequence[int]) -> "Batch[T]":
+    def _get_batch(self, indices: Sequence[int], device: torch.device) -> "Batch[T]":
         """Retrieve a `Batch` from the memory given a list of indices"""
 
-    def sample(self, batch_size: int) -> "Batch[T]":
+    def sample(self, batch_size: int, device: torch.device) -> "Batch[T]":
         """Randomly sample the memory to retrieve a `Batch`"""
         indices = np.random.randint(0, len(self), batch_size)
-        return self._get_batch(indices.tolist())
+        return self._get_batch(indices.tolist(), device)
 
     def can_sample(self, batch_size: int) -> bool:
         """Return whether the memory contains enough items to sample a batch of the given size"""
@@ -89,24 +89,26 @@ class Batch[T: torch.Tensor | Data]:
 
     @cached_property
     def available_actions(self):
-        return torch.stack([self.memory._obs[i].available_actions for i in self.indices]).to(self.device)
+        return torch.stack([self.memory._obs[i].available_actions for i in self.indices]).to(self.device, non_blocking=True)
 
-    @cached_property
+    @property
     def actions(self):
-        return torch.tensor([self.memory._actions[i] for i in self.indices], dtype=torch.long).unsqueeze(-1).to(self.device)
+        return (
+            torch.tensor([self.memory._actions[i] for i in self.indices], dtype=torch.long).unsqueeze(-1).to(self.device, non_blocking=True)
+        )
 
-    @cached_property
+    @property
     def rewards(self):
-        return torch.tensor([self.memory._rewards[i] for i in self.indices], dtype=torch.float32).to(self.device)
+        return torch.tensor([self.memory._rewards[i] for i in self.indices], dtype=torch.float32).to(self.device, non_blocking=True)
 
-    @cached_property
+    @property
     def dones(self):
-        return torch.tensor([self.memory._dones[i] for i in self.indices], dtype=torch.bool).to(self.device)
+        return torch.tensor([self.memory._dones[i] for i in self.indices], dtype=torch.bool).to(self.device, non_blocking=True)
 
-    @cached_property
+    @property
     def next_available_actions(self):
-        return torch.stack([self.memory._next_obs[i].available_actions for i in self.indices]).to(self.device)
+        return torch.stack([self.memory._next_obs[i].available_actions for i in self.indices]).to(self.device, non_blocking=True)
 
-    @cached_property
+    @property
     def next_values(self):
-        return torch.tensor([self.memory._next_values[i] for i in self.indices], dtype=torch.float32).to(self.device)
+        return torch.tensor([self.memory._next_values[i] for i in self.indices], dtype=torch.float32).to(self.device, non_blocking=True)
