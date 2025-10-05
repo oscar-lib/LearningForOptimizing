@@ -66,5 +66,6 @@ case class SolverInput(
   device: String,
   noTarget: Boolean,
   logdir: Option[String],
-  seed: Int
+  seed: Int,
+  memorySize: Int
 )

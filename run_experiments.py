@@ -194,6 +194,8 @@ class MultipleArgs:
                 # The first n_jobs runs are given a specific GPU
                 if self._require_gpu and job_num < self.n_jobs:
                     device = f"cuda:{job_num % n_devices}"
+                elif self._require_gpu:
+                    device = "auto-gpu"
                 else:
                     device = "auto"
                 yield SingleArgs(
@@ -338,12 +340,13 @@ def main():
         multiple_runs(
             MultipleArgs(
                 bandit,
-                "examples/csp/testingall.txt",
+                "examples/csp/testingall-100.txt",
                 "r2",
                 logdir=f"{bandit}-r2-csp",
                 n_jobs=8,
                 timeout=300,
                 n_repeats=20,
+                require_gpu=True,
             )
         )
 

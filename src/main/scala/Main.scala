@@ -55,7 +55,8 @@ object Main extends App {
     training: Boolean = true,
     device: String = "auto",
     noTarget: Boolean = false,
-    logdir: Option[String] = None
+    logdir: Option[String] = None,
+    memorySize: Int = 10_000
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -286,6 +287,14 @@ object Main extends App {
           .action((_, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(debug = true)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Int]("memorySize")
+          .text("Set the size of the replay memory for DQN (or PPO batch size) (default: 10,000)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(memorySize = x)
               case _                         => throw new Error("Unexpected Error")
             }
           ),
@@ -671,7 +680,8 @@ object Main extends App {
             printHistory = i.printHistory,
             noTarget = i.noTarget,
             logdir = i.logdir,
-            seed = i.seed.toInt
+            seed = i.seed.toInt,
+            memorySize = i.memorySize
           )
           i.problem match {
             case "csp" =>

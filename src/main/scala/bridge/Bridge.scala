@@ -42,6 +42,7 @@ abstract class Bridge(
   training: Boolean,
   noTarget: Boolean,
   logdir: Option[String],
+  memorySize: Int,
   seed: Int
 ) {
 
@@ -49,25 +50,27 @@ abstract class Bridge(
   def send(msg: Message): Unit
   def completeCommand(command: Array[String]): Array[String]
 
-  val process = this.startSubprocess()
+  val process = this.startSubprocess(false)
 
-  def startSubprocess(): Option[Process] = {
+  def startSubprocess(withHeartbeat: Boolean): Option[Process] = {
     if (!debug) {
       val command = this.makeCommand()
       val pb      = new ProcessBuilder(command: _*)
       println(String.join(" ", pb.command()))
       val process = pb.start()
-      println("Waiting 5 seconds for the process to start...")
-      for (i <- 0 until 5) {
-        print(f"Heartbeat ${i + 1}/5...")
-        process.waitFor(1, java.util.concurrent.TimeUnit.SECONDS)
-        if (!process.isAlive) {
-          val msg = process.getErrorStream().readAllBytes().map(_.toChar).mkString
-          throw new Exception(f"Python process did not start correctly: $msg")
+      if (withHeartbeat) {
+        println("Waiting 5 seconds for the process to start...")
+        for (i <- 0 until 5) {
+          print(f"Heartbeat ${i + 1}/5...")
+          process.waitFor(1, java.util.concurrent.TimeUnit.SECONDS)
+          if (!process.isAlive) {
+            val msg = process.getErrorStream().readAllBytes().map(_.toChar).mkString
+            throw new Exception(f"Python process did not start correctly: $msg")
+          }
+          println(" OK")
         }
-        println(" OK")
+        println("Python process successfully started.")
       }
-      println("Python process successfully started.")
       Some(process)
     } else None
   }
@@ -78,13 +81,14 @@ abstract class Bridge(
     var command            = new Array[String](0)
     command :+= pythonBinary.toString()
     command :+= pythonSrcDirectory.resolve("main.py").toString
-    command :+= f"-a=$algo"
-    command :+= f"--device=${device}"
-    command :+= f"--epsilon=$epsilon%.4f"
-    command :+= f"--clipping=$clipping%.4f"
-    command :+= f"--batch-size=$batchSize"
-    command :+= f"--seed=$seed"
+    command :+= f"-a=${this.algo}"
+    command :+= f"--device=${this.device}"
+    command :+= f"--epsilon=${this.epsilon}%.4f"
+    command :+= f"--clipping=${this.clipping}%.4f"
+    command :+= f"--batch-size=${this.batchSize}"
+    command :+= f"--seed=${this.seed}"
     command :+= "--disable-training-logs"
+    command :+= f"--memory-size=${this.memorySize}"
     if (noTarget) {
       command :+= f"--no-target"
     }
@@ -316,6 +320,7 @@ class NamedPipeBridge(
   saveTo: Option[String],
   training: Boolean,
   noTarget: Boolean,
+  memorySize: Int,
   logdir: Option[String],
   seed: Int
 ) extends {
@@ -340,7 +345,8 @@ class NamedPipeBridge(
       training,
       noTarget,
       logdir,
-      seed
+      memorySize = memorySize,
+      seed = seed
     ) {
 
   val input  = new FileInputStream(this.pipeIn)
@@ -391,6 +397,7 @@ class UnixPipeBridge(
   training: Boolean,
   noTarget: Boolean,
   logdir: Option[String],
+  memorySize: Int,
   seed: Int
 ) extends {
       val id = if (debug) { 0 }
@@ -424,7 +431,8 @@ class UnixPipeBridge(
       training,
       noTarget,
       logdir,
-      seed
+      memorySize = memorySize,
+      seed = seed
     ) {
 
   println(s"Listening on ${this.address.toString}")

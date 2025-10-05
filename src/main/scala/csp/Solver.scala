@@ -96,6 +96,7 @@ case class Solver(cspModel: Model, in: SolverInput) {
           rewardModel = rewardModel,
           noTarget = in.noTarget,
           logdir = in.logdir,
+          memorySize = in.memorySize,
           seed = in.seed
         )
       case "ucb"            => new UCBNew(neighList, in, rewardModel)

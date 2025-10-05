@@ -38,6 +38,7 @@ class StatefulCombinator(
   rewardModel: RewardModel,
   noTarget: Boolean,
   logdir: Option[String],
+  memorySize: Int,
   seed: Int,
   saveTo: Option[String] = None
 ) extends BanditSelector(
@@ -51,20 +52,21 @@ class StatefulCombinator(
   private var lastMoveWasRandom = false
   private val nActions          = neighborhoods.length
   private val bridge = new UnixPipeBridge(
-    algo,
-    debug,
-    batchSize,
-    epsilon,
-    clipping,
-    lr,
-    ddqn,
-    device,
-    loadFrom,
-    saveTo,
-    training,
-    noTarget,
-    logdir,
-    seed
+    algo = algo,
+    debug = debug,
+    batchSize = batchSize,
+    epsilon = epsilon,
+    clipping = clipping,
+    lr = lr,
+    ddqn = ddqn,
+    device = device,
+    loadFrom = loadFrom,
+    saveTo = saveTo,
+    training = training,
+    noTarget = noTarget,
+    logdir = logdir,
+    memorySize = memorySize,
+    seed = seed
   )
   bridge.sendStaticProblemData(model, this.nActions)
   var justReset = false

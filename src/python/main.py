@@ -1,15 +1,17 @@
-from typing import Literal, Optional
-import torch
-import random
-import numpy as np
-from runner import run
-import typed_argparse as tap
-from bridge import SocketBridge, NamedPipeBridge, Bridge, UnixSocketBridge
 import logging
-import dotenv
 import os
+import random
 from datetime import datetime
 from functools import cached_property
+from typing import Literal, Optional
+
+import dotenv
+import numpy as np
+import torch
+import typed_argparse as tap
+from bridge import Bridge, NamedPipeBridge, SocketBridge, UnixSocketBridge
+from runner import run
+from utils import gpu
 
 
 class Args(tap.TypedArgs):
@@ -18,7 +20,7 @@ class Args(tap.TypedArgs):
     input_pipe: Optional[str] = tap.arg("-i", help="Input pipe name")
     output_pipe: Optional[str] = tap.arg("-o", help="Output pipe name")
     algorithm: Literal["dqn", "ppo"] = tap.arg("-a", help="Algorithm to use", default="dqn")
-    _device: Literal["cpu", "auto"] | int | str = tap.arg("--device", help="Device to use", default="auto")
+    _device: Literal["cpu", "auto", "auto-gpu"] | int | str = tap.arg("--device", help="Device to use", default="auto")
     epsilon: float = tap.arg("--epsilon", help="Epsilon value", type=float, default=0.1)
     _clipping: str | float = tap.arg("--clipping", help="Clipping value", default=0.0)
     batch_size: int = tap.arg("--batch-size", help="Batch size", default=32)
@@ -65,14 +67,16 @@ class Args(tap.TypedArgs):
 
     @cached_property
     def device(self) -> torch.device:
-        if self._device != "auto":
+        if self._device not in ("auto", "auto-gpu"):
             return torch.device(self._device)
-        n_devices = torch.cuda.device_count()
-        if n_devices == 0:
-            return torch.device("cpu")
-        from utils import gpu
 
-        device = gpu.get_device("auto", fit_strategy="scatter", estimated_memory_MB=2048)
+        if self._device == "auto-gpu":
+            if not torch.cuda.is_available():
+                logging.error("CUDA is not available when using 'auto-gpu', falling back to CPU", exc_info=True)
+                raise ValueError("CUDA is not available")
+            device = gpu.get_device("auto", fit_strategy="scatter", estimated_memory_MB=2048)
+        else:
+            device = gpu.get_device("auto", fit_strategy="scatter", estimated_memory_MB=2048)
         logging.info(f"Using device: {device}")
         return device
 
