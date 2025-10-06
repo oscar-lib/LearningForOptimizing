@@ -4,7 +4,7 @@ import numpy as np
 import numpy.typing as npt
 from dataclasses import dataclass
 
-from utils import schedule
+from marlenv.utils import schedule
 
 
 class Policy:

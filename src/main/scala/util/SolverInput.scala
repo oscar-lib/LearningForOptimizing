@@ -67,5 +67,9 @@ case class SolverInput(
   noTarget: Boolean,
   logdir: Option[String],
   seed: Int,
-  memorySize: Int
+  memorySize: Int,
+  epsilonStart: Double,
+  epsilonEnd: Double,
+  epsilonNSecs: Int,
+  epsilonDecay: String
 )

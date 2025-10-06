@@ -56,7 +56,11 @@ object Main extends App {
     device: String = "auto",
     noTarget: Boolean = false,
     logdir: Option[String] = None,
-    memorySize: Int = 10_000
+    memorySize: Int = 10_000,
+    epsilonStart: Double = 1.0,
+    epsilonEnd: Double = 0.1,
+    epsilonNSecs: Int = 300,
+    epsilonDecay: String = "linear"
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -229,6 +233,43 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(epsilon = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[String]("epsilonDecay")
+          .text("Set the decay strategy for epsilon (default: linear, other option: exponential)")
+          .action((x, c) => {
+            if (x != "linear" && x != "exponential") {
+              throw new Error(
+                s"Invalid epsilon decay strategy: $x. Valid values are 'linear' and 'exponential'."
+              );
+            }
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(epsilonDecay = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          }),
+        opt[Double]("epsilonStart")
+          .text("Set the starting value for epsilon (default: 1.0)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(epsilonStart = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("epsilonEnd")
+          .text("Set the ending value for epsilon (default: 0.1)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(epsilonEnd = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Int]("epsilonNSecs")
+          .text("Set the number of seconds over which epsilon is decayed (default: 300)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(epsilonNSecs = x)
               case _                         => throw new Error("Unexpected Error")
             }
           ),
@@ -681,7 +722,11 @@ object Main extends App {
             noTarget = i.noTarget,
             logdir = i.logdir,
             seed = i.seed.toInt,
-            memorySize = i.memorySize
+            memorySize = i.memorySize,
+            epsilonStart = i.epsilonStart,
+            epsilonEnd = i.epsilonEnd,
+            epsilonNSecs = i.epsilonNSecs,
+            epsilonDecay = i.epsilonDecay
           )
           i.problem match {
             case "csp" =>

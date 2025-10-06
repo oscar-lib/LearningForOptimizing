@@ -23,7 +23,14 @@ class Algo(ABC):
 
     @abstractmethod
     def learn(
-        self, time_step: int, obs: Observation, action: int, reward: float, next_obs: Observation, next_obs_value: float
+        self,
+        time_step: int,
+        secs_elapsed: int,
+        obs: Observation,
+        action: int,
+        reward: float,
+        next_obs: Observation,
+        next_obs_value: float,
     ) -> dict[str, float]:
         """
         Called after each interaction with the environment.

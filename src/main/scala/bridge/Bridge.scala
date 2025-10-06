@@ -32,7 +32,10 @@ abstract class Bridge(
   algo: RLAlgorithm.Value,
   debug: Boolean,
   batchSize: Int,
-  epsilon: Double,
+  epsilonStart: Double,
+  epsilonEnd: Double,
+  epsilonNSecs: Int,
+  epsilonDecay: String,
   clipping: Double,
   lr: Double,
   ddqn: Boolean,
@@ -83,7 +86,10 @@ abstract class Bridge(
     command :+= pythonSrcDirectory.resolve("main.py").toString
     command :+= f"-a=${this.algo}"
     command :+= f"--device=${this.device}"
-    command :+= f"--epsilon=${this.epsilon}%.4f"
+    command :+= f"--epsilon-start=${this.epsilonStart}%.4f"
+    command :+= f"--epsilon-end=${this.epsilonEnd}%.4f"
+    command :+= f"--epsilon-n-secs=${this.epsilonNSecs}"
+    command :+= f"--epsilon-decay=${this.epsilonDecay}"
     command :+= f"--clipping=${this.clipping}%.4f"
     command :+= f"--batch-size=${this.batchSize}"
     command :+= f"--seed=${this.seed}"
@@ -311,7 +317,10 @@ class NamedPipeBridge(
   algo: RLAlgorithm.Value,
   debug: Boolean,
   batchSize: Int,
-  epsilon: Double,
+  epsilonStart: Double,
+  epsilonEnd: Double,
+  epsilonNSecs: Int,
+  epsilonDecay: String,
   clipping: Double,
   lr: Double,
   ddqn: Boolean,
@@ -335,7 +344,10 @@ class NamedPipeBridge(
       algo,
       debug,
       batchSize,
-      epsilon,
+      epsilonStart,
+      epsilonEnd,
+      epsilonNSecs,
+      epsilonDecay,
       clipping,
       lr,
       ddqn,
@@ -387,7 +399,10 @@ class UnixPipeBridge(
   algo: RLAlgorithm.Value,
   debug: Boolean,
   batchSize: Int,
-  epsilon: Double,
+  epsilonStart: Double,
+  epsilonEnd: Double,
+  epsilonNSecs: Int,
+  epsilonDecay: String,
   clipping: Double,
   lr: Double,
   ddqn: Boolean,
@@ -421,7 +436,10 @@ class UnixPipeBridge(
       algo,
       debug,
       batchSize,
-      epsilon,
+      epsilonStart,
+      epsilonEnd,
+      epsilonNSecs,
+      epsilonDecay,
       clipping,
       lr,
       ddqn,

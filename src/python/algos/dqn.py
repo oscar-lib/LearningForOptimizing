@@ -9,6 +9,7 @@ from policies import EpsilonGreedy
 from qtarget_updater import HardUpdate
 from replay_memory.replay_memory import Batch, ReplayMemory
 import random
+from marlenv.utils import Schedule
 
 from .algo import Algo
 
@@ -22,6 +23,7 @@ class DQN(Algo):
     grad_norm_clipping: Optional[float]
     lr: float
     policy: EpsilonGreedy
+    epsilon: Schedule
 
     def __init__(
         self,
@@ -30,7 +32,7 @@ class DQN(Algo):
         gamma: float = 0.99,
         batch_size: int = 64,
         lr: float = 1e-4,
-        epsilon: float = 0.1,
+        epsilon: Schedule | float = 0.1,
         grad_norm_clipping: Optional[float] = None,
         double_qlearning: bool = False,
         no_target: bool = False,
@@ -45,6 +47,8 @@ class DQN(Algo):
         self.batch_size = batch_size
         self.double_qlearning = double_qlearning
         # self.policy = EpsilonGreedy.constant(epsilon)
+        if isinstance(epsilon, (float, int)):
+            epsilon = Schedule.constant(epsilon)
         self.epsilon = epsilon
         self.lr = lr
         self.optimiser = torch.optim.Adam(self.qnetwork.parameters(), lr=lr)
@@ -74,6 +78,7 @@ class DQN(Algo):
     def learn(
         self,
         time_step: int,
+        secs_elapsed: int,
         obs: Observation[torch.Tensor],
         action: int,
         reward: float,
@@ -81,6 +86,7 @@ class DQN(Algo):
         next_obs_value: float,
     ) -> dict[str, float]:
         self.memory.add(obs, action, reward, next_obs, next_obs_value)
+        self.epsilon.update(secs_elapsed)
         if not self._can_update():
             return {}
         logs, td_error = self.optimise_qnetwork()
