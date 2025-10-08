@@ -105,10 +105,12 @@ class StatefulCombinator(
     if (this.lastMoveWasRandom) {
       return
     }
-    val stats  = NeighborhoodStats(searchResult, neighborhood)
-    val reward = this.rewardModel(stats, neighborhood)
-    val obj    = this.rewardModel.transformObjective(this.objective.value)
-    this.bridge.sendReward(reward, obj)
+    val gain           = NeighborhoodUtils.lastCallGain(neighborhood)
+    val newObj         = this.objective.value
+    val oldObj         = newObj - gain
+    val reward         = this.rewardModel(oldObj, newObj)
+    val transformedObj = this.rewardModel.transformObjective(this.objective.value)
+    this.bridge.sendReward(reward, transformedObj)
   }
 
   override def reset(): Unit = {
