@@ -256,3 +256,19 @@ class Gain(normalizationFactor: Float) extends RewardModel(normalizationFactor) 
     return (newObj - prevObj).toDouble * normalizationFactor
   }
 }
+
+/** K. Li, Á. Fialho, S. Kwong, and Q. Zhang. 2014. Adaptive Operator Selection With Bandits for a
+  * Multiobjective Evolutionary Algorithm Based on Decomposition. IEEE Transactions on Evolutionary
+  * Computation 18, 1 (2014)
+  */
+class FitnessRateRank extends RewardModel(1.0f) {
+  override def apply(prevObj: Long, newObj: Long): Double = {
+    return (prevObj - newObj).toDouble / prevObj.toDouble
+  }
+
+  override def apply(runStat: NeighborhoodStats, neighborhood: Neighborhood): Double = {
+    throw new UnsupportedOperationException(
+      "This method is not supported in FitnessRateRank. Use apply(prevObj: Long, newObj: Long) instead."
+    )
+  }
+}
