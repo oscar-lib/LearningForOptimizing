@@ -38,6 +38,7 @@ class SingleArgs:
     timeout: int
     seed: int
     device: str
+    training: bool
     logdir: Optional[str] = None
 
     def __init__(
@@ -48,6 +49,7 @@ class SingleArgs:
         device: str = "auto",
         timeout: int = 300,
         seed: int = 0,
+        training: bool = True,
         args: Optional[dict[str, Any]] = None,
         logdir: Optional[str] = None,
     ):
@@ -58,6 +60,7 @@ class SingleArgs:
         self.seed = seed
         self.device = device
         self.logdir = logdir
+        self.training = training
         if args is None:
             try:
                 args_str = BEST_PARAMS[self.problem][self.bandit][self.reward]
@@ -81,7 +84,8 @@ class SingleArgs:
         else:
             params += f"{self.bandit}"
         params += f" --problem {self.problem} --input {self.problem_path} --reward {self.reward} --timeout {self.timeout} {self.args} --seed {self.seed} --device={self.device}"
-
+        if not self.training:
+            params += " --noTrain"
         if self.logdir is not None:
             params += f" --logdir {self.logdir}"
         return params
@@ -100,6 +104,7 @@ class MultipleArgs:
     n_repeats: int
     timeout: int
     seed: int
+    training: bool
     instance_filenames: list[str]
     args: Optional[dict[str, Any]]
     _require_gpu: bool
@@ -116,6 +121,7 @@ class MultipleArgs:
         n_repeats: int = 20,
         timeout: int = 300,
         seed: int = 0,
+        training: bool = True,
         args: Optional[dict[str, Any]] = None,
         require_gpu: bool = True,
     ):
@@ -132,6 +138,7 @@ class MultipleArgs:
         )
         self.logdir = logdir
         self.bandit = bandit
+        self.training = training
         if problems_file in ("csp", "tsp", "pdptw"):
             self.problems_file = os.path.join("examples", problems_file, "testingall.txt")
         else:
@@ -193,7 +200,11 @@ class MultipleArgs:
 
                 # The first n_jobs runs are given a specific GPU
                 if self._require_gpu and job_num < self.n_jobs:
-                    device = f"cuda:{job_num % n_devices}"
+                    num = job_num % n_devices
+                    if num >= 2:
+                        num += 1  # Skip GPU 2 for other uses
+                    num = num % n_devices
+                    device = f"cuda:{num}"
                 elif self._require_gpu:
                     device = "auto-gpu"
                 else:
@@ -206,6 +217,7 @@ class MultipleArgs:
                     seed=seed,
                     args=self.args,
                     device=device,
+                    training=self.training,
                     logdir=logdirs[instance],
                 )
                 job_num += 1
@@ -336,17 +348,26 @@ def multiple_runs(args: MultipleArgs):
 
 def main():
     dotenv.load_dotenv()
-    for bandit in ("dqn-no-target", "dqn"):
+    for bandit in ("dqn-no-target", "random"):
+        if bandit == "dqn-no-target":
+            logdir = "logs/random-python"
+        else:
+            logdir = "logs/random-scala"
         multiple_runs(
             MultipleArgs(
                 bandit,
                 "examples/csp/testingall-100.txt",
                 "r2",
-                logdir=f"{bandit}-r2-csp",
-                n_jobs=8,
+                logdir=logdir,
+                n_jobs=1,
                 timeout=300,
-                n_repeats=20,
-                require_gpu=True,
+                n_repeats=10,
+                require_gpu=False,
+                training=False,
+                args={
+                    "epsilonStart": 1.0,
+                    "epsilonEnd": 1.0,
+                },
             )
         )
 

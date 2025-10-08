@@ -14,7 +14,7 @@ class CSVLogger(AbstractLogger):
         self._next_flush = time.time() + flush_interval_sec
         self.n_lines = 0
 
-    def log(self, data: dict[str, float], time_step: int):
+    def log(self, data: dict[str, float | int], time_step: int):
         if len(data) == 0:
             return
         self.n_lines += 1

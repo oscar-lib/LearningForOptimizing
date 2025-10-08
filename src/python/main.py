@@ -1,9 +1,11 @@
 import logging
 import os
 import random
+import orjson
 from datetime import datetime
 from functools import cached_property
 from typing import Literal, Optional
+from marlenv.utils import Schedule
 
 import dotenv
 import numpy as np
@@ -25,7 +27,7 @@ class Args(tap.TypedArgs):
     epsilon_start: float = tap.arg("--epsilon-start", help="Starting value of epsilon for linear decay", type=float, default=1.0)
     epsilon_n_secs: int = tap.arg("--epsilon-n-secs", help="Number of seconds over which epsilon is decayed", type=int, default=300)
     epsilon_decay: Literal["linear", "exponential"] = tap.arg("--epsilon-decay", help="Epsilon decay strategy", default="linear")
-    _clipping: str | float = tap.arg("--clipping", help="Clipping value", default=0.0)
+    _clipping: float = tap.arg("--clipping", help="Clipping value", default=0.0)
     batch_size: int = tap.arg("--batch-size", help="Batch size", default=32)
     memory_size: int = tap.arg("--memory-size", help="Size of the replay memory", default=10_000)
     ddqn: bool = tap.arg("--ddqn", help="Use Double DQN", default=False)
@@ -63,6 +65,16 @@ class Args(tap.TypedArgs):
         if clip == 0:
             return None
         return clip
+
+    @property
+    def epsilon(self):
+        if self.epsilon_start == self.epsilon_end:
+            return Schedule.constant(self.epsilon_start)
+        if self.epsilon_decay == "linear":
+            return Schedule.linear(self.epsilon_start, self.epsilon_end, self.epsilon_n_secs)
+        elif self.epsilon_decay == "exponential":
+            return Schedule.exp(self.epsilon_start, self.epsilon_end, self.epsilon_n_secs)
+        raise ValueError(f"Unknown epsilon decay strategy: {self.epsilon_decay}")
 
     @property
     def train(self):
@@ -113,6 +125,8 @@ def main(args: Args):
     torch.manual_seed(args.seed)
     np.random.seed(args.seed)
     random.seed(args.seed)
+    with open(os.path.join(args.logdir, f"args-{args.seed}.json"), "wb") as f:
+        f.write(orjson.dumps(args.__dict__, option=orjson.OPT_INDENT_2))
     run(args)
 
 

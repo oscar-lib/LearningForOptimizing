@@ -11,6 +11,7 @@ from problem import CSP, PDPTW, TSP, Problem
 from replay_memory import GraphReplayMemory, LinearMemory
 from marlenv.utils import Schedule
 from datetime import datetime
+import random
 
 if TYPE_CHECKING:
     from main import Args
@@ -28,9 +29,8 @@ def do_run(agent: Algo, env: OptimEnv, logger: CSVLogger, train: bool):
             next_obs, reward, new_obj = env.step(action)
             logs = logs | {"reward": reward, "obj": new_obj}
             if train:
-                now = datetime.now()
-                dt = (now - start).seconds
-                logs = logs | agent.learn(t, dt, obs, action, reward, next_obs, new_obj)
+                seconds_elapsed = (datetime.now() - start).seconds
+                logs = logs | agent.learn(t, seconds_elapsed, obs, action, reward, next_obs, new_obj)
             logger.log(logs, t)
             obs = next_obs
         except EpisodeEndException:
@@ -111,20 +111,13 @@ def _create_agent(problem: Problem, algo: Literal["dqn", "ppo"], args: "Args") -
                     memory = LinearMemory(args.memory_size)
                 case other:
                     raise Exception(f"Unsupported problem for DQN: {other}")
-            match args.epsilon_decay:
-                case "linear":
-                    epsilon = Schedule.linear(args.epsilon_start, args.epsilon_end, args.epsilon_n_secs)
-                case "exponential":
-                    epsilon = Schedule.exp(args.epsilon_start, args.epsilon_end, args.epsilon_n_secs)
-                case other:
-                    raise ValueError(f"Unknown epsilon decay strategy: {other}")
             return DQN(
                 qnetwork=qnetwork,
                 memory=memory,
                 double_qlearning=args.ddqn,
                 grad_norm_clipping=args.clipping,
                 lr=args.lr,
-                epsilon=epsilon,
+                epsilon=args.epsilon,
                 batch_size=args.batch_size,
                 no_target=args.no_target,
                 enable_logs=not args.disable_training_logs,

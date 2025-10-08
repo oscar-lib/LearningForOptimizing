@@ -21,7 +21,7 @@
             "r2": " --learningRate 0.0005 --epsilon 0.2 --batchSize 250 --clipping 35.0"
         },
         "dqn-no-target": {
-            "r2": " --learningRate 0.0001 --epsilon 0.2 --batchSize 163 --clipping 21"
+            "r2": " --learningRate 0.00067 --epsilonStart 0.88 --epsilonEnd 0.13 --epsilonNSecs 415 --epsilonDecay exponential --memorySize 21000 --batchSize 192 --clipping 27.1"
         },
         "dqn-pretrained-csp-100": {
             "r1": " --epsilon 0.0 --noTrain --accept=strict-improvement --loadFrom=saved_dqn_csp_100",

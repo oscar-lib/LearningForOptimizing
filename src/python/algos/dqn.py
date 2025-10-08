@@ -61,7 +61,7 @@ class DQN(Algo):
 
     def select_action(self, obs: Observation[torch.Tensor | Data]):
         # Avoid forward pass if we take a random action
-        if random.random() < self.epsilon:
+        if random.random() < self.epsilon.value:
             available = [i for i, v in enumerate(obs.available_actions) if v]
             return random.choice(available), []
         if isinstance(obs.data, torch.Tensor):
