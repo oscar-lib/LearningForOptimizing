@@ -8,3 +8,8 @@ examples/csp/csp_300/carseq_300_8_20_30.txt
 examples/csp/csp_300/carseq_300_8_20_32.txt
 examples/csp/csp_300/carseq_300_8_20_36.txt
 examples/csp/csp_300/carseq_300_8_20_37.txt
+examples/csp/csp_300/pb_300_01.txt
+examples/csp/csp_300/pb_300_02.txt
+examples/csp/csp_300/pb_300_03.txt
+examples/csp/csp_300/pb_300_04.txt
+examples/csp/csp_300/pb_300_05.txt

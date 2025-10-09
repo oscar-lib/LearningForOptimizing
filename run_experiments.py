@@ -31,7 +31,7 @@ def dict2arg(d: dict[str, Any]) -> str:
 
 @dataclass
 class SingleArgs:
-    bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target"]
+    bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"]
     problem_path: str
     reward: Literal["r1", "r2", "r3"]
     args: str
@@ -43,7 +43,7 @@ class SingleArgs:
 
     def __init__(
         self,
-        bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target"],
+        bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"],
         problem_path: str,
         reward: Literal["r1", "r2", "r3"],
         device: str = "auto",
@@ -79,7 +79,7 @@ class SingleArgs:
     @property
     def params(self):
         params = "--bandit "
-        if self.bandit == "dqn-no-target":
+        if self.bandit in ("dqn-no-target", "dqn-no-target-300"):
             params += "dqn --noTarget"
         else:
             params += f"{self.bandit}"
@@ -96,7 +96,7 @@ class SingleArgs:
 
 @dataclass
 class MultipleArgs:
-    bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target"]
+    bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"]
     problems_file: str
     reward: Literal["r1", "r2", "r3"]
     output_filename: Optional[str | Literal["auto"]]
@@ -112,7 +112,7 @@ class MultipleArgs:
 
     def __init__(
         self,
-        bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target"],
+        bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"],
         problems_file: Literal["csp", "tsp", "pdptw"] | str,
         reward: Literal["r1", "r2", "r3"],
         logdir: Optional[str] = None,
@@ -200,11 +200,7 @@ class MultipleArgs:
 
                 # The first n_jobs runs are given a specific GPU
                 if self._require_gpu and job_num < self.n_jobs:
-                    num = job_num % n_devices
-                    if num >= 2:
-                        num += 1  # Skip GPU 2 for other uses
-                    num = num % n_devices
-                    device = f"cuda:{num}"
+                    device = f"cuda:{job_num % n_devices}"
                 elif self._require_gpu:
                     device = "auto-gpu"
                 else:
@@ -226,7 +222,7 @@ class MultipleArgs:
 @dataclass
 class RunResult:
     metrics: dict
-    bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target"]
+    bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"]
     instance: str
     reward: Literal["r1", "r2", "r3"]
     timeout: int
@@ -348,28 +344,19 @@ def multiple_runs(args: MultipleArgs):
 
 def main():
     dotenv.load_dotenv()
-    for bandit in ("dqn-no-target", "random"):
-        if bandit == "dqn-no-target":
-            logdir = "logs/random-python"
-        else:
-            logdir = "logs/random-scala"
-        multiple_runs(
-            MultipleArgs(
-                bandit,
-                "examples/csp/testingall-100.txt",
-                "r2",
-                logdir=logdir,
-                n_jobs=1,
-                timeout=300,
-                n_repeats=10,
-                require_gpu=False,
-                training=False,
-                args={
-                    "epsilonStart": 1.0,
-                    "epsilonEnd": 1.0,
-                },
-            )
+    multiple_runs(
+        MultipleArgs(
+            "dqn-no-target-300",
+            "examples/csp/testingall-300.txt",
+            "r2",
+            logdir="logs/dqn-no-target-300",
+            n_jobs=8,
+            timeout=600,
+            n_repeats=10,
+            require_gpu=True,
+            training=True,
         )
+    )
 
 
 def ask_recompile_with_countdown() -> bool:

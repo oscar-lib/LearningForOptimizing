@@ -27,7 +27,7 @@ class Args(tap.TypedArgs):
     epsilon_start: float = tap.arg("--epsilon-start", help="Starting value of epsilon for linear decay", type=float, default=1.0)
     epsilon_n_secs: int = tap.arg("--epsilon-n-secs", help="Number of seconds over which epsilon is decayed", type=int, default=300)
     epsilon_decay: Literal["linear", "exponential"] = tap.arg("--epsilon-decay", help="Epsilon decay strategy", default="linear")
-    _clipping: float = tap.arg("--clipping", help="Clipping value", default=0.0)
+    clipping: Optional[float] = tap.arg("--clipping", help="Clipping value", default=None)
     batch_size: int = tap.arg("--batch-size", help="Batch size", default=32)
     memory_size: int = tap.arg("--memory-size", help="Size of the replay memory", default=10_000)
     ddqn: bool = tap.arg("--ddqn", help="Use Double DQN", default=False)
@@ -50,21 +50,6 @@ class Args(tap.TypedArgs):
         if self._logdir is None:
             return os.path.join("logs", self.creation_time)
         return self._logdir
-
-    @property
-    def clipping(self) -> Optional[float]:
-        match self._clipping:
-            case str():
-                clip = float(self._clipping)
-            case float():
-                clip = self._clipping
-            case _:
-                raise ValueError(f"Invalid clipping value: {self._clipping}")
-        if clip < 0:
-            raise ValueError(f"Clipping value must be non-negative, got {clip}")
-        if clip == 0:
-            return None
-        return clip
 
     @property
     def epsilon(self):

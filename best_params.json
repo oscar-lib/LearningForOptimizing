@@ -23,6 +23,9 @@
         "dqn-no-target": {
             "r2": " --learningRate 0.00067 --epsilonStart 0.88 --epsilonEnd 0.13 --epsilonNSecs 415 --epsilonDecay exponential --memorySize 21000 --batchSize 192 --clipping 27.1"
         },
+        "dqn-no-target-300": {
+            "r2": "--epsilonStart 0.9186349606719535 --epsilonEnd 0.45 --learningRate 0.00036915549077037093 --batchSize 160 --clipping 7.042093096642138 --memorySize 83000 --epsilonNSecs 250"
+        },
         "dqn-pretrained-csp-100": {
             "r1": " --epsilon 0.0 --noTrain --accept=strict-improvement --loadFrom=saved_dqn_csp_100",
             "r2": " --epsilon 0.0 --noTrain --accept=strict-improvement --loadFrom=saved_dqn_csp_100"

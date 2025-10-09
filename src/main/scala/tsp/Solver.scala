@@ -90,7 +90,8 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           memorySize = in.memorySize,
           noTarget = in.noTarget,
           logdir = in.logdir,
-          seed = in.seed
+          seed = in.seed,
+          infiniteHorizon = in.infiniteHorizon
         )
       case _ => throw new IllegalArgumentException(s"Unknown bandit type: ${in.bandit}.")
     }

@@ -71,5 +71,6 @@ case class SolverInput(
   epsilonStart: Double,
   epsilonEnd: Double,
   epsilonNSecs: Int,
-  epsilonDecay: String
+  epsilonDecay: String,
+  infiniteHorizon: Boolean
 )

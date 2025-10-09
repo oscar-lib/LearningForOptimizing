@@ -100,7 +100,8 @@ case class Solver(cspModel: Model, in: SolverInput) {
           noTarget = in.noTarget,
           logdir = in.logdir,
           memorySize = in.memorySize,
-          seed = in.seed
+          seed = in.seed,
+          infiniteHorizon = in.infiniteHorizon
         )
       case "ucb"            => new UCBNew(neighList, in, rewardModel)
       case "bestslopefirst" => bestSlopeFirst(neighList)

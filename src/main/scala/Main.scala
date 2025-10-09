@@ -60,7 +60,8 @@ object Main extends App {
     epsilonStart: Double = 1.0,
     epsilonEnd: Double = 0.1,
     epsilonNSecs: Int = 300,
-    epsilonDecay: String = "linear"
+    epsilonDecay: String = "linear",
+    infiniteHorizon: Boolean = false
   ) extends Config
 
   private case class SolveSeriesConfig(
@@ -156,6 +157,14 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(verbosity = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Unit]("infiniteHorizon")
+          .text("Use an infinite horizon for training DQN and PPO")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(infiniteHorizon = true)
               case _                         => throw new Error("Unexpected Error")
             }
           ),
@@ -726,7 +735,8 @@ object Main extends App {
             epsilonStart = i.epsilonStart,
             epsilonEnd = i.epsilonEnd,
             epsilonNSecs = i.epsilonNSecs,
-            epsilonDecay = i.epsilonDecay
+            epsilonDecay = i.epsilonDecay,
+            infiniteHorizon = i.infiniteHorizon
           )
           i.problem match {
             case "csp" =>

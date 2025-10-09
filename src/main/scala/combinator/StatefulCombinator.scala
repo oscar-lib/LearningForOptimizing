@@ -43,6 +43,7 @@ class StatefulCombinator(
   logdir: Option[String],
   memorySize: Int,
   seed: Int,
+  infiniteHorizon: Boolean,
   saveTo: Option[String] = None
 ) extends BanditSelector(
       neighborhoods: List[Neighborhood],
@@ -52,8 +53,7 @@ class StatefulCombinator(
       learningRate = 0.0 // Not used
     ) {
 
-  private var lastMoveWasRandom = false
-  private val nActions          = neighborhoods.length
+  private val nActions = neighborhoods.length
   private val bridge = new UnixPipeBridge(
     algo = algo,
     debug = debug,
@@ -75,7 +75,7 @@ class StatefulCombinator(
     seed = seed
   )
   bridge.sendStaticProblemData(model, this.nActions)
-  var justReset = false
+  private var prevObjective = this.objective.value
 
   override def getMove(
     obj: Objective,
@@ -88,37 +88,27 @@ class StatefulCombinator(
   override def getNextNeighborhood: Option[Neighborhood] = {
     if (this.nTabu == this.nNeighbors) {
       return None
-    } else if (this.model.hasObjectivePenalty()) {
-      this.lastMoveWasRandom = true
-      return this.getRandomNeighborhood
     }
-    this.lastMoveWasRandom = false
     val action = this.bridge.askAction(this.model, this.authorizedNeighborhood)
     Some(this.neighborhoods(action))
   }
 
   override def notifyMove(searchResult: SearchResult, neighborhood: Neighborhood): Unit = {
-    this.justReset = false
     if (searchResult == NoMoveFound) {
       this.setTabu(neighborhood)
     }
-    if (this.lastMoveWasRandom) {
-      return
-    }
-    val gain           = NeighborhoodUtils.lastCallGain(neighborhood)
     val newObj         = this.objective.value
-    val oldObj         = newObj - gain
-    val reward         = this.rewardModel(oldObj, newObj)
-    val transformedObj = this.rewardModel.transformObjective(this.objective.value)
+    val reward         = this.rewardModel(this.prevObjective, newObj)
+    val transformedObj = this.rewardModel.transformObjective(newObj)
     this.bridge.sendReward(reward, transformedObj)
+    this.prevObjective = newObj
   }
 
   override def reset(): Unit = {
-    if (!this.justReset && !this.lastMoveWasRandom) {
+    super.reset()
+    if (!this.infiniteHorizon) {
       this.bridge.sendEpisodeEnded()
     }
-    super.reset()
-    this.justReset = true
   }
 
   def close() = {
