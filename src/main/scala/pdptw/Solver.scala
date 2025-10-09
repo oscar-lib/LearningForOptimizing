@@ -165,7 +165,12 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     }
     var bandit: Neighborhood = in.bandit.toLowerCase() match {
       case "epsilongreedy" => new EpsilonGreedyBanditNew(neighList, in, rewardModel)
-      case "dqn" =>
+      case "dqn" | "ppo" =>
+        val algo = if (in.bandit == "dqn") {
+          RLAlgorithm.DQN
+        } else {
+          RLAlgorithm.PPO
+        }
         new StatefulCombinator(
           neighList,
           this.oscarModel,
@@ -178,7 +183,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           clipping = in.clipping,
           ddqn = in.ddqn,
           debug = in.debug,
-          algo = RLAlgorithm.DQN,
+          algo = algo,
           device = in.device,
           objective = oscarModel.objectiveFunction,
           acceptanceCriterion = in.acceptanceCriterion,

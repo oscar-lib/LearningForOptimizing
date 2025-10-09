@@ -346,15 +346,15 @@ def main():
     dotenv.load_dotenv()
     multiple_runs(
         MultipleArgs(
-            "dqn-no-target-300",
+            "ppo",
             "examples/csp/testingall-300.txt",
             "r2",
-            logdir="logs/dqn-no-target-300",
-            n_jobs=8,
-            timeout=600,
-            n_repeats=10,
-            require_gpu=True,
+            n_jobs=1,
+            timeout=20,
+            n_repeats=3,
+            require_gpu=False,
             training=True,
+            args={}
         )
     )
 

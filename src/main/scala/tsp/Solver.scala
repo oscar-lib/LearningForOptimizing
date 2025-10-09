@@ -66,7 +66,12 @@ case class Solver(oscarModel: Model, in: SolverInput) {
       case "ucb"            => new UCBNew(neighList, in, rewardModel)
       case "bestslopefirst" => bestSlopeFirst(neighList)
       case "roundrobin"     => roundRobin(neighList.zip((0 to neighList.length).map(i => 1)))
-      case "dqn" =>
+      case "dqn" | "ppo" =>
+        val algo = if (in.bandit == "dqn") {
+          RLAlgorithm.DQN
+        } else {
+          RLAlgorithm.PPO
+        }
         new StatefulCombinator(
           neighList,
           oscarModel,
@@ -79,7 +84,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
           clipping = in.clipping,
           ddqn = in.ddqn,
           debug = in.debug,
-          algo = RLAlgorithm.DQN,
+          algo = algo,
           device = in.device,
           objective = obj,
           acceptanceCriterion = in.acceptanceCriterion,
