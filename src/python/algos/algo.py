@@ -30,7 +30,7 @@ class Algo(ABC):
         action: int,
         reward: float,
         next_obs: Observation,
-        next_obs_value: float,
+        next_obs_cost: float,
     ) -> dict[str, float]:
         """
         Called after each interaction with the environment.

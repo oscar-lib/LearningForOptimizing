@@ -83,9 +83,9 @@ class DQN(Algo):
         action: int,
         reward: float,
         next_obs: Observation,
-        next_obs_value: float,
+        next_obs_cost: float,
     ) -> dict[str, float]:
-        self.memory.add(obs, action, reward, next_obs, next_obs_value)
+        self.memory.add(obs, action, reward, next_obs, next_obs_cost)
         self.epsilon.update(secs_elapsed)
         if not self._can_update():
             return {}
@@ -114,7 +114,7 @@ class DQN(Algo):
         batch = self.memory.sample(self.batch_size, self.device)
         # Qvalues and qvalues with target network computation
         qvalues = self.qnetwork.forward(batch.obs)
-        qvalues = torch.gather(qvalues, dim=-1, index=batch.actions)
+        qvalues = torch.gather(qvalues, dim=-1, index=batch.actions.unsqueeze(-1))
         qvalues = qvalues.squeeze(-1)
 
         # Next state value computation

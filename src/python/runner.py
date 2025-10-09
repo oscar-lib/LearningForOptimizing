@@ -9,9 +9,8 @@ from logger import CSVLogger
 from optimenv import EpisodeEndException, OptimEnv
 from problem import CSP, PDPTW, TSP, Problem
 from replay_memory import GraphReplayMemory, LinearMemory
-from marlenv.utils import Schedule
 from datetime import datetime
-import random
+import nn
 
 if TYPE_CHECKING:
     from main import Args
@@ -100,14 +99,10 @@ def _create_agent(problem: Problem, algo: Literal["dqn", "ppo"], args: "Args") -
         case "dqn":
             match problem:
                 case PDPTW() | TSP():
-                    from nn import QNetGNN
-
-                    qnetwork = QNetGNN(problem)
+                    qnetwork = nn.GNN(problem, problem.n_actions)
                     memory = GraphReplayMemory(args.memory_size)
                 case CSP():
-                    from nn import CNN1D
-
-                    qnetwork = CNN1D(problem)
+                    qnetwork = nn.CSPNetwork(problem, problem.n_actions)
                     memory = LinearMemory(args.memory_size)
                 case other:
                     raise Exception(f"Unsupported problem for DQN: {other}")
@@ -123,13 +118,14 @@ def _create_agent(problem: Problem, algo: Literal["dqn", "ppo"], args: "Args") -
                 enable_logs=not args.disable_training_logs,
             )
         case "ppo":
-            assert isinstance(problem, PDPTW)
-            return PPO(
-                problem=problem,
-                lr_actor=0.001,
-                lr_critic=0.001,
-                gamma=0.99,
-                K_epochs=20,
-                eps_clip=0.2,
-            )
+            match problem:
+                case PDPTW() | TSP():
+                    actor_critic = nn.ActorCriticGNN(problem)
+                    memory = GraphReplayMemory(args.memory_size)
+                case CSP():
+                    actor_critic = nn.CSPActorCritic(problem)
+                    memory = LinearMemory(args.memory_size)
+                case other:
+                    raise Exception(f"Unsupported problem for PPO: {other}")
+            return PPO(actor_critic, memory, minibatch_size=args.batch_size)
     raise Exception(f"Unknown algorithm: {algo}")

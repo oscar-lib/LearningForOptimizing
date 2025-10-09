@@ -1,219 +1,192 @@
+import logging
 import os
-from dataclasses import dataclass
-
+from typing import Literal, Optional
+from torch.nn.functional import mse_loss
+import numpy as np
 import torch
-from nn import Actor, Critic
+from marlenv.utils import Schedule
 from optimenv import Observation
-from problem import PDPTW
-from torch.distributions import Categorical
+from replay_memory.replay_memory import Batch, ReplayMemory
 from torch_geometric.data import Data
-from torch_geometric.loader import DataLoader
 
+from nn import ActorCritic
 from .algo import Algo
 
 
-@dataclass
-class Batch:
-    obs: Data
-    available_actions: torch.Tensor
-    actions: torch.Tensor
-    rewards: torch.Tensor
-    dones: torch.Tensor
-    size: int
-
-    def normalized_returns(self, gamma: float):
-        """(normalized) Monte Carlo estimate of the state values (returns)."""
-        returns = []
-        discounted_reward = 0
-        for reward, is_terminal in zip(reversed(self.rewards), reversed(self.dones)):
-            if is_terminal:
-                discounted_reward = 0
-            discounted_reward = reward + (gamma * discounted_reward)
-            returns.insert(0, discounted_reward)
-
-        # Normalizing the returns
-        returns = torch.tensor(returns, dtype=torch.float32)
-        returns = (returns - returns.mean()) / (returns.std() + 1e-7)
-        return returns
-
-    def to(self, device: torch.device) -> "Batch":
-        return Batch(
-            obs=self.obs.to(device.index, non_blocking=True),
-            available_actions=self.available_actions.to(device),
-            actions=self.actions.to(device, non_blocking=True),
-            rewards=self.rewards.to(device, non_blocking=True),
-            dones=self.dones.to(device, non_blocking=True),
-            size=self.size,
-        )
-
-    def tmp(self, gamma: float):
-        result = torch.zeros_like(self.rewards, dtype=torch.float32)
-        next_step_returns = self.rewards[-1]
-        result[-1] = next_step_returns
-        for step in range(self.size - 2, -1, -1):
-            next_step_returns = self.rewards[step] + gamma * next_step_returns
-            result[step] = next_step_returns
-        return result
-
-
-class RolloutBuffer:
-    def __init__(self):
-        self.actions = list[int]()
-        self.obs = list[Observation]()
-        self.rewards = list[float]()
-        self.dones = list[bool]()
-
-    def store_action(self, obs: Observation, action: int):
-        self.obs.append(obs)
-        self.actions.append(action)
-        self.dones.append(False)
-
-    def store_reward(self, reward: float, next_obs: Observation):
-        self.rewards.append(reward)
-
-    def end_episode(self):
-        self.dones[-1] = True
-        self.rewards.append(0)
-
-    def clear(self):
-        self.actions = []
-        self.obs = []
-        self.rewards = []
-        self.values = []
-        self.dones = []
-
-    def sample(self):
-        batch_size = len(self.actions)
-        obs = DataLoader([obs.data for obs in self.obs], batch_size=batch_size, shuffle=False)._get_iterator().__next__()
-        actions = torch.tensor(self.actions, dtype=torch.long)
-        rewards = torch.tensor(self.rewards, dtype=torch.float32)
-        dones = torch.tensor(self.dones, dtype=torch.bool)
-        available_actions = torch.stack([obs.available_actions for obs in self.obs])
-        return Batch(
-            obs=obs,
-            available_actions=available_actions,
-            actions=actions,
-            rewards=rewards,
-            dones=dones,
-            size=batch_size,
-        )
-
-    def __len__(self):
-        return len(self.actions)
-
-
 class PPO(Algo):
+    actor_critic: ActorCritic
+    memory: ReplayMemory
+    batch_size: int
+    minibatch_size: int
+    c1: Schedule
+    c2: Schedule
+    eps_clip: float
+    gae_lambda: float
+    gamma: float
+    lr: float
+    n_epochs: int
+    grad_norm_clipping: Optional[float]
+
     def __init__(
         self,
-        problem: PDPTW,
-        lr_actor,
-        lr_critic,
-        gamma,
-        K_epochs,
-        eps_clip,
-        batch_size=32,
-        device: torch.device | None = None,
-        c1: float = 0.5,
-        c2: float = 0.01,
+        actor_critic: ActorCritic,
+        memory: ReplayMemory,
+        gamma: float = 0.99,
+        lr_actor: float = 5e-4,
+        lr_critic: float = 1e-3,
+        n_epochs: int = 20,
+        eps_clip: float = 0.2,
+        critic_c1: Schedule | float = 0.5,
+        entropy_c2: Schedule | float = 0.01,
+        train_interval: int = 64,
+        gae_lambda: float = 0.95,
+        grad_norm_clipping: Optional[float] = None,
+        minibatch_size: int = 32,
+        normalize_rewards: bool = True,
+        normalize_advantages: bool = True,
+        device: torch.device = torch.device("cpu"),
+        **kwargs,
     ):
         super().__init__()
+        if len(kwargs) > 0:
+            logging.warning(f"Unexpected ignored PPO arguments ignored: {kwargs}")
+        self._device = device
+        self.batch_size = train_interval
+        self.actor_critic = actor_critic.to(device)
         self.gamma = gamma
+        self.n_epochs = n_epochs
         self.eps_clip = eps_clip
-        self.K_epochs = K_epochs
-        self.c1 = c1
-        self.c2 = c2
-        self.batch_size = batch_size
+        self.minibatch_size = minibatch_size
+        self.memory = memory
+        self._ratio_min = 1 - eps_clip
+        self._ratio_max = 1 + eps_clip
+        self.normalize_rewards = normalize_rewards
+        self.normalize_advantages = normalize_advantages
+        param_groups, self._parameters = self._compute_param_groups(lr_actor, lr_critic)
+        self.optimizer = torch.optim.Adam(param_groups)
+        if isinstance(critic_c1, (float, int)):
+            critic_c1 = Schedule.constant(critic_c1)
+        self.c1 = critic_c1
+        if isinstance(entropy_c2, (float, int)):
+            entropy_c2 = Schedule.constant(entropy_c2)
+        self.c2 = entropy_c2
+        self.gae_lambda = gae_lambda
+        self.grad_norm_clipping = grad_norm_clipping
 
-        if device is None:
-            device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.device = device
-
-        self.buffer = RolloutBuffer()
-        self.actor = Actor(problem)
-        self.critic = Critic(problem)
-        self.optimizer = torch.optim.Adam(  # type: ignore
-            [
-                {"params": self.actor.parameters(), "lr": lr_actor},
-                {"params": self.critic.parameters(), "lr": lr_critic},
-            ]
-        )
-        self.mse_loss = torch.nn.MSELoss()
-
-    def select_action(self, obs: Observation):
-        with torch.no_grad():
-            obs.data = obs.data.to(self.device.index, non_blocking=True)
-            obs.available_actions = obs.available_actions.to(self.device, non_blocking=True)
-            logits = self.actor.forward(obs.data).squeeze()
-            # mask unavailable actions
-            logits[~obs.available_actions] = -torch.inf
-            dist = Categorical(logits=logits)
-            action = int(dist.sample().item())
-
-        self.buffer.store_action(obs, action)
-        return action, logits.numpy(force=True)
-
-    def learn(self, time_step: int, obs: Observation, action: int, reward: float, next_obs: Observation) -> dict[str, float]:
-        self.buffer.store_reward(reward, next_obs)
-        if len(self.buffer) < self.batch_size:
-            return {}
-        return self.update(next_obs)
+    def _compute_param_groups(self, lr_actor: float, lr_critic: float):
+        all_parameters = list(self.actor_critic.parameters())
+        params = [
+            {"params": self.actor_critic.actor_parameters(), "lr": lr_actor, "name": "actor parameters"},
+            {"params": self.actor_critic.critic_parameters(), "lr": lr_critic, "name": "critic parameters"},
+        ]
+        return params, all_parameters
 
     def notify_episode_end(self):
-        self.buffer.end_episode()
+        self.memory.end_episode()
 
-    def update(self, next_obs: Observation):
-        batch = self.buffer.sample().to(self.device)
-        # next_state_value = self.critic.forward(next_obs.graph).squeeze().item()
-        returns = batch.normalized_returns(self.gamma).to(self.device)
+    def select_action(self, obs: Observation[torch.Tensor | Data]):
+        if isinstance(obs.data, torch.Tensor):
+            data = obs.data.unsqueeze(0)  # Add batch dimension
+        else:
+            data = obs.data
         with torch.no_grad():
-            old_values = self.critic.forward(batch.obs).squeeze()
-            old_logits = self.actor.forward(batch.obs)
-            old_log_probs = Categorical(logits=old_logits).log_prob(batch.actions)
-            advantages = returns - old_values
-        total_loss = 0
-        # Optimize policy for K epochs
-        for _ in range(self.K_epochs):
-            # Evaluating old actions and values
-            logits = self.actor.forward(batch.obs)
-            dist = Categorical(logits=logits)
+            distribution = self.actor_critic.policy(data)
+            logits = distribution.logits
+            action = distribution.sample().squeeze(0).item()
+        return int(action), logits.cpu().numpy(force=True)
 
-            log_probs = dist.log_prob(batch.actions)
-            state_values = self.critic.forward(batch.obs).squeeze()
+    def _compute_training_data(self, batch: Batch) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """Compute the returns, advantages and action log_probs according to the current policy"""
+        policy = self.actor_critic.policy(batch.obs)
+        log_probs = policy.log_prob(batch.actions)
+        values = self.actor_critic.value(batch.obs)
+        next_values = self.actor_critic.value(batch.next_obs)
+        advantages = batch.compute_gae(self.gamma, values, next_values, trace_decay=self.gae_lambda, normalize=False)
+        returns = advantages + values
+        return returns, advantages, log_probs
 
-            # Finding the ratio (pi_theta / pi_theta__old)
-            ratios = torch.exp(log_probs - old_log_probs)
-            dist_entropy = dist.entropy()
-            # Finding Surrogate Loss
-            surr1 = ratios * advantages
-            surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
+    def train(self, elapsed_seconds: int):
+        batch = self.memory.as_batch(self.device)
+        # if self.normalize_rewards:
+        #    batch.normalize_rewards()
+        self.c1.update(elapsed_seconds)
+        self.c2.update(elapsed_seconds)
+        with torch.no_grad():
+            returns, advantages, log_probs = self._compute_training_data(batch)
 
-            # final loss of clipped objective PPO
-            actor_loss = -torch.min(surr1, surr2)
-            critic_loss = self.mse_loss.forward(state_values, returns)
-            loss = torch.mean(actor_loss + self.c1 * critic_loss - self.c2 * dist_entropy)
+        for _ in range(self.n_epochs):
+            indices = np.random.choice(batch.size, self.minibatch_size, replace=False)
+            minibatch = batch.get_minibatch(indices)
+            mini_log_probs, mini_returns, mini_advantages = log_probs[indices], returns[indices], advantages[indices]
 
-            # take gradient step
+            # Use the Monte Carlo estimate of returns as target values
+            # L^VF(θ) = E[(V(s) - V_targ(s))^2] in PPO paper
+            mini_values = self.actor_critic.value(minibatch.obs)
+            critic_loss = mse_loss(mini_values, mini_returns)
+
+            # Actor loss (ratio between the new and old policy):
+            # L^CLIP(θ) = E[ min(r(θ)A, clip(r(θ), 1 − ε, 1 + ε)A) ] in PPO paper
+            mini_policy = self.actor_critic.policy(minibatch.obs)
+            new_log_probs = mini_policy.log_prob(minibatch.actions)
+
+            ratios = torch.exp(new_log_probs - mini_log_probs)
+            surrogate1 = mini_advantages * ratios
+            surrogate2 = torch.clamp(ratios, self._ratio_min, self._ratio_max) * mini_advantages
+            # Minus because we want to maximize the objective
+            actor_loss = torch.mean(-torch.min(surrogate1, surrogate2))
+
+            # S[\pi_0](s_t) in the paper (equation (9))
+            entropy = mini_policy.entropy()
+            entropy_loss = torch.mean(entropy)
+
             self.optimizer.zero_grad()
+            # Equation (9) in the paper
+            loss = actor_loss + self.c1 * critic_loss - self.c2 * entropy_loss
             loss.backward()
+            if self.grad_norm_clipping is not None:
+                torch.nn.utils.clip_grad_norm_(self._parameters, self.grad_norm_clipping)
             self.optimizer.step()
-            total_loss += loss.item()
 
-        self.buffer.clear()
-        return {"avg-loss": total_loss / self.K_epochs}
+    def learn(
+        self,
+        time_step: int,
+        secs_elapsed: int,
+        obs: Observation,
+        action: int,
+        reward: float,
+        next_obs: Observation,
+        next_obs_cost: float,
+    ) -> dict[str, float]:
+        next_obs_value = -next_obs_cost
+        self.memory.add(obs, action, reward, next_obs, next_obs_value)
+        if not self.memory.can_sample(self.batch_size):
+            return {}
+        self.train(secs_elapsed)
+        self.memory.clear()
+        return {}
+
+    @property
+    def networks(self):
+        """Dynamic list of neural networks attributes in the trainer"""
+        return [nn for nn in self.__dict__.values() if isinstance(nn, torch.nn.Module)]
+
+    @property
+    def device(self):
+        return self._device
 
     def to(self, device: torch.device):
-        self.actor.to(device, non_blocking=True)
-        self.critic.to(device, non_blocking=True)
-        self.device = device
+        """Send the networks to the given device."""
+        self._device = device
+        for nn in self.networks:
+            nn.to(device)
         return self
 
-    def save(self, directory: str):
+    def save(self, path: str):
+        directory = os.path.dirname(path)
         os.makedirs(directory, exist_ok=True)
-        torch.save(self.actor.state_dict(), os.path.join(directory, "actor.weights"))
-        torch.save(self.critic.state_dict(), os.path.join(directory, "critic.weights"))
+        with open(path, "wb") as f:
+            torch.save(self.actor_critic.state_dict(), f)
 
-    def load(self, directory: str):
-        actor_weights = torch.load(os.path.join(directory, "actor.weights"))
-        self.actor.load_state_dict(actor_weights)
-        critic_weights = torch.load(os.path.join(directory, "critic.weights"))
-        self.critic.load_state_dict(critic_weights)
+    def load(self, path: str):
+        with open(path, "rb") as f:
+            self.actor_critic.load_state_dict(torch.load(f))

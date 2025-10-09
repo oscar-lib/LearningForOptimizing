@@ -1,6 +1,7 @@
 from functools import cached_property
 from typing import Sequence
 
+from numpy import ndarray
 import torch
 from torch_geometric.data import Batch as GeoBatch
 from torch_geometric.data import Data
@@ -27,3 +28,6 @@ class GraphBatch(Batch[Data]):
     def next_obs(self):
         # DataLoader([self._next_obs[i].data for i in indices], batch_size=batch_size, shuffle=False)._get_iterator().__next__()
         return GeoBatch.from_data_list([self.memory._next_obs[i].data for i in self.indices])
+
+    def get_minibatch(self, indices: ndarray) -> Batch[Data]:
+        return GraphBatch(self.memory, indices.tolist(), self.device)

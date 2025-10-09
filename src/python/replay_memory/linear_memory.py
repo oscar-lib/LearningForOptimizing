@@ -1,3 +1,4 @@
+from numpy import ndarray
 from .replay_memory import ReplayMemory, Batch
 import torch
 from typing import Sequence
@@ -16,3 +17,6 @@ class LinearBatch(Batch[torch.Tensor]):
     @property
     def next_obs(self):
         return torch.stack([self.memory._next_obs[i].data for i in self.indices]).to(self.device)
+
+    def get_minibatch(self, indices: ndarray) -> Batch[torch.Tensor]:
+        return LinearBatch(self.memory, indices.tolist(), self.device)

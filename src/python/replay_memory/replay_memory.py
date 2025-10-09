@@ -29,7 +29,8 @@ class ReplayMemory[T: torch.Tensor | Data](ABC):
         self._next_values.append(next_value)
 
     def end_episode(self):
-        self._dones[-1] = True
+        if len(self._dones) > 0:
+            self._dones[-1] = True
 
     @abstractmethod
     def _get_batch(self, indices: Sequence[int], device: torch.device) -> "Batch[T]":
@@ -39,6 +40,11 @@ class ReplayMemory[T: torch.Tensor | Data](ABC):
         """Randomly sample the memory to retrieve a `Batch`"""
         indices = np.random.randint(0, len(self), batch_size)
         return self._get_batch(indices.tolist(), device)
+
+    def as_batch(self, device: torch.device) -> "Batch[T]":
+        """Return the whole memory as a single batch"""
+        indices = list(range(len(self)))
+        return self._get_batch(indices, device)
 
     def can_sample(self, batch_size: int) -> bool:
         """Return whether the memory contains enough items to sample a batch of the given size"""
@@ -60,7 +66,7 @@ class ReplayMemory[T: torch.Tensor | Data](ABC):
         return len(self._dones)
 
 
-class Batch[T: torch.Tensor | Data]:
+class Batch[T: torch.Tensor | Data](ABC):
     def __init__(self, memory: ReplayMemory[T], indices: Sequence[int], device: torch.device):
         self.memory = memory
         self.indices = indices
@@ -93,15 +99,13 @@ class Batch[T: torch.Tensor | Data]:
 
     @property
     def actions(self):
-        return (
-            torch.tensor([self.memory._actions[i] for i in self.indices], dtype=torch.long).unsqueeze(-1).to(self.device, non_blocking=True)
-        )
+        return torch.tensor([self.memory._actions[i] for i in self.indices], dtype=torch.long).to(self.device, non_blocking=True)
 
-    @property
+    @cached_property
     def rewards(self):
         return torch.tensor([self.memory._rewards[i] for i in self.indices], dtype=torch.float32).to(self.device, non_blocking=True)
 
-    @property
+    @cached_property
     def dones(self):
         return torch.tensor([self.memory._dones[i] for i in self.indices], dtype=torch.bool).to(self.device, non_blocking=True)
 
@@ -112,3 +116,52 @@ class Batch[T: torch.Tensor | Data]:
     @property
     def next_values(self):
         return torch.tensor([self.memory._next_values[i] for i in self.indices], dtype=torch.float32).to(self.device, non_blocking=True)
+
+    def compute_gae(
+        self,
+        gamma: float,
+        values: torch.Tensor,
+        next_values: torch.Tensor,
+        trace_decay: float = 0.95,
+        normalize: bool = False,
+    ) -> torch.Tensor:
+        """
+        Compute Generalized Advantage Estimation (GAE).
+        Paper: https://arxiv.org/pdf/1506.02438
+
+        Notes:
+            This method assumes that the items are adjacent in time.
+            With `trace_decay=1.0`, this method is equivalent to the Monte Carlo estimate of advantages `self.compute_mc_advantages(...)`.
+            With `trace_decay=0.0`, this method is equivalent to the 1-step TD error `self.compute_td1_advantages(...)`.
+
+        Args:
+            gamma: Discount factor.
+            normalize: Whether to normalize the advantages at the end of the computation.
+
+        Returns:
+            Advantage estimates (batch_size,).
+        """
+        deltas: list[float] = (self.rewards + gamma * next_values - values).tolist()
+        gae = 0.0
+        not_dones: list[float] = (~self.dones).float().tolist()
+        advantages = []
+        for t in range(self.size - 1, -1, -1):
+            gae = deltas[t] + not_dones[t] * gamma**t * trace_decay * gae
+            advantages.append(gae)
+        advantages.reverse()
+        advantages = torch.tensor(advantages, dtype=torch.float32)
+        if normalize:
+            advantages = self._normalize(advantages)
+        return advantages
+
+    def _normalize(self, tensor: torch.Tensor):
+        """Normalize the tensor such that it has a mean of 0 and a std of 1."""
+        mean = torch.sum(tensor) / self.size
+        std = torch.std(tensor)
+        return (tensor - mean) / (std + 1e-8)
+
+    def normalize_rewards(self):
+        self.rewards = self._normalize(self.rewards)
+
+    @abstractmethod
+    def get_minibatch(self, indices: np.ndarray) -> "Batch[T]": ...

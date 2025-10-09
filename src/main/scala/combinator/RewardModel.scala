@@ -253,7 +253,7 @@ class Gain(normalizationFactor: Float) extends RewardModel(normalizationFactor) 
   }
 
   override def apply(prevObj: Long, newObj: Long): Double = {
-    return (newObj - prevObj).toDouble * normalizationFactor
+    return (prevObj - newObj).toDouble * normalizationFactor
   }
 }
 
