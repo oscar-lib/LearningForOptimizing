@@ -75,28 +75,9 @@ case class Solver(oscarModel: Model, in: SolverInput) {
         new StatefulCombinator(
           neighList,
           oscarModel,
-          lr = in.learningRate,
-          batchSize = in.batchSize,
-          epsilonStart = in.epsilonStart,
-          epsilonEnd = in.epsilonEnd,
-          epsilonNSecs = in.epsilonNSecs,
-          epsilonDecay = in.epsilonDecay,
-          clipping = in.clipping,
-          ddqn = in.ddqn,
-          debug = in.debug,
-          algo = algo,
-          device = in.device,
+          args = in,
           objective = obj,
-          acceptanceCriterion = in.acceptanceCriterion,
-          loadFrom = in.loadFrom,
-          saveTo = in.saveTo,
-          training = in.training,
-          rewardModel = rewardModel,
-          memorySize = in.memorySize,
-          noTarget = in.noTarget,
-          logdir = in.logdir,
-          seed = in.seed,
-          infiniteHorizon = in.infiniteHorizon
+          rewardModel = rewardModel
         )
       case _ => throw new IllegalArgumentException(s"Unknown bandit type: ${in.bandit}.")
     }

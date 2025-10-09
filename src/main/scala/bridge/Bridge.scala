@@ -27,27 +27,9 @@ import java.net.UnixDomainSocketAddress
 import java.nio.channels.SocketChannel
 import java.nio.channels.ServerSocketChannel
 import java.net.StandardProtocolFamily
+import util.SolverInput
 
-abstract class Bridge(
-  algo: RLAlgorithm.Value,
-  debug: Boolean,
-  batchSize: Int,
-  epsilonStart: Double,
-  epsilonEnd: Double,
-  epsilonNSecs: Int,
-  epsilonDecay: String,
-  clipping: Double,
-  lr: Double,
-  ddqn: Boolean,
-  device: String,
-  loadFrom: Option[String],
-  saveTo: Option[String],
-  training: Boolean,
-  noTarget: Boolean,
-  logdir: Option[String],
-  memorySize: Int,
-  seed: Int
-) {
+abstract class Bridge(args: SolverInput) {
 
   def recv(): Message
   def send(msg: Message): Unit
@@ -56,7 +38,7 @@ abstract class Bridge(
   val process = this.startSubprocess(false)
 
   def startSubprocess(withHeartbeat: Boolean): Option[Process] = {
-    if (!debug) {
+    if (!args.debug) {
       val command = this.makeCommand()
       val pb      = new ProcessBuilder(command: _*)
       println(String.join(" ", pb.command()))
@@ -84,35 +66,35 @@ abstract class Bridge(
     var command            = new Array[String](0)
     command :+= pythonBinary.toString()
     command :+= pythonSrcDirectory.resolve("main.py").toString
-    command :+= f"-a=${this.algo}"
-    command :+= f"--device=${this.device}"
-    command :+= f"--epsilon-start=${this.epsilonStart}%.4f"
-    command :+= f"--epsilon-end=${this.epsilonEnd}%.4f"
-    command :+= f"--epsilon-n-secs=${this.epsilonNSecs}"
-    command :+= f"--epsilon-decay=${this.epsilonDecay}"
-    command :+= f"--clipping=${this.clipping}%.4f"
-    command :+= f"--batch-size=${this.batchSize}"
-    command :+= f"--seed=${this.seed}"
+    command :+= f"-a=${this.args.bandit}"
+    command :+= f"--device=${this.args.device}"
+    command :+= f"--epsilon-start=${this.args.epsilonStart}%.4f"
+    command :+= f"--epsilon-end=${this.args.epsilonEnd}%.4f"
+    command :+= f"--epsilon-n-secs=${this.args.epsilonNSecs}"
+    command :+= f"--epsilon-decay=${this.args.epsilonDecay}"
+    command :+= f"--clipping=${this.args.clipping}%.4f"
+    command :+= f"--batch-size=${this.args.batchSize}"
+    command :+= f"--seed=${this.args.seed}"
     command :+= "--disable-training-logs"
-    command :+= f"--memory-size=${this.memorySize}"
-    if (noTarget) {
+    command :+= f"--memory-size=${this.args.memorySize}"
+    command :+= f"--lr=${this.args.learningRate}%.6f"
+    if (this.args.noTarget) {
       command :+= f"--no-target"
     }
-    if (ddqn) {
+    if (this.args.ddqn) {
       command :+= f"--ddqn"
     }
-    command :+= f"--lr=$lr%.4f"
-    if (loadFrom.isDefined) {
-      command :+= f"--load-from=${loadFrom.get}"
+    if (this.args.loadFrom.isDefined) {
+      command :+= f"--load-from=${this.args.loadFrom.get}"
     }
-    if (saveTo.isDefined) {
-      command :+= f"--save-to=${saveTo.get}"
+    if (this.args.saveTo.isDefined) {
+      command :+= f"--save-to=${this.args.saveTo.get}"
     }
-    if (!training) {
+    if (!this.args.training) {
       command :+= "--no-train"
     }
-    if (logdir.isDefined) {
-      command :+= f"--logdir=${logdir.get}"
+    if (this.args.logdir.isDefined) {
+      command :+= f"--logdir=${this.args.logdir.get}"
     }
     this.completeCommand(command) // allow subclasses to modify the launch command
   }
@@ -207,53 +189,16 @@ object Bridge {
   }
 }
 
-class NamedPipeBridge(
-  algo: RLAlgorithm.Value,
-  debug: Boolean,
-  batchSize: Int,
-  epsilonStart: Double,
-  epsilonEnd: Double,
-  epsilonNSecs: Int,
-  epsilonDecay: String,
-  clipping: Double,
-  lr: Double,
-  ddqn: Boolean,
-  device: String,
-  loadFrom: Option[String],
-  saveTo: Option[String],
-  training: Boolean,
-  noTarget: Boolean,
-  memorySize: Int,
-  logdir: Option[String],
-  seed: Int
-) extends {
+class NamedPipeBridge(args: SolverInput)
+    extends {
       // Early initialization block before the superclass constructor
       val _unused = new File("/tmp/pipes").mkdirs();
-      val id = if (debug) { 0 }
+      val id = if (args.debug) { 0 }
       else { System.nanoTime() }
       val pipeOut = NamedPipeBridge.createFifoIfNotExists(s"/tmp/pipes/s2p-${id}")
       val pipeIn  = NamedPipeBridge.createFifoIfNotExists(s"/tmp/pipes/p2s-${id}")
     }
-    with Bridge(
-      algo,
-      debug,
-      batchSize,
-      epsilonStart,
-      epsilonEnd,
-      epsilonNSecs,
-      epsilonDecay,
-      clipping,
-      lr,
-      ddqn,
-      device,
-      loadFrom,
-      saveTo,
-      training,
-      noTarget,
-      logdir,
-      memorySize = memorySize,
-      seed = seed
-    ) {
+    with Bridge(args) {
 
   val input  = new FileInputStream(this.pipeIn)
   val output = new FileOutputStream(this.pipeOut)
@@ -289,27 +234,9 @@ object NamedPipeBridge {
   }
 }
 
-class UnixPipeBridge(
-  algo: RLAlgorithm.Value,
-  debug: Boolean,
-  batchSize: Int,
-  epsilonStart: Double,
-  epsilonEnd: Double,
-  epsilonNSecs: Int,
-  epsilonDecay: String,
-  clipping: Double,
-  lr: Double,
-  ddqn: Boolean,
-  device: String,
-  loadFrom: Option[String],
-  saveTo: Option[String],
-  training: Boolean,
-  noTarget: Boolean,
-  logdir: Option[String],
-  memorySize: Int,
-  seed: Int
-) extends {
-      val id = if (debug) { 0 }
+class UnixPipeBridge(args: SolverInput)
+    extends {
+      val id = if (args.debug) { 0 }
       else { System.nanoTime() }
       val address = UnixDomainSocketAddress.of(s"/tmp/pipes/unix-socket-$id")
       val _unused = {
@@ -324,28 +251,8 @@ class UnixPipeBridge(
         s.bind(address);
         s
       }
-
     }
-    with Bridge(
-      algo,
-      debug,
-      batchSize,
-      epsilonStart,
-      epsilonEnd,
-      epsilonNSecs,
-      epsilonDecay,
-      clipping,
-      lr,
-      ddqn,
-      device,
-      loadFrom,
-      saveTo,
-      training,
-      noTarget,
-      logdir,
-      memorySize = memorySize,
-      seed = seed
-    ) {
+    with Bridge(args) {
 
   println(s"Listening on ${this.address.toString}")
   val socket = this.server.accept()

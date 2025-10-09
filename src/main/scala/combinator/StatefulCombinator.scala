@@ -14,6 +14,7 @@ import oscar.cbls.core.search.MoveFound
 import bridge.Bridge
 import bridge.NamedPipeBridge
 import bridge.UnixPipeBridge
+import util.SolverInput
 
 object RLAlgorithm extends Enumeration {
   final val DQN = Value("dqn")
@@ -23,57 +24,19 @@ object RLAlgorithm extends Enumeration {
 class StatefulCombinator(
   neighborhoods: List[Neighborhood],
   model: SerializableModel,
-  algo: RLAlgorithm.Value,
-  debug: Boolean,
-  ddqn: Boolean,
-  lr: Double,
-  clipping: Double,
-  epsilonStart: Double,
-  epsilonEnd: Double,
-  epsilonNSecs: Int,
-  epsilonDecay: String,
-  device: String,
-  batchSize: Int,
+  args: SolverInput,
   objective: Objective,
-  acceptanceCriterion: AcceptanceCriterion,
-  loadFrom: Option[String],
-  training: Boolean,
-  rewardModel: RewardModel,
-  noTarget: Boolean,
-  logdir: Option[String],
-  memorySize: Int,
-  seed: Int,
-  infiniteHorizon: Boolean,
-  saveTo: Option[String] = None
+  rewardModel: RewardModel
 ) extends BanditSelector(
       neighborhoods: List[Neighborhood],
       learningScheme = AfterEveryMove, // Not used
-      seed = seed,                     // Not used
+      seed = args.seed,                // Not used
       rewardModel = rewardModel,
       learningRate = 0.0 // Not used
     ) {
 
   private val nActions = neighborhoods.length
-  private val bridge = new UnixPipeBridge(
-    algo = algo,
-    debug = debug,
-    batchSize = batchSize,
-    epsilonStart = epsilonStart,
-    epsilonEnd = epsilonEnd,
-    epsilonNSecs = epsilonNSecs,
-    epsilonDecay = epsilonDecay,
-    clipping = clipping,
-    lr = lr,
-    ddqn = ddqn,
-    device = device,
-    loadFrom = loadFrom,
-    saveTo = saveTo,
-    training = training,
-    noTarget = noTarget,
-    logdir = logdir,
-    memorySize = memorySize,
-    seed = seed
-  )
+  private val bridge   = new UnixPipeBridge(args)
   bridge.sendStaticProblemData(model, this.nActions)
   private var prevObjective = this.objective.value
 
@@ -82,7 +45,7 @@ class StatefulCombinator(
     initialObj: Long,
     acceptanceCriterion: AcceptanceCriterion
   ): SearchResult = {
-    return super.getMove(obj, initialObj, this.acceptanceCriterion)
+    return super.getMove(obj, initialObj, this.args.acceptanceCriterion)
   }
 
   override def getNextNeighborhood: Option[Neighborhood] = {
@@ -106,9 +69,7 @@ class StatefulCombinator(
 
   override def reset(): Unit = {
     super.reset()
-    if (!this.infiniteHorizon) {
-      this.bridge.sendEpisodeEnded()
-    }
+    this.bridge.sendEpisodeEnded()
   }
 
   def close() = {

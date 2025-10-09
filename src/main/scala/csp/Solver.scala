@@ -85,28 +85,9 @@ case class Solver(cspModel: Model, in: SolverInput) {
         new StatefulCombinator(
           neighList,
           cspModel,
-          lr = in.learningRate,
-          batchSize = in.batchSize,
-          epsilonStart = in.epsilonStart,
-          epsilonEnd = in.epsilonEnd,
-          epsilonNSecs = in.epsilonNSecs,
-          epsilonDecay = in.epsilonDecay,
-          clipping = in.clipping,
-          ddqn = in.ddqn,
-          debug = in.debug,
-          algo = algo,
-          device = in.device,
+          args = in,
           objective = obj,
-          acceptanceCriterion = in.acceptanceCriterion,
-          loadFrom = in.loadFrom,
-          saveTo = in.saveTo,
-          training = in.training,
-          rewardModel = rewardModel,
-          noTarget = in.noTarget,
-          logdir = in.logdir,
-          memorySize = in.memorySize,
-          seed = in.seed,
-          infiniteHorizon = in.infiniteHorizon
+          rewardModel = rewardModel
         )
       case "ucb"            => new UCBNew(neighList, in, rewardModel)
       case "bestslopefirst" => bestSlopeFirst(neighList)

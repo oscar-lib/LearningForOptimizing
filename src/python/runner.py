@@ -127,5 +127,16 @@ def _create_agent(problem: Problem, algo: Literal["dqn", "ppo"], args: "Args") -
                     memory = LinearMemory(args.memory_size)
                 case other:
                     raise Exception(f"Unsupported problem for PPO: {other}")
-            return PPO(actor_critic, memory, minibatch_size=args.batch_size)
+            return PPO(
+                actor_critic,
+                memory,
+                minibatch_size=args.batch_size,
+                n_epochs=args.n_epochs,
+                critic_c1=args.c1,
+                entropy_c2=args.c2,
+                lr_actor=args.lr,
+                lr_critic=args.lr,
+                grad_norm_clipping=args.clipping,
+                train_interval=args.memory_size,
+            )
     raise Exception(f"Unknown algorithm: {algo}")

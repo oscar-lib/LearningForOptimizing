@@ -174,28 +174,9 @@ case class Solver(oscarModel: Model, in: SolverInput) {
         new StatefulCombinator(
           neighList,
           this.oscarModel,
-          lr = in.learningRate,
-          batchSize = in.batchSize,
-          epsilonStart = in.epsilonStart,
-          epsilonEnd = in.epsilonEnd,
-          epsilonNSecs = in.epsilonNSecs,
-          epsilonDecay = in.epsilonDecay,
-          clipping = in.clipping,
-          ddqn = in.ddqn,
-          debug = in.debug,
-          algo = algo,
-          device = in.device,
+          args = in,
           objective = oscarModel.objectiveFunction,
-          acceptanceCriterion = in.acceptanceCriterion,
-          loadFrom = in.loadFrom,
-          saveTo = in.saveTo,
-          training = in.training,
-          rewardModel = rewardModel,
-          noTarget = in.noTarget,
-          logdir = in.logdir,
-          seed = in.seed,
-          memorySize = in.memorySize,
-          infiniteHorizon = in.infiniteHorizon
+          rewardModel = rewardModel
         )
       case "ucb"            => new UCBNew(neighList, in, rewardModel)
       case "bestslopefirst" => bestSlopeFirst(neighList)

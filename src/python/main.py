@@ -40,6 +40,13 @@ class Args(tap.TypedArgs):
     no_target: bool = tap.arg("--no-target", help="Whether to use a target network for DQN", default=False)
     _logdir: Optional[str] = tap.arg("--logdir", help="Directory to save logs", default=None)
     disable_training_logs: bool = tap.arg("--disable-training-logs", help="Disable logging of training metrics", default=False)
+    c1_start: float = tap.arg("--c1-start", help="Initial value of c1 for PPO", type=float, default=1.0)
+    c1_end: float = tap.arg("--c1-end", help="Final value of c1 for PPO", type=float, default=0.0)
+    c1_n_secs: int = tap.arg("--c1-n-secs", help="Number of seconds over which c1 is decayed", type=int, default=300)
+    n_epochs: int = tap.arg("--n-epochs", help="Number of epochs per update for PPO", type=int, default=20)
+    c2_start: float = tap.arg("--c2-start", help="Initial value of c2 for PPO", type=float, default=1.0)
+    c2_end: float = tap.arg("--c2-end", help="Final value of c2 for PPO", type=float, default=0.0)
+    c2_n_secs: int = tap.arg("--c2-n-secs", help="Number of seconds over which c2 is decayed", type=int, default=300)
 
     @cached_property
     def creation_time(self) -> str:
@@ -64,6 +71,18 @@ class Args(tap.TypedArgs):
     @property
     def train(self):
         return not self.no_train
+
+    @property
+    def c1(self):
+        if self.c1_start == self.c1_end:
+            return Schedule.constant(self.c1_start)
+        return Schedule.linear(self.c1_start, self.c1_end, self.c1_n_secs)
+
+    @property
+    def c2(self):
+        if self.c2_start == self.c2_end:
+            return Schedule.constant(self.c2_start)
+        return Schedule.linear(self.c2_start, self.c2_end, self.c2_n_secs)
 
     @cached_property
     def device(self) -> torch.device:
