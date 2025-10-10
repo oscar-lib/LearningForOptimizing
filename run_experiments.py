@@ -347,14 +347,25 @@ def main():
     multiple_runs(
         MultipleArgs(
             "ppo",
-            "examples/csp/testingall-300.txt",
+            "examples/csp/testingall-500.txt",
             "r2",
-            n_jobs=1,
-            timeout=20,
-            n_repeats=3,
-            require_gpu=False,
+            n_jobs=8,
+            timeout=900,
+            n_repeats=10,
+            require_gpu=True,
             training=True,
-            args={}
+            logdir="logs/ppo-csp500",
+            args={
+                "learningRate": 1e-4,
+                "lrCritic": 1e-4,
+                "batchSize": 16,
+                "memorySize": 92,
+                "c1Start": 0.5,
+                "c1End": 0.5,
+                "c2Start": 0.01,
+                "c2End": 0.01,
+                "nEpochs": 20,
+            },
         )
     )
 

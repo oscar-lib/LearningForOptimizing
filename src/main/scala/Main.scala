@@ -60,7 +60,15 @@ object Main extends App {
     epsilonStart: Double = 1.0,
     epsilonEnd: Double = 0.1,
     epsilonNSecs: Int = 300,
-    epsilonDecay: String = "linear"
+    epsilonDecay: String = "linear",
+    c1Start: Double = 1.0,
+    c1End: Double = 1.0,
+    c1NSecs: Int = 300,
+    c2Start: Double = 0.5,
+    c2End: Double = 0.5,
+    c2NSecs: Int = 300,
+    nEpochs: Int = 20,
+    lrCritic: Double = 1e-5
     // infiniteHorizon: Boolean = false
   ) extends Config
 
@@ -168,6 +176,62 @@ object Main extends App {
         //       case _                         => throw new Error("Unexpected Error")
         //     }
         // ),
+        opt[Double]("c1Start")
+          .text("Set the starting value for c1 (default: 1.0)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(c1Start = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("c1End")
+          .text("Set the ending value for c1 (default: 1.0)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(c1End = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Int]("c1NSecs")
+          .text("Set the number of seconds over which c1 is decayed (default: 300)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(c1NSecs = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("c2Start")
+          .text("Set the starting value for c2 (default: 0.5)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(c2Start = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("c2End")
+          .text("Set the ending value for c2 (default: 0.5)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(c2End = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Int]("c2NSecs")
+          .text("Set the number of seconds over which c2 is decayed (default: 300)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(c2NSecs = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Int]("nEpochs")
+          .text("Set the number of epochs for PPO (default: 20)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(nEpochs = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
         opt[Unit]("display")
           .text("Display the solution resolution on a map")
           .action((_, c) =>
@@ -190,6 +254,14 @@ object Main extends App {
           .action((x, c) =>
             c match {
               case conf: SolveInstanceConfig => conf.copy(learningRate = x)
+              case _                         => throw new Error("Unexpected Error")
+            }
+          ),
+        opt[Double]("lrCritic")
+          .text("Set the learning rate for the critic in PPO (default: 1e-5)")
+          .action((x, c) =>
+            c match {
+              case conf: SolveInstanceConfig => conf.copy(lrCritic = x)
               case _                         => throw new Error("Unexpected Error")
             }
           ),
@@ -735,7 +807,15 @@ object Main extends App {
             epsilonStart = i.epsilonStart,
             epsilonEnd = i.epsilonEnd,
             epsilonNSecs = i.epsilonNSecs,
-            epsilonDecay = i.epsilonDecay
+            epsilonDecay = i.epsilonDecay,
+            c1Start = i.c1Start,
+            c1End = i.c1End,
+            c1NSecs = i.c1NSecs,
+            c2Start = i.c2Start,
+            c2End = i.c2End,
+            c2NSecs = i.c2NSecs,
+            nEpochs = i.nEpochs,
+            lrCritic = i.lrCritic
             // infiniteHorizon = i.infiniteHorizon
           )
           i.problem match {

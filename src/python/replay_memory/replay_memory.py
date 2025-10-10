@@ -149,7 +149,7 @@ class Batch[T: torch.Tensor | Data](ABC):
             gae = deltas[t] + not_dones[t] * gamma**t * trace_decay * gae
             advantages.append(gae)
         advantages.reverse()
-        advantages = torch.tensor(advantages, dtype=torch.float32)
+        advantages = torch.tensor(advantages, dtype=torch.float32, device=self.device)
         if normalize:
             advantages = self._normalize(advantages)
         return advantages

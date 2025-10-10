@@ -61,6 +61,12 @@ class CSPActorCritic(ActorCritic):
     def critic_parameters(self) -> list[torch.nn.Parameter]:
         return list(self.critic.parameters())
 
+    def to(self, device: torch.device, *args, non_blocking: bool = True, **kwargs):
+        """Override to ensure the CNN is moved to the correct device."""
+        self.actor.to(device, non_blocking=non_blocking, *args, **kwargs)
+        self.critic.to(device, non_blocking=non_blocking, *args, **kwargs)
+        return super().to(device, non_blocking=non_blocking, *args, **kwargs)
+
 
 class CSPNetwork(torch.nn.Module):
     def __init__(self, problem: CSP, n_network_outputs: int):

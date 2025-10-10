@@ -32,6 +32,7 @@ class Args(tap.TypedArgs):
     memory_size: int = tap.arg("--memory-size", help="Size of the replay memory", default=10_000)
     ddqn: bool = tap.arg("--ddqn", help="Use Double DQN", default=False)
     lr: float = tap.arg("--lr", help="Learning rate", type=float, default=1e-4)
+    lr_critic: float = tap.arg("--lr-critic", help="Learning rate for the critic in PPO", type=float, default=1e-5)
     keepalive: bool = tap.arg("--keepalive", help="Keep the connection alive", default=False)
     save_to: Optional[str] = tap.arg("--save-to", help="Path to save the model", default=None)
     load_from: Optional[str] = tap.arg("--load-from", help="Path to load the model from", default=None)

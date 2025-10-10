@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import Literal, Optional
+from typing import Optional
 from torch.nn.functional import mse_loss
 import numpy as np
 import torch
@@ -50,7 +50,7 @@ class PPO(Algo):
         super().__init__()
         if len(kwargs) > 0:
             logging.warning(f"Unexpected ignored PPO arguments ignored: {kwargs}")
-        self._device = device
+        self.device = device
         self.batch_size = train_interval
         self.actor_critic = actor_critic.to(device)
         self.gamma = gamma
@@ -165,20 +165,10 @@ class PPO(Algo):
         self.memory.clear()
         return {}
 
-    @property
-    def networks(self):
-        """Dynamic list of neural networks attributes in the trainer"""
-        return [nn for nn in self.__dict__.values() if isinstance(nn, torch.nn.Module)]
-
-    @property
-    def device(self):
-        return self._device
-
     def to(self, device: torch.device):
         """Send the networks to the given device."""
-        self._device = device
-        for nn in self.networks:
-            nn.to(device)
+        self.device = device
+        self.actor_critic = self.actor_critic.to(device)
         return self
 
     def save(self, path: str):

@@ -70,7 +70,6 @@ class StatefulCombinator(
   override def reset(): Unit = {
     this.bridge.sendEpisodeEnded()
     val timestamp = System.currentTimeMillis()
-    println(s"Episode ended at $timestamp, resetting combinator")
     super.reset()
   }
 

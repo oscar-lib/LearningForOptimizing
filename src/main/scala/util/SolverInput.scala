@@ -71,5 +71,13 @@ case class SolverInput(
   epsilonStart: Double,
   epsilonEnd: Double,
   epsilonNSecs: Int,
-  epsilonDecay: String
+  epsilonDecay: String,
+  c1Start: Double,
+  c1End: Double,
+  c1NSecs: Int,
+  c2Start: Double,
+  c2End: Double,
+  c2NSecs: Int,
+  nEpochs: Int,
+  lrCritic: Double
 )

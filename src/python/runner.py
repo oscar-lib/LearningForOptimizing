@@ -140,7 +140,7 @@ def _create_agent(problem: Problem, algo: Literal["dqn", "ppo"], args: "Args") -
                 critic_c1=args.c1,
                 entropy_c2=args.c2,
                 lr_actor=args.lr,
-                lr_critic=args.lr,
+                lr_critic=args.lr_critic,
                 grad_norm_clipping=args.clipping,
                 train_interval=args.memory_size,
             )
