@@ -12,6 +12,7 @@ import dotenv
 import orjson
 import torch
 import threading
+import sys
 
 EXECUTABLE = "java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
 with open("best_params.json", "rb") as f:
@@ -346,26 +347,26 @@ def main():
     dotenv.load_dotenv()
     multiple_runs(
         MultipleArgs(
-            "ppo",
-            "examples/csp/testingall-500.txt",
+            "dqn",
+            "examples/csp/testing-500.txt",
             "r2",
             n_jobs=8,
             timeout=900,
             n_repeats=10,
             require_gpu=True,
             training=True,
-            logdir="logs/ppo-csp500",
-            args={
-                "learningRate": 1e-4,
-                "lrCritic": 1e-4,
-                "batchSize": 16,
-                "memorySize": 92,
-                "c1Start": 0.5,
-                "c1End": 0.5,
-                "c2Start": 0.01,
-                "c2End": 0.01,
-                "nEpochs": 20,
-            },
+            # logdir="logs/ppo-csp500",
+            # args={
+            #     "learningRate": 1e-4,
+            #     "lrCritic": 1e-4,
+            #     "batchSize": 16,
+            #     "memorySize": 92,
+            #     "c1Start": 0.5,
+            #     "c1End": 0.5,
+            #     "c2Start": 0.01,
+            #     "c2End": 0.01,
+            #     "nEpochs": 20,
+            # },
         )
     )
 
@@ -373,7 +374,7 @@ def main():
 def ask_recompile_with_countdown() -> bool:
     def get_input(result):
         try:
-            result.append(input("Do you want to recompile ? (y/n): ").strip().lower())
+            result.append(input().strip().lower())
         except OSError:  # Happens when input is not available, e.g. with nohup
             pass
 
@@ -381,7 +382,18 @@ def ask_recompile_with_countdown() -> bool:
     input_thread = threading.Thread(target=get_input, args=(result,))
     input_thread.daemon = True
     input_thread.start()
-    input_thread.join(timeout=3)
+
+    for i in range(3, 0, -1):
+        sys.stdout.write(f"\r[{i}s]\tDo you want to recompile? (y/n) ")
+        sys.stdout.flush()
+        input_thread.join(timeout=1)
+        if not input_thread.is_alive():
+            break
+    sys.stdout.write("\r[0s]\tDo you want to recompile? (y/n) ")
+    sys.stdout.flush()
+    print()  # Move to next line after countdown
+    if len(result) == 0:
+        print("No input within 3 seconds received, assuming 'yes'.")
     return len(result) == 0 or result[0] not in ("n", "")
 
 

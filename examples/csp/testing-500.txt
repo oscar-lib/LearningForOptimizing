@@ -1,0 +1,15 @@
+examples/csp/csp_500/carseq_500_8_20_53.txt
+examples/csp/csp_500/carseq_500_8_20_56.txt
+examples/csp/csp_500/carseq_500_8_20_60.txt
+examples/csp/csp_500/carseq_500_8_20_62.txt
+examples/csp/csp_500/carseq_500_8_20_64.txt
+examples/csp/csp_500/carseq_500_8_20_65.txt
+examples/csp/csp_500/carseq_500_8_20_66.txt
+examples/csp/csp_500/carseq_500_8_20_67.txt
+examples/csp/csp_500/carseq_500_8_20_68.txt
+examples/csp/csp_500/carseq_500_8_20_72.txt
+examples/csp/csp_500/carseq_500_8_20_74.txt
+examples/csp/csp_500/carseq_500_8_20_77.txt
+examples/csp/csp_500/carseq_500_8_20_79.txt
+examples/csp/csp_500/carseq_500_8_20_88.txt
+examples/csp/csp_500/carseq_500_8_20_93.txt

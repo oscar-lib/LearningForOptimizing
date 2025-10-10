@@ -39,6 +39,7 @@ class StatefulCombinator(
   private val bridge   = new UnixPipeBridge(args)
   bridge.sendStaticProblemData(model, this.nActions)
   private var prevObjective = this.objective.value
+  private var justReset     = false
 
   override def getMove(
     obj: Objective,
@@ -65,12 +66,15 @@ class StatefulCombinator(
     val transformedObj = this.rewardModel.transformObjective(newObj)
     this.bridge.sendReward(reward, transformedObj)
     this.prevObjective = newObj
+    this.justReset = false
   }
 
   override def reset(): Unit = {
-    this.bridge.sendEpisodeEnded()
-    val timestamp = System.currentTimeMillis()
+    if (!this.justReset) {
+      this.bridge.sendEpisodeEnded()
+    }
     super.reset()
+    this.justReset = true
   }
 
   def close() = {
