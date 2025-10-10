@@ -70,11 +70,12 @@ class StatefulCombinator(
   }
 
   override def reset(): Unit = {
-    if (!this.justReset) {
-      this.bridge.sendEpisodeEnded()
+    if (this.justReset) {
+      return
     }
-    super.reset()
+    this.bridge.sendEpisodeEnded()
     this.justReset = true
+    super.reset()
   }
 
   def close() = {
