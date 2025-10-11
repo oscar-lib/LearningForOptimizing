@@ -5,8 +5,7 @@ from copy import deepcopy
 import torch
 from torch_geometric.data import Data
 from optimenv import Observation
-from policies import EpsilonGreedy
-from qtarget_updater import HardUpdate
+from nn import SoftUpdate
 from replay_memory.replay_memory import Batch, ReplayMemory
 import random
 from marlenv.utils import Schedule
@@ -22,7 +21,6 @@ class DQN(Algo):
     batch_size: int
     grad_norm_clipping: Optional[float]
     lr: float
-    policy: EpsilonGreedy
     epsilon: Schedule
 
     def __init__(
@@ -46,7 +44,6 @@ class DQN(Algo):
         self.gamma = gamma
         self.batch_size = batch_size
         self.double_qlearning = double_qlearning
-        # self.policy = EpsilonGreedy.constant(epsilon)
         if isinstance(epsilon, (float, int)):
             epsilon = Schedule.constant(epsilon)
         self.epsilon = epsilon
@@ -54,23 +51,23 @@ class DQN(Algo):
         self.optimiser = torch.optim.Adam(self.qnetwork.parameters(), lr=lr)
         # Parameters and optimiser
         self.grad_norm_clipping = grad_norm_clipping
-        self.target_updater = HardUpdate(update_period=100)
+        self.target_updater = SoftUpdate(self.qnetwork.parameters(), self.qtarget.parameters())
         self.use_target = not no_target
         self.parameters = list(self.qnetwork.parameters())
         self.enable_logs = enable_logs
 
-    def select_action(self, obs: Observation[torch.Tensor | Data]):
+    def select_action(self, obs: Observation[torch.Tensor | Data]) -> tuple[int, dict[str, float]]:
         # Avoid forward pass if we take a random action
         if random.random() < self.epsilon.value:
             available = [i for i, v in enumerate(obs.available_actions) if v]
-            return random.choice(available), []
+            return random.choice(available), {}
         if isinstance(obs.data, torch.Tensor):
             data = obs.data.unsqueeze(0)  # Add batch dimension
         else:
             data = obs.data
         qvalues: torch.Tensor = self.qnetwork.forward(data).squeeze(0)  # Squeeze the batch dimension
         action = int(qvalues.argmax())
-        return action, qvalues.tolist()
+        return action, {f"qvalue-{i}": v for i, v in enumerate(qvalues.tolist())}
 
     def notify_episode_end(self):
         self.memory.end_episode()

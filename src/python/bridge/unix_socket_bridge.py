@@ -1,3 +1,4 @@
+import logging
 import socket
 
 from .bridge import Bridge

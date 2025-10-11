@@ -3,16 +3,18 @@ import multiprocessing as mp
 import os
 import re
 import subprocess
+import sys
+import threading
 import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal, Optional
+from results import Result
 
 import dotenv
 import orjson
 import torch
-import threading
-import sys
+
 
 EXECUTABLE = "java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
 with open("best_params.json", "rb") as f:
@@ -100,7 +102,6 @@ class MultipleArgs:
     bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"]
     problems_file: str
     reward: Literal["r1", "r2", "r3"]
-    output_filename: Optional[str | Literal["auto"]]
     n_jobs: int
     n_repeats: int
     timeout: int
@@ -117,7 +118,6 @@ class MultipleArgs:
         problems_file: Literal["csp", "tsp", "pdptw"] | str,
         reward: Literal["r1", "r2", "r3"],
         logdir: Optional[str] = None,
-        output_filename: Optional[str | Literal["auto"]] = "auto",
         n_jobs: int = 1,
         n_repeats: int = 20,
         timeout: int = 300,
@@ -146,9 +146,6 @@ class MultipleArgs:
             self.problems_file = problems_file
         self.reward = reward
         self.instance_filenames = self._load_problem_instances()
-        if output_filename == "auto":
-            output_filename = os.path.join(self.logdir, "results.csv")
-        self.output_filename = output_filename
         self.n_jobs = n_jobs
         self.n_repeats = n_repeats
         self.timeout = timeout
@@ -220,38 +217,6 @@ class MultipleArgs:
                 job_num += 1
 
 
-@dataclass
-class RunResult:
-    metrics: dict
-    bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"]
-    instance: str
-    reward: Literal["r1", "r2", "r3"]
-    timeout: int
-    seed: int
-
-    def get_columns(self):
-        return [
-            "bandit",
-            "instance",
-            "reward",
-            "timeout",
-            "seed",
-        ] + list(self.metrics.keys())
-
-    def as_csv(self, columns: list[str]):
-        values = []
-        for col in columns:
-            try:
-                values.append(getattr(self, col))
-            except AttributeError:
-                values.append(self.metrics.get(col, ""))
-        return ",".join(map(str, values))
-
-    @property
-    def integral_primal_gap(self) -> float:
-        return self.metrics["integralPrimalGap"]
-
-
 def gather_results(stdout: bytes):
     output = stdout.decode("utf-8").strip()
     # Find all key=value pairs (keys can have underscores or hyphens)
@@ -280,7 +245,7 @@ def single_run(args: SingleArgs):
         raise RuntimeError(f"Command failed: {cmd}")
     result_dict = gather_results(process.stdout)
     logging.info(f"{args.as_csv()},{result_dict}")
-    return RunResult(
+    return Result(
         metrics=result_dict,
         bandit=args.bandit,
         instance=args.problem_path,
@@ -294,22 +259,20 @@ def multiple_runs(args: MultipleArgs):
     if args._require_gpu and torch.cuda.device_count() == 0:
         logging.error("No GPU devices found for multiple runs. Exiting.")
         exit()
-    results = list[RunResult]()
-    results_file = None
+    results = list[Result]()
     csv_columns = None
-    if args.output_filename is not None:
-        os.makedirs(os.path.dirname(args.output_filename), exist_ok=True)
-        if os.path.exists(args.output_filename):
-            mode = "a"
-            with open(args.output_filename, "r") as f:
-                first_line = f.readline().strip()
-                assert first_line.startswith("bandit,instance,reward,timeout,seed")  # Basic check
-                csv_columns = first_line.split(",")
-        else:
-            mode = "w"
-        results_file = open(args.output_filename, mode)
+    os.makedirs(args.logdir, exist_ok=True)
+    results_filename = os.path.join(args.logdir, "results.csv")
+    if os.path.exists(results_filename):
+        mode = "a"
+        with open(results_filename, "r") as f:
+            first_line = f.readline().strip()
+            assert first_line.startswith("bandit,instance,reward,timeout,seed")  # Basic check for column names
+            csv_columns = first_line.split(",")
+    else:
+        mode = "w"
 
-    with mp.Pool(args.n_jobs) as pool:
+    with mp.Pool(args.n_jobs) as pool, open(results_filename, mode) as results_file:
         handles = [pool.apply_async(single_run, (single_args,)) for single_args in args.single_args()]
         # Collect the results as they become available
         dirty = True
@@ -324,12 +287,11 @@ def multiple_runs(args: MultipleArgs):
                         result = handle.get()
                         results.append(result)
                         to_remove.append(handle)
-                        if results_file is not None:
-                            if csv_columns is None:
-                                csv_columns = result.get_columns()
-                                results_file.write(",".join(csv_columns) + "\n")
-                            results_file.write(result.as_csv(csv_columns) + "\n")
-                            results_file.flush()
+                        if csv_columns is None:
+                            csv_columns = result.get_columns()
+                            results_file.write(",".join(csv_columns) + "\n")
+                        results_file.write(result.as_csv(csv_columns) + "\n")
+                        results_file.flush()
                     except Exception as e:
                         logging.error(f"Error processing result: {e}", exc_info=True)
                         to_remove.append(handle)
@@ -337,9 +299,7 @@ def multiple_runs(args: MultipleArgs):
                 dirty = True
                 handles.remove(handle)
             time.sleep(0.1)  # Avoid busy waiting
-    if results_file is not None:
-        results_file.close()
-        logging.info(f"Results written to {args.output_filename}")
+    logging.info(f"Results written to {results_filename}")
     return results
 
 
@@ -347,7 +307,7 @@ def main():
     dotenv.load_dotenv()
     multiple_runs(
         MultipleArgs(
-            "dqn",
+            "ppo",
             "examples/csp/testing-500.txt",
             "r2",
             n_jobs=8,
@@ -355,23 +315,28 @@ def main():
             n_repeats=10,
             require_gpu=True,
             training=True,
-            # logdir="logs/ppo-csp500",
-            # args={
-            #     "learningRate": 1e-4,
-            #     "lrCritic": 1e-4,
-            #     "batchSize": 16,
-            #     "memorySize": 92,
-            #     "c1Start": 0.5,
-            #     "c1End": 0.5,
-            #     "c2Start": 0.01,
-            #     "c2End": 0.01,
-            #     "nEpochs": 20,
-            # },
+            logdir="logs/test-ppo-bug-2",
+            args={
+                "learningRate": 1e-4,
+                "lrCritic": 1e-4,
+                "batchSize": 16,
+                "memorySize": 92,
+                "c1Start": 0.5,
+                "c1End": 0.5,
+                "c2Start": 0.01,
+                "c2End": 0.01,
+                "nEpochs": 20,
+            },
         )
     )
 
 
 def ask_recompile_with_countdown() -> bool:
+    # Check if input is available
+    if not sys.stdin.isatty():
+        print("No interactive input available, assuming 'yes' to recompile.")
+        return True
+
     def get_input(result):
         try:
             result.append(input().strip().lower())

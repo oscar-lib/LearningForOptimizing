@@ -8,7 +8,7 @@ from optimenv import Observation
 
 class Algo(ABC):
     @abstractmethod
-    def select_action(self, obs: Observation) -> tuple[int, np.ndarray]:
+    def select_action(self, obs: Observation) -> tuple[int, dict[str, float]]:
         """
         Select an action given an observation.
 

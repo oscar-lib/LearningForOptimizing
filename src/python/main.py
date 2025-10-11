@@ -123,7 +123,7 @@ def main(args: Args):
     dotenv.load_dotenv()
     logging.basicConfig(
         level=os.getenv("LOG_LEVEL", "INFO").upper(),
-        format="%(asctime)s - %(process)d - %(levelname)s - %(message)s",
+        format="%(asctime)s - %(process)d - %(levelname)s - %(filename)s - %(message)s",
         handlers=[logging.StreamHandler(), logging.FileHandler(f"{args.logdir}/output-{args.seed}.log")],
     )
     logging.info(f"Starting the runner with arguments {args}:")

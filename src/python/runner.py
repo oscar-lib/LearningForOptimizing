@@ -21,17 +21,18 @@ def run_episode(t_start: datetime, t: int, agent: Algo, env: OptimEnv, logger: C
         obs = env.reset()
         while True:
             t += 1
-            action, action_data = agent.select_action(obs)
-            logs = {"action": action, **{f"action-{i}": x for i, x in enumerate(action_data)}}
+            action, logs = agent.select_action(obs)
+            logs["action"] = action
             next_obs, reward, new_obj = env.step(action)
-            logs = logs | {"reward": reward, "obj": new_obj}
+            logs["reward"] = reward
+            logs["newObj"] = new_obj
             if train:
                 seconds_elapsed = (datetime.now() - t_start).seconds
                 logs = logs | agent.learn(t, seconds_elapsed, obs, action, reward, next_obs, new_obj)
             logger.log(logs, t)
             obs = next_obs
     except EpisodeEndException:
-        logging.info(f"Episode ended at timestamp {datetime.timestamp(datetime.now())}")
+        logging.info(f"Episode ended at timestamp {datetime.timestamp(datetime.now())} (step {t})")
         if train:
             agent.notify_episode_end()
     return t
@@ -54,7 +55,6 @@ def do_run(agent: Algo, env: OptimEnv, logger: CSVLogger, train: bool):
             logger.log(logs, t)
             obs = next_obs
         except EpisodeEndException:
-            logging.debug("Episode ended")
             if train:
                 agent.notify_episode_end()
             obs = env.reset()

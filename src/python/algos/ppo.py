@@ -91,9 +91,13 @@ class PPO(Algo):
             data = obs.data
         with torch.no_grad():
             distribution = self.actor_critic.policy(data)
-            logits = distribution.logits
+            value = self.actor_critic.value(data).item()
+            logs = {
+                "value": value,
+                **{f"logits-{i}": logit for i, logit in enumerate(distribution.logits.squeeze(0).tolist())},
+            }
             action = distribution.sample().squeeze(0).item()
-        return int(action), logits.cpu().numpy(force=True)
+        return int(action), logs
 
     def _compute_training_data(self, batch: Batch) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Compute the returns, advantages and action log_probs according to the current policy"""

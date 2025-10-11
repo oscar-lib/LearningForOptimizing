@@ -53,7 +53,9 @@ class StatefulCombinator(
     if (this.nTabu == this.nNeighbors) {
       return None
     }
+    println("Asking action")
     val action = this.bridge.askAction(this.model, this.authorizedNeighborhood)
+    println("Action returned: " + action)
     Some(this.neighborhoods(action))
   }
 
@@ -64,7 +66,9 @@ class StatefulCombinator(
     val newObj         = this.objective.value
     val reward         = this.rewardModel(this.prevObjective, newObj)
     val transformedObj = this.rewardModel.transformObjective(newObj)
+    println("Sending reward: " + reward + " transformed obj: " + transformedObj)
     this.bridge.sendReward(reward, transformedObj)
+    println("Reward sent")
     this.prevObjective = newObj
     this.justReset = false
   }
@@ -73,6 +77,7 @@ class StatefulCombinator(
     if (this.justReset) {
       return
     }
+    println("Resetting")
     this.bridge.sendEpisodeEnded()
     this.justReset = true
     super.reset()
