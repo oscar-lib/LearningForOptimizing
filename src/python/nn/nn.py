@@ -1,4 +1,3 @@
-from collections.abc import Iterator
 import math
 from abc import ABC, abstractmethod
 from typing import Sequence
