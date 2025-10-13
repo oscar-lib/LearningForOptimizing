@@ -24,8 +24,8 @@
             "r2": " --learningRate 0.00067 --epsilonStart 0.88 --epsilonEnd 0.13 --epsilonNSecs 415 --epsilonDecay exponential --memorySize 21000 --batchSize 192 --clipping 27.1"
         },
         "ppo": {
-            "r2": "--c1Start=0.34 --c1End=0.06 --c2Start=0.39 --c2End=0.2 --memorySize=1015 --lrActor=0.0018103176507973232 --lrCritic=0.0007315462310749335 --batchSize=15 --clipping=11.799185331865313 --epsilonNSecs=196 --c2NSecs=431 --nEpochs=65",
-            "r2-second-best": "--c1Start=0.33 --c1End=0.88 --c2Start=0.8 --c2End=0.39 --memorySize=830 --lrActor=0.003876727876721317 --lrCritic=0.0006688476891159103 --batchSize=145 --clipping=19.286062313142338 --epsilonNSecs=146 --c2NSecs=721 --nEpochs=68"
+            "r2": "--c1Start=0.34 --c1End=0.06 --c2Start=0.39 --c2End=0.2 --memorySize=1015 --learningRate=0.0018103176507973232 --lrCritic=0.0007315462310749335 --batchSize=15 --clipping=11.799185331865313 --epsilonNSecs=196 --c2NSecs=431 --nEpochs=65",
+            "r2-second-best": "--c1Start=0.33 --c1End=0.88 --c2Start=0.8 --c2End=0.39 --memorySize=830 --learningRate=0.003876727876721317 --lrCritic=0.0006688476891159103 --batchSize=145 --clipping=19.286062313142338 --epsilonNSecs=146 --c2NSecs=721 --nEpochs=68"
         },
         "dqn-no-target-300": {
             "r2": "--epsilonStart 0.9186349606719535 --epsilonEnd 0.45 --learningRate 0.00036915549077037093 --batchSize 160 --clipping 7.042093096642138 --memorySize 83000 --epsilonNSecs 250"

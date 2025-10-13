@@ -53,7 +53,7 @@ class SingleArgs:
         timeout: int = 300,
         seed: int = 0,
         training: bool = True,
-        args: Optional[dict[str, Any]] = None,
+        args: dict[str, Any] | str | None = None,
         logdir: Optional[str] = None,
     ):
         self.bandit = bandit
@@ -64,13 +64,18 @@ class SingleArgs:
         self.device = device
         self.logdir = logdir
         self.training = training
-        if args is None:
-            try:
-                args_str = BEST_PARAMS[self.problem][self.bandit][self.reward]
-            except KeyError:
-                raise KeyError(f"No arguments provided and there is no BEST_PARAMS for {self.problem}, {self.bandit}, {self.reward}")
-        else:
-            args_str = dict2arg(args)
+        match args:
+            case None:
+                try:
+                    args_str = BEST_PARAMS[self.problem][self.bandit][self.reward]
+                except KeyError:
+                    raise KeyError(f"No arguments provided and there is no BEST_PARAMS for {self.problem}, {self.bandit}, {self.reward}")
+            case str():
+                args_str = args
+            case dict():
+                args_str = dict2arg(args)
+            case other:
+                raise ValueError(f"Invalid type for args: {type(other)}")
         self.args = args_str
 
     @property
@@ -108,7 +113,7 @@ class MultipleArgs:
     seed: int
     training: bool
     instance_filenames: list[str]
-    args: Optional[dict[str, Any]]
+    args: dict[str, Any] | str | None
     _require_gpu: bool
     logdir: str
 
@@ -123,7 +128,7 @@ class MultipleArgs:
         timeout: int = 300,
         seed: int = 0,
         training: bool = True,
-        args: Optional[dict[str, Any]] = None,
+        args: dict[str, Any] | str | None = None,
         require_gpu: bool = True,
     ):
         logdir_is_none = logdir is None
@@ -246,12 +251,12 @@ def single_run(args: SingleArgs):
     result_dict = gather_results(process.stdout)
     logging.info(f"{args.as_csv()},{result_dict}")
     return Result(
-        metrics=result_dict,
         bandit=args.bandit,
         instance=args.problem_path,
         reward=args.reward,
         timeout=args.timeout,
         seed=args.seed,
+        **result_dict,
     )
 
 
@@ -264,11 +269,14 @@ def multiple_runs(args: MultipleArgs):
     os.makedirs(args.logdir, exist_ok=True)
     results_filename = os.path.join(args.logdir, "results.csv")
     if os.path.exists(results_filename):
-        mode = "a"
         with open(results_filename, "r") as f:
             first_line = f.readline().strip()
-            assert first_line.startswith("bandit,instance,reward,timeout,seed")  # Basic check for column names
-            csv_columns = first_line.split(",")
+            if len(first_line.strip()) == 0:
+                mode = "w"
+            else:
+                mode = "a"
+                assert first_line.startswith("bandit,instance,reward,timeout,seed")  # Basic check for column names
+                csv_columns = first_line.split(",")
     else:
         mode = "w"
 
@@ -305,36 +313,37 @@ def multiple_runs(args: MultipleArgs):
 
 def main():
     dotenv.load_dotenv()
-    multiple_runs(
-        MultipleArgs(
-            "ppo",
-            "examples/csp/testing-500.txt",
-            "r2",
-            n_jobs=8,
-            timeout=900,
-            n_repeats=10,
-            require_gpu=True,
-            training=True,
-            logdir="logs/test-ppo-bug-2",
-            args={
-                "learningRate": 1e-4,
-                "lrCritic": 1e-4,
-                "batchSize": 16,
-                "memorySize": 92,
-                "c1Start": 0.5,
-                "c1End": 0.5,
-                "c2Start": 0.01,
-                "c2End": 0.01,
-                "nEpochs": 20,
-            },
+    for bandit in ("ucb", "epsilongreedy", "ppo"):
+        if bandit == "ppo":
+            logdir = "logs/ppo-second-best-csp500"
+            require_gpu = True
+            n_jobs = 8
+            args = BEST_PARAMS["csp"]["ppo"]["r2-second-best"]
+        else:
+            logdir = f"logs/{bandit}-csp500"
+            require_gpu = False
+            n_jobs = 24
+            args = None
+
+        multiple_runs(
+            MultipleArgs(
+                bandit,
+                "examples/csp/testing-500.txt",
+                "r2",
+                n_jobs=n_jobs,
+                timeout=900,
+                n_repeats=10,
+                require_gpu=require_gpu,
+                logdir=logdir,
+                args=args,
+            )
         )
-    )
 
 
 def ask_recompile_with_countdown() -> bool:
     # Check if input is available
     if not sys.stdin.isatty():
-        print("No interactive input available, assuming 'yes' to recompile.")
+        print("No interactive input available, recompiling.")
         return True
 
     def get_input(result):
@@ -354,8 +363,6 @@ def ask_recompile_with_countdown() -> bool:
         input_thread.join(timeout=1)
         if not input_thread.is_alive():
             break
-    sys.stdout.write("\r[0s]\tDo you want to recompile? (y/n) ")
-    sys.stdout.flush()
     print()  # Move to next line after countdown
     if len(result) == 0:
         print("No input within 3 seconds received, assuming 'yes'.")

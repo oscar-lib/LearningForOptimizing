@@ -1,6 +1,5 @@
-from dataclasses import dataclass
 from functools import cached_property
-from typing import Literal
+from typing import Any, Literal
 
 import polars as pl
 
@@ -10,7 +9,6 @@ from .obj_over_time import ObjOverTime
 UNROUTED_NODE_PENALTY = 1000000000
 
 
-@dataclass
 class Result:
     metrics: dict
     bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"]
@@ -18,6 +16,22 @@ class Result:
     reward: Literal["r1", "r2", "r3"]
     timeout: int
     seed: int
+
+    def __init__(
+        self,
+        bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"],
+        instance: str,
+        reward: Literal["r1", "r2", "r3"],
+        timeout: int,
+        seed: int,
+        **metrics: Any,
+    ):
+        self.bandit = bandit
+        self.instance = instance
+        self.reward = reward
+        self.timeout = timeout
+        self.seed = seed
+        self.metrics = metrics
 
     def get_columns(self):
         return [
