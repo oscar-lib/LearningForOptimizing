@@ -46,6 +46,10 @@ class Message(header: Header, body: Array[Byte]) {
     return body
   }
 
+  def stringBody(): String = {
+    return new String(this.body(), "UTF-8")
+  }
+
   def msgType(): MessageType.Value = {
     return header.msgType()
   }

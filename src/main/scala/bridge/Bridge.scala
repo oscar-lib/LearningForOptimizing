@@ -116,8 +116,7 @@ abstract class Bridge(args: SolverInput) {
     // this.output.write(msg.toBytes())
     val resp = this.recv()
     if (resp.msgType() != MessageType.ACK) {
-      println(resp.header(), resp.body())
-      throw new Exception("Failed to send static problem data")
+      throw new Exception(f"Failed to send static problem data: ${resp.stringBody()}")
     }
   }
 
@@ -125,7 +124,7 @@ abstract class Bridge(args: SolverInput) {
     this.sendActionData(problem, availabeActions)
     val response = this.recv()
     if (response.msgType() != MessageType.INFERENCE_RSP) {
-      throw new Exception("Failed to get inference response")
+      throw new Exception(f"Failed to get inference response: ${response.stringBody()}")
     }
     val body   = response.body()
     val action = ByteBuffer.wrap(body).order(ByteOrder.BIG_ENDIAN).getInt()
