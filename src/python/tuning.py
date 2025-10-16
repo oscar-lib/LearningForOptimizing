@@ -63,7 +63,7 @@ def run(trial: optuna.Trial):
     total = 0.0
     for result in results:
         if not result.is_optimal():
-            total += result.objective(timeout) * result.n_secs_to_best_obj
+            total += result.objective(t=timeout) * result.n_secs_to_best_obj
     return total
 
 

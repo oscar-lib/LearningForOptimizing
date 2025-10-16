@@ -15,6 +15,8 @@ import dotenv
 import orjson
 import torch
 
+GPUS = [0, 1, 2, 3, 4, 5, 6, 7]
+
 
 EXECUTABLE = "java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
 with open("best_params.json", "rb") as f:
@@ -193,7 +195,6 @@ class MultipleArgs:
 
     def single_args(self):
         job_num = 0
-        n_devices = torch.cuda.device_count()
         logdirs = dict[str, str]()
         for seed in range(self.seed, self.seed + self.n_repeats):
             for instance in self.instance_filenames:
@@ -202,10 +203,14 @@ class MultipleArgs:
                     logdirs[instance] = os.path.join(self.logdir, f"{self.problem}-{instance_name}")
 
                 # The first n_jobs runs are given a specific GPU
-                if self._require_gpu and job_num < self.n_jobs:
-                    device = f"cuda:{job_num % n_devices}"
-                elif self._require_gpu:
-                    device = "auto-gpu"
+                if self._require_gpu:
+                    n_devices = torch.cuda.device_count()
+                    if n_devices == 0:
+                        raise RuntimeError("No GPU devices available but require_gpu is set to True")
+                    if job_num < self.n_jobs:
+                        device = f"cuda:{GPUS[job_num % len(GPUS)]}"
+                    else:
+                        device = "auto-gpu"
                 else:
                     device = "auto"
                 yield SingleArgs(
@@ -311,35 +316,6 @@ def multiple_runs(args: MultipleArgs):
     return results
 
 
-def main():
-    dotenv.load_dotenv()
-    for bandit in ("ucb", "epsilongreedy", "ppo"):
-        if bandit == "ppo":
-            logdir = "logs/ppo-second-best-csp500"
-            require_gpu = True
-            n_jobs = 8
-            args = BEST_PARAMS["csp"]["ppo"]["r2-second-best"]
-        else:
-            logdir = f"logs/{bandit}-csp500"
-            require_gpu = False
-            n_jobs = 24
-            args = None
-
-        multiple_runs(
-            MultipleArgs(
-                bandit,
-                "examples/csp/testing-500.txt",
-                "r2",
-                n_jobs=n_jobs,
-                timeout=900,
-                n_repeats=10,
-                require_gpu=require_gpu,
-                logdir=logdir,
-                args=args,
-            )
-        )
-
-
 def ask_recompile_with_countdown() -> bool:
     # Check if input is available
     if not sys.stdin.isatty():
@@ -357,16 +333,32 @@ def ask_recompile_with_countdown() -> bool:
     input_thread.daemon = True
     input_thread.start()
 
-    for i in range(3, 0, -1):
-        sys.stdout.write(f"\r[{i}s]\tDo you want to recompile? (y/n) ")
+    for i in range(30, 0, -1):
+        sys.stdout.write(f"\r[{i / 10:.1f}s]\tDo you want to recompile? (y/n) ")
         sys.stdout.flush()
-        input_thread.join(timeout=1)
+        input_thread.join(timeout=0.1)
         if not input_thread.is_alive():
             break
     print()  # Move to next line after countdown
     if len(result) == 0:
         print("No input within 3 seconds received, assuming 'yes'.")
     return len(result) == 0 or result[0] not in ("n", "")
+
+
+def main():
+    dotenv.load_dotenv()
+    multiple_runs(
+        MultipleArgs(
+            "random",
+            "examples/csp/testing-500.txt",
+            "r2",
+            n_jobs=8,
+            timeout=3600,
+            n_repeats=10,
+            require_gpu=True,
+            logdir="logs/random-csp500-30m_timeout",
+        )
+    )
 
 
 if __name__ == "__main__":

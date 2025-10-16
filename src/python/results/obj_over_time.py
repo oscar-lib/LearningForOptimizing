@@ -1,3 +1,4 @@
+from typing import overload, Optional
 import orjson
 from dataclasses import dataclass
 from functools import cached_property
@@ -9,21 +10,44 @@ class ObjOverTime:
     objectives: list[float]
     steps: list[int]
 
-    def at(self, t: float):
-        assert t >= 0
-        # Dichotomic search across timestamps
-        left, right = 0, len(self.timestamps) - 1
-        if t > self.timestamps[-1]:
+    @overload
+    def at(self, *, step: int) -> float: ...
+
+    @overload
+    def at(self, *, t: float) -> float: ...
+
+    def at(self, *, t: Optional[float] = None, step: Optional[int] = None) -> float:
+        match (t, step):
+            case (None, None):
+                raise ValueError("Either t or step must be provided")
+            case (float(), int()):
+                raise ValueError("Only one of t or step must be provided")
+            case (None, int(step)):
+                target = step
+                values = self.steps
+            case (float(t), None) | (int(t), None):
+                target = t
+                values = self.timestamps
+            case other:
+                raise ValueError(f"Unexpected case: {other}")
+        if target <= values[0]:
+            return self.objectives[0]
+        if target >= values[-1]:
             return self.objectives[-1]
-        while left < right:
-            idx = (left + right) // 2
-            if self.timestamps[idx] == t:
-                return self.objectives[idx]
-            if self.timestamps[idx] < t:
+        # Dichotomic search across steps or timestamps
+        left, right = 1, len(values) - 1
+        idx = (left + right) // 2
+        while not (values[idx] > target and values[idx - 1] <= target):
+            if target >= values[idx]:
+                # If the target is greater than the value at idx,
+                # then the lower bound is increased to the next index
                 left = idx + 1
             else:
-                right = idx - 1
-        return self.objectives[idx]
+                # If the target is lower, idx could be the first index greater than target,
+                # so we set the upper bound to idx rather than idx - 1.
+                right = idx
+            idx = (left + right) // 2
+        return self.objectives[idx - 1]
 
     @staticmethod
     def parse(sol_over_time: str):
