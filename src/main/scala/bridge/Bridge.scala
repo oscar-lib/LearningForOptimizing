@@ -68,30 +68,36 @@ abstract class Bridge(args: SolverInput) {
     command :+= pythonSrcDirectory.resolve("main.py").toString
     command :+= f"-a=${this.args.bandit}"
     command :+= f"--device=${this.args.device}"
-    command :+= f"--epsilon-start=${this.args.epsilonStart}"
-    command :+= f"--epsilon-end=${this.args.epsilonEnd}"
-    command :+= f"--epsilon-n-secs=${this.args.epsilonNSecs}"
-    command :+= f"--epsilon-decay=${this.args.epsilonDecay}"
+    if (this.args.bandit == RLAlgorithm.DQN.toString) {
+      command :+= f"--epsilon-start=${this.args.epsilonStart}"
+      command :+= f"--epsilon-end=${this.args.epsilonEnd}"
+      command :+= f"--epsilon-n-secs=${this.args.epsilonNSecs}"
+      command :+= f"--epsilon-decay=${this.args.epsilonDecay}"
+      if (this.args.noTarget) {
+        command :+= f"--no-target"
+      }
+      if (this.args.ddqn) {
+        command :+= f"--ddqn"
+      }
+    } else if (this.args.bandit == RLAlgorithm.PPO.toString) {
+      command :+= f"--c1-start=${this.args.c1Start}"
+      command :+= f"--c1-end=${this.args.c1End}"
+      command :+= f"--c1-n-secs=${this.args.c1NSecs}"
+      command :+= f"--c2-start=${this.args.c2Start}"
+      command :+= f"--c2-end=${this.args.c2End}"
+      command :+= f"--c2-n-secs=${this.args.c2NSecs}"
+      command :+= f"--n-epochs=${this.args.nEpochs}"
+      command :+= f"--lr-critic=${this.args.lrCritic}"
+    } else {
+      throw new Exception(f"Unsupported RL algorithm: ${this.args.bandit}")
+    }
+
     command :+= f"--clipping=${this.args.clipping}"
     command :+= f"--batch-size=${this.args.batchSize}"
     command :+= f"--seed=${this.args.seed}"
     command :+= "--disable-training-logs"
     command :+= f"--memory-size=${this.args.memorySize}"
     command :+= f"--lr=${this.args.learningRate}"
-    command :+= f"--c1-start=${this.args.c1Start}"
-    command :+= f"--c1-end=${this.args.c1End}"
-    command :+= f"--c1-n-secs=${this.args.c1NSecs}"
-    command :+= f"--c2-start=${this.args.c2Start}"
-    command :+= f"--c2-end=${this.args.c2End}"
-    command :+= f"--c2-n-secs=${this.args.c2NSecs}"
-    command :+= f"--n-epochs=${this.args.nEpochs}"
-    command :+= f"--lr-critic=${this.args.lrCritic}"
-    if (this.args.noTarget) {
-      command :+= f"--no-target"
-    }
-    if (this.args.ddqn) {
-      command :+= f"--ddqn"
-    }
     if (this.args.loadFrom.isDefined) {
       command :+= f"--load-from=${this.args.loadFrom.get}"
     }

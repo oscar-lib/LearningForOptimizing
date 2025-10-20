@@ -15,7 +15,8 @@ import dotenv
 import orjson
 import torch
 
-GPUS = [0, 1, 2, 3, 4, 5, 6, 7]
+GPUS = list(range(torch.cuda.device_count()))
+GPUS.remove(2)
 
 
 EXECUTABLE = "java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
@@ -347,16 +348,19 @@ def ask_recompile_with_countdown() -> bool:
 
 def main():
     dotenv.load_dotenv()
+    bandit = "ppo"
+    n_jobs = 7
+    require_gpu = True
     multiple_runs(
         MultipleArgs(
-            "random",
+            bandit,
             "examples/csp/testing-500.txt",
             "r2",
-            n_jobs=8,
-            timeout=3600,
+            n_jobs=n_jobs,
+            timeout=7200,
             n_repeats=10,
-            require_gpu=True,
-            logdir="logs/random-csp500-30m_timeout",
+            require_gpu=require_gpu,
+            logdir=f"logs/{bandit}-csp500-2h-bis",
         )
     )
 
