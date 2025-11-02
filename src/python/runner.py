@@ -52,8 +52,8 @@ def run(args: "Args"):
     stop = False
     while not stop:
         logging.info("Waiting for a new connection")
+        bridge = args.make_bridge()
         try:
-            bridge = args.make_bridge()
             new_problem = _retrieve_problem_data(bridge, args.device)
             if problem is None:
                 problem = new_problem
@@ -74,6 +74,7 @@ def run(args: "Args"):
             stop = True
         except Exception as e:
             logging.error(f"An unexpected error occurred: {e}", exc_info=True)
+            bridge.send(Message.error(f"Python error: {e}").to_bytes())
             stop = True
         finally:
             if agent is not None and args.save_to is not None:

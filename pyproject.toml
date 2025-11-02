@@ -21,6 +21,7 @@ dependencies = [
     "pyinstrument>=5.1.1",
     "multi-agent-rlenv>=3.6.3",
     "altair>=5.5.0",
+    "seaborn>=0.13.2",
 ]
 
 
