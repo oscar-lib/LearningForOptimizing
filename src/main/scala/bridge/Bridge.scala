@@ -35,26 +35,23 @@ abstract class Bridge(args: SolverInput) {
   def send(msg: Message): Unit
   def completeCommand(command: Array[String]): Array[String]
 
-  val process = this.startSubprocess(false)
+  val process = this.startSubprocess()
 
-  def startSubprocess(withHeartbeat: Boolean): Option[Process] = {
+  def startSubprocess(): Option[Process] = {
     if (!args.debug) {
       val command = this.makeCommand()
       val pb      = new ProcessBuilder(command: _*)
       println(String.join(" ", pb.command()))
       val process = pb.start()
-      if (withHeartbeat) {
-        println("Waiting 5 seconds for the process to start...")
-        for (i <- 0 until 5) {
-          print(f"Heartbeat ${i + 1}/5...")
-          process.waitFor(1, java.util.concurrent.TimeUnit.SECONDS)
-          if (!process.isAlive) {
-            val msg = process.getErrorStream().readAllBytes().map(_.toChar).mkString
-            throw new Exception(f"Python process did not start correctly: $msg")
-          }
-          println(" OK")
+      println("Waiting 5 seconds for the process to start...")
+      for (i <- 0 until 5) {
+        print(f"Heartbeat ${i + 1}/5...")
+        process.waitFor(1, java.util.concurrent.TimeUnit.SECONDS)
+        if (!process.isAlive) {
+          val msg = process.getErrorStream().readAllBytes().map(_.toChar).mkString
+          throw new Exception(f"Python process did not start correctly: $msg")
         }
-        println("Python process successfully started.")
+        println(" alive")
       }
       Some(process)
     } else None

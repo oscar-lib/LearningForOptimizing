@@ -5,62 +5,18 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "torch>=2.4.0",
-    "numpy>=2.1.0",
-    "python-dotenv>=1.0",
-    "torch-geometric>=2.5.3",
-    "sumtree>=0.2.7",
-    "typed-argparse>=0.3.1",
-    "polars>=1.6.0",
-    "matplotlib>=3.9.2",
-    "jupyterlab>=4.2.5",
-    "orjson>=3.10.18",
-    "pyarrow>=20.0.0",
-    "optuna>=4.4.0",
-    "optuna-dashboard>=0.19.0",
-    "pyinstrument>=5.1.1",
+    "jupyterlab>=4.4.10",
+    "matplotlib>=3.10.7",
     "multi-agent-rlenv>=3.6.3",
-    "altair>=5.5.0",
+    "numpy>=2.3.4",
+    "optuna>=4.5.0",
+    "optuna-dashboard>=0.19.0",
+    "orjson>=3.11.4",
+    "polars>=1.35.1",
+    "pyarrow>=22.0.0",
+    "python-dotenv>=1.2.1",
     "seaborn>=0.13.2",
-]
-
-
-[project.optional-dependencies]
-torch = ["torch>=2.6.0"]
-torch-cpu = ["torch>=2.6.0"]
-torch-cu118 = ["torch>=2.6.0"]
-torch-cu124 = ["torch>=2.6.0"]
-
-
-[[tool.uv.index]]
-name = "torch-cpu"
-url = "https://download.pytorch.org/whl/cpu"
-explicit = true
-
-[[tool.uv.index]]
-name = "torch-cu118"
-url = "https://download.pytorch.org/whl/cu118"
-explicit = true
-
-[[tool.uv.index]]
-name = "torch-cu124"
-url = "https://download.pytorch.org/whl/cu124"
-explicit = true
-
-[tool.uv]
-conflicts = [
-    [
-        { extra = "torch-cpu" },
-        { extra = "torch-cu124" },
-        { extra = "torch-cu118" },
-    ],
-]
-dev-dependencies = ["pytest>=8.3.2"]
-
-
-[tool.uv.sources]
-torch = [
-    { index = "torch-cpu", extra = "torch-cpu" },
-    { index = "torch-cu118", extra = "torch-cu118" },
-    { index = "torch-cu124", extra = "torch-cu124" },
+    "torch==2.7",
+    "torch-geometric>=2.7.0",
+    "typed-argparse>=0.3.1",
 ]

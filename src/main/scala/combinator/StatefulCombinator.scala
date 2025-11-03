@@ -32,7 +32,7 @@ class StatefulCombinator(
       learningScheme = AfterEveryMove, // Not used
       seed = args.seed,                // Not used
       rewardModel = rewardModel,
-      learningRate = 0.0 // Not used
+      learningRate = 0.0 // Not used,
     ) {
 
   private val nActions = neighborhoods.length

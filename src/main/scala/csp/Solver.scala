@@ -100,7 +100,7 @@ case class Solver(cspModel: Model, in: SolverInput) {
 
     var search: Neighborhood = {
       banditNeighborhood match {
-        case BanditCombinator(_, _, _, _, _, _, _, _) => banditNeighborhood
+        case BanditCombinator(_, _, _, _, _, _, _, _, _) => banditNeighborhood
         case _ =>
           banditNeighborhood
             .onExhaustRestartAfter(

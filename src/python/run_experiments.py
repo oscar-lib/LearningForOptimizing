@@ -10,13 +10,14 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal, Optional
 from results import Result
+from datetime import datetime
 
 import dotenv
 import orjson
 import torch
 
 GPUS = list(range(torch.cuda.device_count()))
-GPUS.remove(2)
+# GPUS.remove(2)
 
 
 EXECUTABLE = "java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
@@ -270,7 +271,6 @@ def multiple_runs(args: MultipleArgs):
     if args._require_gpu and torch.cuda.device_count() == 0:
         logging.error("No GPU devices found for multiple runs. Exiting.")
         exit()
-    results = list[Result]()
     csv_columns = None
     os.makedirs(args.logdir, exist_ok=True)
     results_filename = os.path.join(args.logdir, "results.csv")
@@ -285,14 +285,21 @@ def multiple_runs(args: MultipleArgs):
                 csv_columns = first_line.split(",")
     else:
         mode = "w"
-
+    results = list[Result]()
     with mp.Pool(args.n_jobs) as pool, open(results_filename, mode) as results_file:
+        start = datetime.now()
         handles = [pool.apply_async(single_run, (single_args,)) for single_args in args.single_args()]
+        total = len(handles)
         # Collect the results as they become available
         dirty = True
         while len(handles) > 0:
             if dirty:
-                logging.info(f"Waiting for {len(handles)} results...")
+                if len(results) > 0:
+                    avg_time = (datetime.now() - start) / len(results)
+                    remaining = len(handles) * avg_time
+                else:
+                    remaining = "?"
+                logging.info(f"Waiting for {len(handles)}/{total} results... Estimated time remaining: {remaining}")
                 dirty = False
             to_remove = []
             for handle in handles:
@@ -348,19 +355,16 @@ def ask_recompile_with_countdown() -> bool:
 
 def main():
     dotenv.load_dotenv()
-    bandit = "ppo"
-    n_jobs = 7
-    require_gpu = True
     multiple_runs(
         MultipleArgs(
-            bandit,
-            "examples/csp/testing-500.txt",
+            "ppo",
+            "examples/csp/testingall.txt",
             "r2",
-            n_jobs=n_jobs,
-            timeout=7200,
-            n_repeats=10,
-            require_gpu=require_gpu,
-            logdir=f"logs/{bandit}-csp500-2h-bis",
+            n_jobs=2 * len(GPUS),
+            timeout=5400,
+            n_repeats=30,
+            require_gpu=True,
+            logdir="logs/ppo-csp_all-1h30",
         )
     )
 

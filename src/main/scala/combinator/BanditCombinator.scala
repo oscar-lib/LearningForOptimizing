@@ -42,7 +42,8 @@ case class BanditCombinator(
   computeReward: Array[NeighborhoodStatistics] => Array[Double],
   ignoreFst: Boolean = true,
   afterMove: Boolean = false,
-  rollingAverage: Boolean = false
+  rollingAverage: Boolean = false,
+  seed: Int = 3000
 ) extends AbstractLearningCombinator("BanditCombinator", l: _*) {
 
   private val nbNeigh: Int = l.length
@@ -54,7 +55,7 @@ case class BanditCombinator(
   private val neighProbability: Array[Double]         = Array.fill(nbNeigh)(1d / nbNeigh)
   // private val shortTermNeighProbability : Array[Double] = Array.tabulate(nbNeigh)(i => longTermNeighProbability(i))
 
-  private val rand                                   = new Random(3000)
+  private val rand                                   = new Random(seed)
   private val authorizedNeighborhood: Array[Boolean] = Array.fill(nbNeigh)(true)
   private var nbAvailableNeigh                       = nbNeigh
   private var totalCurrentNeighWeight: Double        = 1
