@@ -77,11 +77,6 @@ case class Solver(cspModel: Model, in: SolverInput) {
     val banditNeighborhood: Neighborhood = in.bandit.toLowerCase() match {
       case "epsilongreedy" => new EpsilonGreedyBanditNew(neighList, in, rewardModel)
       case "dqn" | "ppo" =>
-        val algo = if (in.bandit == "dqn") {
-          RLAlgorithm.DQN
-        } else {
-          RLAlgorithm.PPO
-        }
         new StatefulCombinator(
           neighList,
           cspModel,
