@@ -9,8 +9,7 @@ import time
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal, Optional
-from results import Result
-from datetime import datetime
+from results import Result, Bandit
 
 import dotenv
 import orjson
@@ -38,7 +37,7 @@ def dict2arg(d: dict[str, Any]) -> str:
 
 @dataclass
 class SingleArgs:
-    bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"]
+    bandit: Bandit
     problem_path: str
     reward: Literal["r1", "r2", "r3"]
     args: str
@@ -50,7 +49,7 @@ class SingleArgs:
 
     def __init__(
         self,
-        bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"],
+        bandit: Bandit,
         problem_path: str,
         reward: Literal["r1", "r2", "r3"],
         device: str = "auto",
@@ -108,7 +107,7 @@ class SingleArgs:
 
 @dataclass
 class MultipleArgs:
-    bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"]
+    bandit: Bandit
     problems_file: str
     reward: Literal["r1", "r2", "r3"]
     n_jobs: int
@@ -123,7 +122,7 @@ class MultipleArgs:
 
     def __init__(
         self,
-        bandit: Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300"],
+        bandit: Bandit,
         problems_file: Literal["csp", "tsp", "pdptw"] | str,
         reward: Literal["r1", "r2", "r3"],
         logdir: Optional[str] = None,
@@ -357,14 +356,16 @@ def main():
     dotenv.load_dotenv()
     multiple_runs(
         MultipleArgs(
-            "ppo",
+            "bestslopefirst",
             "examples/csp/testingall.txt",
             "r2",
-            n_jobs=2 * len(GPUS),
+            n_jobs=32,
             timeout=5400,
-            n_repeats=30,
+            n_repeats=20,
             require_gpu=True,
-            logdir="logs/ppo-csp_all-1h30",
+            seed=0,
+            logdir="logs/bestslopefirst-csp_all-1h30",
+            args="",
         )
     )
 

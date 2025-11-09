@@ -49,7 +49,7 @@ class UCBNew(neighborhoods: List[Neighborhood], in: SolverInput, rewardModel: Re
       val ucbIdx =
         if (nSelected(idx) == 0) Double.MinValue // should not happen due to initialization above
         else
-          weights(idx) / nSelected(idx) + wConf * math.sqrt(2 * math.log(t) / nSelected(idx))
+          this.weights(idx) + wConf * math.sqrt(2 * math.log(t) / nSelected(idx))
       if (ucbIdx == maxUcb) {
         neigh_idx_max +:= idx
       } else if (ucbIdx > maxUcb) {
