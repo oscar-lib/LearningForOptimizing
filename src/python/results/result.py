@@ -86,7 +86,8 @@ class Result:
 
     @cached_property
     def bks(self) -> float:
-        row = BKS[self.problem].filter(pl.col("instance") == self.instance).select("bks")
+        instance = self.instance.split("/")[-1]
+        row = BKS[self.problem].filter(pl.col("instance").str.ends_with(instance)).select("bks")
         if row.is_empty():
             return 0.0
         return row.item()
@@ -137,11 +138,11 @@ class Result:
         return self.oot.last == self.bks
 
     @property
-    def t_max(self) -> float:
+    def t_max(self):
         return self.oot.timestamps[-1]
 
     @property
-    def step_max(self) -> int:
+    def step_max(self):
         return self.oot.steps[-1]
 
     def feasible_array(self, by: Literal["time", "step"], tmax: Optional[int] = None):

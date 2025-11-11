@@ -1,26 +1,23 @@
 # creates a subplot of gap over time for each problem and each agent
 import bisect
-import os
-
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.mlab as mlab
 import re
-from collections import defaultdict
-
 from matplotlib.ticker import MaxNLocator
 
 TIMEOUT = 900.0
 SHOW_STD = False
 
-plt.rcParams.update({
-    'text.usetex': True,
-    'font.family': 'serif',
-    #'font.serif': ['Latin Modern Roman'],  # Replace with the specific font used in your beamer poster
-    #'font.sans-serif': ['Latin Modern Sans'],
-    'font.size': 10,  # in beamer
-})
+plt.rcParams.update(
+    {
+        "text.usetex": True,
+        "font.family": "serif",
+        #'font.serif': ['Latin Modern Roman'],  # Replace with the specific font used in your beamer poster
+        #'font.sans-serif': ['Latin Modern Sans'],
+        "font.size": 10,  # in beamer
+    }
+)
 
 
 def cm_to_inch(cm):
@@ -30,26 +27,16 @@ def cm_to_inch(cm):
     return cm / 2.54
 
 
-ORANGE = '#e69f00'
-BLUE = '#0072b2'
-BLUISH_GREEN = '#009e73'
-VERMILION = '#d55e00'
-REDDISH_PURPLE = '#cc79a7'
-SKY_BLUE = '#56b4e9'
-YELLOW = '#f0e442'
-BLACK = '#000000'
-WHITE = '#ffffff'
-MY_COLORS = [
-    ORANGE,
-    BLUE,
-    BLUISH_GREEN,
-    VERMILION,
-    REDDISH_PURPLE,
-    SKY_BLUE,
-    YELLOW,
-    BLACK,
-    WHITE
-]
+ORANGE = "#e69f00"
+BLUE = "#0072b2"
+BLUISH_GREEN = "#009e73"
+VERMILION = "#d55e00"
+REDDISH_PURPLE = "#cc79a7"
+SKY_BLUE = "#56b4e9"
+YELLOW = "#f0e442"
+BLACK = "#000000"
+WHITE = "#ffffff"
+MY_COLORS = [ORANGE, BLUE, BLUISH_GREEN, VERMILION, REDDISH_PURPLE, SKY_BLUE, YELLOW, BLACK, WHITE]
 
 COLORS_METHOD = {
     "ucb-r1": ORANGE,
@@ -58,7 +45,9 @@ COLORS_METHOD = {
     "epsilongreedy-r2": SKY_BLUE,
     "bestslopefirst": BLACK,
     "random": BLUISH_GREEN,
-    "roundrobin": REDDISH_PURPLE
+    "roundrobin": REDDISH_PURPLE,
+    "dqn-r1": BLUE,
+    "dqn-r3": BLUE,
 }
 
 METHOD_PRETTY_NAMES = {
@@ -76,8 +65,7 @@ trivial_upper_bounds = {}
 
 
 class InstanceData:
-
-    def __init__(self, instance: str, method: str, solution_list: list[(float, int, float)]):
+    def __init__(self, instance: str, method: str, solution_list: list[tuple[float, int, float]]):
         self.instance = instance
         self.method = method
         self.solution_list = solution_list
@@ -95,7 +83,7 @@ class InstanceData:
         times = []
         best = obj_best[self.instance]
         upper_bound = trivial_upper_bounds[self.instance]
-        use_upper_bound = False #"csp" in self.instance or "carseq" in self.instance
+        use_upper_bound = False  # "csp" in self.instance or "carseq" in self.instance
         for sol in self.solution_list:
             if sol[2] == best:
                 percentage = 0.0
@@ -168,7 +156,8 @@ def average_instance_data(instance_data_list: list[InstanceData]) -> InstanceDat
     aggregated.percentages = avg_percentages
     return aggregated
 
-problem_list = ["tsp", "csp", "pdptw"]
+
+problem_list = ("csp",)  # ["tsp", "csp", "pdptw"]
 
 # ICORES template: one column = 7.5cm , 2 columns + margin = 15.8cm
 
@@ -180,11 +169,31 @@ for axi, problem in enumerate(problem_list):
         filename_list = ["results/tsp_baseline.csv", "results/tsp_bandits.csv"]
         colnames = ["instance", "bandit", "reward", "timeout", "unroutedNodes", "travelLength", "solutions", "integralPrimalGap"]
     elif problem == "csp":
-        filename_list = ["results/csp_baseline.csv", "results/csp_bandits.csv"]
+        filename_list = [
+            # "results/csp_baseline.csv",
+            # "results/csp_bandits.csv",
+            "logs/ppo-csp_all-1h30/results.csv",
+            "logs/dqn-csp_all-1h30/results.csv",
+            "logs/random-csp_all-1h30/results.csv",
+            "logs/ucb-csp_all-1h30/results.csv",
+            "logs/egreedy-csp_all-1h30/results.csv",
+            "logs/bestslopefirst-csp_all-1h30/results.csv",
+        ]
         colnames = ["instance", "bandit", "reward", "timeout", "best", "solutions"]
     elif problem == "pdptw":
         filename_list = ["results/pdptw_baseline.csv", "results/pdptw_bandits.csv"]
-        colnames = ["instance", "bandit", "reward", "timeout", "unroutedNodes", "nVehicles", "travelLength", "objective", "integralPrimalGap", "solutions"]
+        colnames = [
+            "instance",
+            "bandit",
+            "reward",
+            "timeout",
+            "unroutedNodes",
+            "nVehicles",
+            "travelLength",
+            "objective",
+            "integralPrimalGap",
+            "solutions",
+        ]
     else:
         raise Exception(f"problem {problem} not recognized")
     df_list = []
@@ -210,9 +219,7 @@ for axi, problem in enumerate(problem_list):
         methods.add(method_name)
         solutions_split = str(row["solutions"]).removesuffix(")]").removeprefix("[(").split(")-(")
         solutions_split = [
-            (float(re.search(pattern_sol, s).group(1)),
-            int(re.search(pattern_sol, s).group(2)),
-            float(re.search(pattern_sol, s).group(3)))
+            (float(re.search(pattern_sol, s).group(1)), int(re.search(pattern_sol, s).group(2)), float(re.search(pattern_sol, s).group(3)))  # type:ignore
             for s in solutions_split
         ]
         worst = solutions_split[0][-1]
@@ -260,23 +267,22 @@ for axi, problem in enumerate(problem_list):
                 new_value = update_data.percentage_at_time(t)
                 assert new_value >= 0.0
                 if new_value > old_value:
-                    #print(f"WARNING: old value = {old_value}")
-                    #print(f"WARNING: new value = {new_value}")
+                    # print(f"WARNING: old value = {old_value}")
+                    # print(f"WARNING: new value = {new_value}")
                     pass
-                #assert new_value <= old_value
+                # assert new_value <= old_value
                 delta = delta - old_value + new_value
                 current_values[update_data.instance] = new_value
             # average over the number of update points performed
-            #assert delta <= 0.0
+            # assert delta <= 0.0
             average = average + delta
             v = np.asarray(list(current_values.values()))
-            new_std = np.std(v)
+            new_std = np.std(v).item()
             std_list.append(new_std)
             average_list.append(average)
 
-
         average_list = [avg / n for avg in average_list]
-        #std_list = [4.0 for _ in average_list]
+        # std_list = [4.0 for _ in average_list]
         methods_values[method] = [all_time_points, average_list, std_list]
 
     # sort methods by final reading
@@ -284,7 +290,7 @@ for axi, problem in enumerate(problem_list):
     final_readings_sorted = list(sorted(final_readings.values()))
     sorted_methods = sorted(list(methods), key=lambda m: methods_values[m][1][-1], reverse=True)
 
-    #fig = plt.figure(figsize=(cm_to_inch(8), cm_to_inch(8)))
+    # fig = plt.figure(figsize=(cm_to_inch(8), cm_to_inch(8)))
     ax = axs[axi]
     ax.set_title(problem.upper())
     for method in sorted_methods:
@@ -305,8 +311,8 @@ for axi, problem in enumerate(problem_list):
     ax.set_xlabel("Time (s)")
     if axi == 0:
         ax.set_ylabel(r"Average primal gap (\%)")
-    ax.spines['top'].set_visible(False)
-    ax.spines['right'].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
     ax.set_xlim([0, TIMEOUT])
     ax.xaxis.set_major_locator(MaxNLocator(nbins=4))  # n well-spaced ticks
 
@@ -315,23 +321,25 @@ for axi, problem in enumerate(problem_list):
         delta_y_scale = 4
         n_best = 10
         y_lim_low = max(final_readings_sorted[0] - delta_y_scale, 0.0)
-        y_lim_high = final_readings_sorted[min(n_best, len(final_readings_sorted)-1)] + delta_y_scale
+        y_lim_high = final_readings_sorted[min(n_best, len(final_readings_sorted) - 1)] + delta_y_scale
         ax.set_ylim(y_lim_low, y_lim_high)
         # Shrink current axis by 75% to put legend box there
-        #box = ax.get_position()
-        #ax.set_position([box.x0, box.y0 + box.height * 0.08, box.width, box.height * 0.67])
-    #if axi == 1:
+        # box = ax.get_position()
+        # ax.set_position([box.x0, box.y0 + box.height * 0.08, box.width, box.height * 0.67])
+    # if axi == 1:
     #    ax.legend(loc='center', bbox_to_anchor=(0.3, 1.3))
     ax.grid(axis="y")
 ax = axs[1]
 handles, labels = ax.get_legend_handles_labels()
-leg = fig.legend(handles, labels,
-                 bbox_to_anchor=(0.5, 1.35), loc='upper center',
-                 ncol=4, handlelength=1.5, columnspacing=1.3, handletextpad=0.6)
+leg = fig.legend(
+    handles, labels, bbox_to_anchor=(0.5, 1.35), loc="upper center", ncol=4, handlelength=1.5, columnspacing=1.3, handletextpad=0.6
+)
 
-plot_filename = f"subplot-gap-over-time.pdf"
-fig.savefig(plot_filename,
-            bbox_inches='tight',
-            bbox_extra_artists=(leg,),   # helps some backends include the legend
-            pad_inches=0.05)
+plot_filename = "subplot-gap-over-time.pdf"
+fig.savefig(
+    plot_filename,
+    bbox_inches="tight",
+    bbox_extra_artists=(leg,),  # helps some backends include the legend
+    pad_inches=0.05,
+)
 print(f"figure saved to {plot_filename}")

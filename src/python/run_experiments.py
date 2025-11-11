@@ -163,7 +163,7 @@ class MultipleArgs:
         self._write_config()
 
     def _write_config(self):
-        IGNORED_KEYS = ("require_gpu", "n_repeats", "seed")
+        IGNORED_KEYS = ("require_gpu", "n_repeats", "seed", "n_jobs")
         config_path = os.path.join(self.logdir, "config.json")
         self_config_str = orjson.dumps(self)
         self_config: dict = orjson.loads(self_config_str)
@@ -368,6 +368,32 @@ def main():
             args="",
         )
     )
+    multiple_runs(
+        MultipleArgs(
+            "dqn",
+            "examples/pdptw/testingall.txt",
+            "r3",
+            n_jobs=5,
+            timeout=900,
+            n_repeats=10,
+            seed=0,
+            require_gpu=True,
+            logdir="logs/dqn-pdptw_all-15m",
+        )
+    )
+    for algo in ("random", "epsilongreedy", "ucb"):
+        multiple_runs(
+            MultipleArgs(
+                algo,
+                "examples/pdptw/testingall.txt",
+                "r3",
+                n_jobs=8,
+                timeout=900,
+                n_repeats=10,
+                require_gpu=False,
+                logdir=f"logs/{algo}-pdptw_all-15m",
+            )
+        )
 
 
 if __name__ == "__main__":

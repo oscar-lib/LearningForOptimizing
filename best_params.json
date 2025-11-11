@@ -63,6 +63,9 @@
         "dqn": {
             "r1": "--learningRate 0.002  --batchSize 17 --epsilon 0.38 --clipping 30",
             "r3": "--learningRate 0.0001 --batchSize 236 --epsilon 0.03 --ddqn --clipping=0.55"
+        },
+        "ppo": {
+            "r3": "--c1Start=0.34 --c1End=0.06 --c2Start=0.39 --c2End=0.2 --memorySize=1015 --learningRate=0.0018103176507973232 --lrCritic=0.0007315462310749335 --batchSize=15 --clipping=11.799185331865313 --c1NSecs=196 --c2NSecs=431 --nEpochs=65"
         }
     },
     "tsp": {
