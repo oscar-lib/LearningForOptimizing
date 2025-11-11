@@ -62,7 +62,8 @@ class StatefulCombinator(
       this.setTabu(neighborhood)
     }
     val newObj         = this.objective.value
-    val reward         = this.rewardModel(this.prevObjective, newObj)
+    val stats          = NeighborhoodStats(searchResult, neighborhood)
+    val reward         = this.rewardModel(stats, neighborhood)
     val transformedObj = this.rewardModel.transformObjective(newObj)
     this.bridge.sendReward(reward, transformedObj)
     this.prevObjective = newObj

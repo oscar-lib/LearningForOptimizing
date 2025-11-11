@@ -354,44 +354,20 @@ def ask_recompile_with_countdown() -> bool:
 
 def main():
     dotenv.load_dotenv()
-    multiple_runs(
-        MultipleArgs(
-            "bestslopefirst",
-            "examples/csp/testingall.txt",
-            "r2",
-            n_jobs=32,
-            timeout=5400,
-            n_repeats=20,
-            require_gpu=True,
-            seed=0,
-            logdir="logs/bestslopefirst-csp_all-1h30",
-            args="",
-        )
-    )
-    multiple_runs(
-        MultipleArgs(
-            "dqn",
-            "examples/pdptw/testingall.txt",
-            "r3",
-            n_jobs=5,
-            timeout=900,
-            n_repeats=10,
-            seed=0,
-            require_gpu=True,
-            logdir="logs/dqn-pdptw_all-15m",
-        )
-    )
-    for algo in ("random", "epsilongreedy", "ucb"):
+
+    for algo in ("dqn", "ppo"):
+        reward = "r1"
         multiple_runs(
             MultipleArgs(
                 algo,
-                "examples/pdptw/testingall.txt",
-                "r3",
-                n_jobs=8,
+                "examples/tsp/testingall.txt",
+                reward,
+                n_jobs=16,
                 timeout=900,
-                n_repeats=10,
-                require_gpu=False,
-                logdir=f"logs/{algo}-pdptw_all-15m",
+                n_repeats=5,
+                seed=0,
+                require_gpu=True,
+                logdir=f"logs/{algo}-tsp_all-15m-{reward}",
             )
         )
 
