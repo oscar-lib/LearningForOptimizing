@@ -7,7 +7,7 @@ from .bks import BKS, primal_gap
 from .obj_over_time import ObjOverTime
 
 UNROUTED_NODE_PENALTY = 1000000000
-Bandit = Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300", "bestslopefirst"]
+Bandit = Literal["epsilongreedy", "random", "ucb", "dqn", "ppo", "dqn-no-target", "dqn-no-target-300", "bestslopefirst", "roundrobin"]
 
 
 class Result:
@@ -24,7 +24,7 @@ class Result:
         instance: str,
         reward: Literal["r1", "r2", "r3"],
         timeout: int,
-        seed: int,
+        seed: int = 0,
         **metrics: Any,
     ):
         self.bandit = bandit
