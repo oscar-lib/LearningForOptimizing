@@ -19,7 +19,7 @@ class ActorCritic(torch.nn.Module, ABC):
         self.output_size = n_actions + n_actions**2
 
     @abstractmethod
-    def policy(self, states: torch.Tensor | Data) -> torch.distributions.Categorical: ...
+    def policy(self, states: torch.Tensor | Data, available_actions: torch.Tensor) -> torch.distributions.Categorical: ...
 
     @abstractmethod
     def value(self, states: torch.Tensor | Data) -> torch.Tensor: ...
@@ -47,8 +47,9 @@ class CSPActorCritic(ActorCritic):
         self.actor = CSPNetwork(problem, problem.n_actions)
         self.critic = CSPNetwork(problem, 1)
 
-    def policy(self, states: torch.Tensor) -> torch.distributions.Categorical:
+    def policy(self, states: torch.Tensor, available_actions: torch.Tensor) -> torch.distributions.Categorical:
         x = self.actor.forward(states)
+        x[~available_actions] = float("-inf")
         return distributions.Categorical(logits=x)
 
     def value(self, states: torch.Tensor) -> torch.Tensor:
@@ -141,8 +142,9 @@ class ActorCriticGNN(ActorCritic):
         self.actor = GNN(problem, problem.n_actions, n_out_features)
         self.critic = GNN(problem, 1, n_out_features)
 
-    def policy(self, data: Data):
+    def policy(self, data: Data, available_actions: torch.Tensor):
         x = self.actor.forward(data)
+        x[~available_actions] = float("-inf")
         return distributions.Categorical(logits=x)
 
     def value(self, states: Data):

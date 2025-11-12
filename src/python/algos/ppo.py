@@ -90,7 +90,7 @@ class PPO(Algo):
         else:
             data = obs.data
         with torch.no_grad():
-            distribution = self.actor_critic.policy(data)
+            distribution = self.actor_critic.policy(data, obs.available_actions.unsqueeze(0))
             value = self.actor_critic.value(data).item()
             logs = {
                 "value": value,
@@ -101,7 +101,7 @@ class PPO(Algo):
 
     def _compute_training_data(self, batch: Batch) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
         """Compute the returns, advantages and action log_probs according to the current policy"""
-        policy = self.actor_critic.policy(batch.obs)
+        policy = self.actor_critic.policy(batch.obs, batch.available_actions)
         log_probs = policy.log_prob(batch.actions)
         values = self.actor_critic.value(batch.obs)
         next_values = self.actor_critic.value(batch.next_obs)
@@ -130,7 +130,7 @@ class PPO(Algo):
 
             # Actor loss (ratio between the new and old policy):
             # L^CLIP(θ) = E[ min(r(θ)A, clip(r(θ), 1 − ε, 1 + ε)A) ] in PPO paper
-            mini_policy = self.actor_critic.policy(minibatch.obs)
+            mini_policy = self.actor_critic.policy(minibatch.obs, minibatch.available_actions)
             new_log_probs = mini_policy.log_prob(minibatch.actions)
 
             ratios = torch.exp(new_log_probs - mini_log_probs)

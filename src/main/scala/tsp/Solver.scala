@@ -125,6 +125,7 @@ case class Solver(oscarModel: Model, in: SolverInput) {
     }
     println(oscarModel.toString)
     println("bestObj=" + oscarModel.objectiveFunction.value)
+    println("nCities=" + oscarModel.problem.nCities())
     // retrieve the best known solution and compute the gap over time compared to it
     val instanceName =
       Paths.get(fileName).getFileName.toString.stripSuffix(".xml").stripSuffix(".tsp")

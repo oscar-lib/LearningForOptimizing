@@ -62,6 +62,7 @@ abstract class Bridge(args: SolverInput) {
     val pythonSrcDirectory = Bridge.findPythonSourcesDirectory()
     var command            = new Array[String](0)
     command :+= pythonBinary.toString()
+    command :+= "-u" // unbuffered output
     command :+= pythonSrcDirectory.resolve("main.py").toString
     command :+= f"-a=${this.args.bandit}"
     command :+= f"--device=${this.args.device}"

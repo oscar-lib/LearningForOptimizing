@@ -354,22 +354,21 @@ def ask_recompile_with_countdown() -> bool:
 
 def main():
     dotenv.load_dotenv()
-
-    for algo in ("dqn", "ppo"):
-        reward = "r1"
-        multiple_runs(
-            MultipleArgs(
-                algo,
-                "examples/tsp/testingall.txt",
-                reward,
-                n_jobs=16,
-                timeout=900,
-                n_repeats=5,
-                seed=0,
-                require_gpu=True,
-                logdir=f"logs/{algo}-tsp_all-15m-{reward}",
+    for algo in ("ppo", "dqn"):
+        for reward in ("r1", "r3"):
+            multiple_runs(
+                MultipleArgs(
+                    algo,
+                    "examples/tsp/testingall.txt",
+                    reward,
+                    n_jobs=8,
+                    timeout=900,
+                    n_repeats=5,
+                    seed=0,
+                    require_gpu=True,
+                    logdir=f"logs/{algo}-bis-tsp_all-15m-{reward}",
+                )
             )
-        )
 
 
 if __name__ == "__main__":
