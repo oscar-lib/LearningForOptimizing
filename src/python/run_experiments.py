@@ -7,10 +7,12 @@ import subprocess
 import sys
 import threading
 import time
+import random
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Literal, Optional
 from results import Result, Bandit
+import typed_argparse as tap
 
 import dotenv
 import orjson
@@ -202,7 +204,9 @@ class MultipleArgs:
         job_num = 0
         logdirs = dict[str, str]()
         for seed in range(self.seed, self.seed + self.n_repeats):
-            for instance in self.instance_filenames:
+            instances = self.instance_filenames.copy()
+            random.shuffle(instances)
+            for instance in instances:
                 if instance not in logdirs:
                     instance_name, *_ = os.path.basename(instance).split(".")
                     logdirs[instance] = os.path.join(self.logdir, f"{self.problem}-{instance_name}")
@@ -238,6 +242,7 @@ def gather_results(stdout: bytes):
     pairs = re.findall(r"([a-zA-Z_-][a-zA-Z0-9_-]*)\s*=\s*([^\n]+)", output)
     metrics = dict([(key.strip(), value) for key, value in pairs])
     metrics.pop("--communication", None)
+    metrics.pop("-a", None)
 
     if "bestObj" not in metrics:
         raise ValueError(f"No objective found in output: {output}")
@@ -303,7 +308,7 @@ def multiple_runs(args: MultipleArgs):
             if dirty:
                 if len(results) > 0:
                     avg_time = (datetime.now() - start) / len(results)
-                    remaining = len(handles) * avg_time
+                    remaining = (total_n_runs - len(results)) * avg_time
                 else:
                     remaining = "?"
                 logging.info(f"Waiting for {total_n_runs - len(results)}/{total_n_runs} results... Estimated time remaining: {remaining}")
@@ -370,28 +375,37 @@ def ask_recompile_with_countdown() -> bool:
     return len(result) == 0 or result[0] not in ("n", "")
 
 
-def main():
-    dotenv.load_dotenv()
-    multiple_runs(
-        MultipleArgs(
-            "epsilongreedy",
-            "examples/pdptw/testingall.txt",
-            "r3",
-            n_jobs=len(GPUS),
-            timeout=900,
-            n_repeats=10,
-            seed=0,
-            require_gpu=True,
-            logdir="logs/epsilongreedy-pdptw_all-15m-r3",
+class Args(tap.TypedArgs):
+    no_compile: bool = tap.arg("--no-compile", help="Skip compilation step", default=False)
+
+    @property
+    def compile(self):
+        return not self.no_compile
+
+
+def main(args: Args):
+    if args.compile and ask_recompile_with_countdown():
+        subprocess.run("sbt assembly", shell=True, check=True)
+    for reward in ("r1", "r3"):
+        multiple_runs(
+            MultipleArgs(
+                "ppo",
+                "examples/pdptw/testingall.txt",
+                reward,
+                n_jobs=2 * len(GPUS),
+                timeout=900,
+                n_repeats=10,
+                seed=0,
+                require_gpu=True,
+                logdir=f"logs/ppo-fine-tuned-pdptw_all-15m-{reward}",
+            )
         )
-    )
 
 
 if __name__ == "__main__":
     try:
-        if ask_recompile_with_countdown():
-            subprocess.run("sbt assembly", shell=True, check=True)
-        main()
+        dotenv.load_dotenv()
+        tap.Parser(Args).bind(main).run()
     except Exception as e:
         logging.error(f"An error occurred: {e}", exc_info=True)
     finally:
