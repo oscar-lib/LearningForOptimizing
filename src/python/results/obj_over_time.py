@@ -59,9 +59,6 @@ class ObjOverTime:
         sol_over_time = sol_over_time.replace(")-", "},")
         sol_over_time = sol_over_time.replace(")]", "}]")
         data: list[dict[str, float | int]] = orjson.loads(sol_over_time)
-        if len(data) == 0:
-            raise ValueError("No data points provided in solution over time")
-
         # flatten to two lists instead of a list of objects
         timestamps = [point["t"] for point in data]
         steps = [int(point.get("step", i)) for i, point in enumerate(data)]

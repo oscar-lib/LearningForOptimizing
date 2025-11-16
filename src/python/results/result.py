@@ -17,6 +17,7 @@ class Result:
     reward: Literal["r1", "r2", "r3"]
     timeout: int
     seed: int
+    device: str
 
     def __init__(
         self,
@@ -24,6 +25,7 @@ class Result:
         instance: str,
         reward: Literal["r1", "r2", "r3"],
         timeout: int,
+        device: str,
         seed: int = 0,
         **metrics: Any,
     ):
@@ -32,6 +34,7 @@ class Result:
         self.reward = reward
         self.timeout = timeout
         self.seed = seed
+        self.device = device
         self.metrics = metrics
 
     def get_columns(self):
@@ -135,7 +138,10 @@ class Result:
         return primal_gap(self.objective(**kwargs), self.bks, self.is_feasible(**kwargs))
 
     def is_optimal(self):
-        return self.oot.last == self.bks
+        try:
+            return self.oot.last == self.bks
+        except (ValueError, IndexError):
+            return False
 
     @property
     def t_max(self):

@@ -1,5 +1,6 @@
 import logging
 import multiprocessing as mp
+from multiprocessing.pool import AsyncResult
 import os
 import re
 import subprocess
@@ -16,7 +17,7 @@ import orjson
 import torch
 
 GPUS = list(range(torch.cuda.device_count()))
-# GPUS.remove(2)
+GPUS.remove(4)
 
 
 EXECUTABLE = "java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
@@ -119,6 +120,7 @@ class MultipleArgs:
     args: dict[str, Any] | str | None
     _require_gpu: bool
     logdir: str
+    reuse_gpu: bool
 
     def __init__(
         self,
@@ -133,6 +135,7 @@ class MultipleArgs:
         training: bool = True,
         args: dict[str, Any] | str | None = None,
         require_gpu: bool = True,
+        reuse_gpu: bool = False,
     ):
         logdir_is_none = logdir is None
         if logdir is None or len(logdir) == 0:
@@ -160,6 +163,7 @@ class MultipleArgs:
         self.seed = seed
         self.args = args
         self._require_gpu = require_gpu
+        self.reuse_gpu = reuse_gpu
         self._write_config()
 
     def _write_config(self):
@@ -262,6 +266,7 @@ def single_run(args: SingleArgs):
         reward=args.reward,
         timeout=args.timeout,
         seed=args.seed,
+        device=args.device,
         **result_dict,
     )
 
@@ -285,20 +290,23 @@ def multiple_runs(args: MultipleArgs):
     else:
         mode = "w"
     results = list[Result]()
+    single_args = list(args.single_args())
+    handles = list[AsyncResult[Result]]()
+    total_n_runs = len(single_args)
     with mp.Pool(args.n_jobs) as pool, open(results_filename, mode) as results_file:
         start = datetime.now()
-        handles = [pool.apply_async(single_run, (single_args,)) for single_args in args.single_args()]
-        total = len(handles)
+        for _ in range(args.n_jobs):
+            handles.append(pool.apply_async(single_run, (single_args.pop(0),)))
         # Collect the results as they become available
         dirty = True
-        while len(handles) > 0:
+        while len(handles) > 0 or len(single_args) > 0:
             if dirty:
                 if len(results) > 0:
                     avg_time = (datetime.now() - start) / len(results)
                     remaining = len(handles) * avg_time
                 else:
                     remaining = "?"
-                logging.info(f"Waiting for {len(handles)}/{total} results... Estimated time remaining: {remaining}")
+                logging.info(f"Waiting for {total_n_runs - len(results)}/{total_n_runs} results... Estimated time remaining: {remaining}")
                 dirty = False
             to_remove = []
             for handle in handles:
@@ -312,9 +320,19 @@ def multiple_runs(args: MultipleArgs):
                             results_file.write(",".join(csv_columns) + "\n")
                         results_file.write(result.as_csv(csv_columns) + "\n")
                         results_file.flush()
+                        next_device = str(result.device)
                     except Exception as e:
                         logging.error(f"Error processing result: {e}", exc_info=True)
                         to_remove.append(handle)
+                        if args._require_gpu:
+                            next_device = "auto-gpu"
+                        else:
+                            next_device = "auto"
+                    if len(single_args) > 0:
+                        next_args = single_args.pop(0)
+                        if args.reuse_gpu:
+                            next_args.device = next_device
+                        handles.append(pool.apply_async(single_run, (next_args,)))
             for handle in to_remove:
                 dirty = True
                 handles.remove(handle)
@@ -354,21 +372,19 @@ def ask_recompile_with_countdown() -> bool:
 
 def main():
     dotenv.load_dotenv()
-    for algo in ("ppo", "dqn"):
-        for reward in ("r1", "r3"):
-            multiple_runs(
-                MultipleArgs(
-                    algo,
-                    "examples/tsp/testingall.txt",
-                    reward,
-                    n_jobs=8,
-                    timeout=900,
-                    n_repeats=5,
-                    seed=0,
-                    require_gpu=True,
-                    logdir=f"logs/{algo}-bis-tsp_all-15m-{reward}",
-                )
-            )
+    multiple_runs(
+        MultipleArgs(
+            "epsilongreedy",
+            "examples/pdptw/testingall.txt",
+            "r3",
+            n_jobs=len(GPUS),
+            timeout=900,
+            n_repeats=10,
+            seed=0,
+            require_gpu=True,
+            logdir="logs/epsilongreedy-pdptw_all-15m-r3",
+        )
+    )
 
 
 if __name__ == "__main__":

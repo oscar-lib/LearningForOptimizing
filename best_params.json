@@ -65,9 +65,8 @@
             "r3": "--learningRate 0.0001 --batchSize 236 --epsilon 0.03 --ddqn --clipping=0.55"
         },
         "ppo": {
-            "r1": "--c1Start=0.34 --c1End=0.06 --c2Start=0.39 --c2End=0.2 --memorySize=1015 --learningRate=0.0018103176507973232 --lrCritic=0.0007315462310749335 --batchSize=15 --clipping=11.799185331865313 --c1NSecs=196 --c2NSecs=431 --nEpochs=65",
-            "r2": "--c1Start=0.34 --c1End=0.06 --c2Start=0.39 --c2End=0.2 --memorySize=1015 --learningRate=0.0018103176507973232 --lrCritic=0.0007315462310749335 --batchSize=15 --clipping=11.799185331865313 --c1NSecs=196 --c2NSecs=431 --nEpochs=65",
-            "r3": "--c1Start=0.34 --c1End=0.06 --c2Start=0.39 --c2End=0.2 --memorySize=1015 --learningRate=0.0018103176507973232 --lrCritic=0.0007315462310749335 --batchSize=15 --clipping=11.799185331865313 --c1NSecs=196 --c2NSecs=431 --nEpochs=65"
+            "r1": "--c1Start=0.53 --c1End=0.42 --c2Start=0.19 --c2End=0.04 --memorySize=995 --learningRate=1.7502058314325387e-05 --lrCritic=0.0022778690797568917 --batchSize=445 --clipping=41.55 --c1NSecs=236 --c2NSecs=181 --nEpochs=82",
+            "r3": "--c1Start=0.09 --c1End=0.53 --c2Start=0.27 --c2End=0.06 --memorySize=925 --learningRate=0.003596229285405802 --lrCritic=5.138000234420728e-05 --batchSize=425 --clipping=47.10027788199225 --c1NSecs=41 --c2NSecs=171 --nEpochs=75"
         }
     },
     "tsp": {
@@ -76,9 +75,8 @@
             "r3": " --learningRate 0.0001 --epsilon 0.83 --batchSize 19 --ddqn --clipping 49.5 --memorySize=5000"
         },
         "ppo": {
-            "r1": "--c1Start=0.34 --c1End=0.06 --c2Start=0.39 --c2End=0.2 --memorySize=1015 --learningRate=0.0018103176507973232 --lrCritic=0.0007315462310749335 --batchSize=15 --clipping=11.799185331865313 --c1NSecs=196 --c2NSecs=431 --nEpochs=65",
-            "r2": "--c1Start=0.34 --c1End=0.06 --c2Start=0.39 --c2End=0.2 --memorySize=1015 --learningRate=0.0018103176507973232 --lrCritic=0.0007315462310749335 --batchSize=15 --clipping=11.799185331865313 --c1NSecs=196 --c2NSecs=431 --nEpochs=65",
-            "r3": "--c1Start=0.34 --c1End=0.06 --c2Start=0.39 --c2End=0.2 --memorySize=1015 --learningRate=0.0018103176507973232 --lrCritic=0.0007315462310749335 --batchSize=15 --clipping=11.799185331865313 --c1NSecs=196 --c2NSecs=431 --nEpochs=65"
+            "r1": "--c1Start=0.61 --c1End=0.04 --c2Start=0.9 --c2End=0.88 --memorySize=25 --learningRate=0.00018247455346337232 --lrCritic=0.0006746961571078336 --batchSize=5 --clipping=44.09 --c1NSecs=56 --c2NSecs=241 --nEpochs=65",
+            "r3": "--c1Start=0.24 --c1End=0.96 --c2Start=0.05 --c2End=0.04 --memorySize=345 --learningRate=1.7583044918613104e-05 --lrCritic=8.256664321806645e-05 --batchSize=5 --clipping=13.852083257118414 --c1NSecs=196 --c2NSecs=171 --nEpochs=71"
         }
     }
 }
