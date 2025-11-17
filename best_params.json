@@ -73,10 +73,12 @@
     "tsp": {
         "dqn": {
             "r1": " --learningRate 0.0001 --epsilon 0.65 --batchSize 16 --clipping 45.5 --memorySize=5000",
+            "r2": " --learningRate 0.0035 --epsilonStart 0.9974 --epsilonEnd 0.93 --epsilonNSecs 235 --epsilonDecay linear --batchSize 128 --clipping 25.33 --memorySize=20000",
             "r3": " --learningRate 0.0001 --epsilon 0.83 --batchSize 19 --ddqn --clipping 49.5 --memorySize=5000"
         },
         "ppo": {
             "r1": "--c1Start=0.61 --c1End=0.04 --c2Start=0.9 --c2End=0.88 --memorySize=25 --learningRate=0.00018247455346337232 --lrCritic=0.0006746961571078336 --batchSize=5 --clipping=44.09 --c1NSecs=56 --c2NSecs=241 --nEpochs=65",
+            "r2": "--c1Start=0.38 --c1End=0.35 --c2Start=0.05 --c2End=0.02 --memorySize=410 --learningRate=0.000640525905634985 --lrCritic=0.00016477224392318527 --batchSize=85 --clipping=41.42 --c1NSecs=1 --c2NSecs=166 --nEpochs=2",
             "r3": "--c1Start=0.24 --c1End=0.96 --c2Start=0.05 --c2End=0.04 --memorySize=345 --learningRate=1.7583044918613104e-05 --lrCritic=8.256664321806645e-05 --batchSize=5 --clipping=13.852083257118414 --c1NSecs=196 --c2NSecs=171 --nEpochs=71"
         }
     }
