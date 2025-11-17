@@ -1,9 +1,5 @@
-from typing import Optional
 import orjson
 import torch
-import logging
-from torch_geometric.data import Data
-
 from .vrp import VRP, VRPNode
 
 

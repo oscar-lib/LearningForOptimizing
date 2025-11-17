@@ -57,12 +57,12 @@ class Args(tap.TypedArgs):
 def main(args: Args):
     if args.compile:
         subprocess.run("sbt assembly", shell=True, check=True)
-    reward = "r3"
+    reward = "r2"
     bandit = "ppo"
-    problem = "pdptw"
+    problem = "tsp"
+    timeout = 10
 
     def run(trial: optuna.Trial):
-        timeout = 300
         args = ppo_parameters(trial, timeout)
         args = MultipleArgs(
             bandit=bandit,
@@ -76,15 +76,23 @@ def main(args: Args):
             reuse_gpu=True,
         )
         logging.info(args)
-        results = multiple_runs(args)
+        results, failures = multiple_runs(args)
         shutil.rmtree(args.logdir)
         total = 0.0
+        mmax = 0
         for result in results:
             if problem == "csp":
                 if not result.is_optimal():
                     total += result.best_obj * result.n_secs_to_best_obj
+                    mmax = max(mmax, result.n_secs_to_best_obj)
             else:
                 total += result.integral_primal_gap
+                mmax = max(mmax, result.integral_primal_gap)
+        if len(failures) > 0:
+            # Add the maximum penalty for failures
+            penalty = mmax * len(failures)
+            logging.warning(f"Trial {trial.number} had {len(failures)} failures, adding penalty of {mmax} x {len(failures)} = {penalty}")
+            total += penalty
         return total
 
     study = optuna.create_study(

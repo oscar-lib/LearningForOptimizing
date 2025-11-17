@@ -1,4 +1,3 @@
-import logging
 from typing import Self
 import torch
 import numpy as np
