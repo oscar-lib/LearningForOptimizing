@@ -66,7 +66,8 @@
         },
         "ppo": {
             "r1": "--c1Start=0.53 --c1End=0.42 --c2Start=0.19 --c2End=0.04 --memorySize=995 --learningRate=1.7502058314325387e-05 --lrCritic=0.0022778690797568917 --batchSize=445 --clipping=41.55 --c1NSecs=236 --c2NSecs=181 --nEpochs=82",
-            "r3": "--c1Start=0.09 --c1End=0.53 --c2Start=0.27 --c2End=0.06 --memorySize=925 --learningRate=0.003596229285405802 --lrCritic=5.138000234420728e-05 --batchSize=425 --clipping=47.10027788199225 --c1NSecs=41 --c2NSecs=171 --nEpochs=75"
+            "r3": "--c1Start=0.09 --c1End=0.53 --c2Start=0.27 --c2End=0.06 --memorySize=725 --learningRate=0.003596229285405802 --lrCritic=5.138000234420728e-05 --batchSize=255 --clipping=47.10027788199225 --c1NSecs=41 --c2NSecs=171 --nEpochs=75",
+            "real-r3": "--c1Start=0.09 --c1End=0.53 --c2Start=0.27 --c2End=0.06 --memorySize=925 --learningRate=0.003596229285405802 --lrCritic=5.138000234420728e-05 --batchSize=425 --clipping=47.10027788199225 --c1NSecs=41 --c2NSecs=171 --nEpochs=75"
         }
     },
     "tsp": {

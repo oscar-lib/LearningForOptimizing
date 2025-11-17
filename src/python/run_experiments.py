@@ -1,3 +1,4 @@
+from io import TextIOWrapper
 import logging
 import multiprocessing as mp
 from multiprocessing.pool import AsyncResult
@@ -8,7 +9,7 @@ import sys
 import threading
 import time
 import random
-from dataclasses import dataclass
+from dataclasses import dataclass, astuple
 from datetime import datetime
 from typing import Any, Literal, Optional
 from results import Result, Bandit
@@ -19,7 +20,7 @@ import orjson
 import torch
 
 GPUS = list(range(torch.cuda.device_count()))
-GPUS.remove(4)
+# GPUS.remove(4)
 
 
 EXECUTABLE = "java -jar ./target/scala-2.13/learningforoptimizing-assembly-0.1.0-SNAPSHOT.jar solveInstance"
@@ -107,6 +108,9 @@ class SingleArgs:
     def as_csv(self):
         return f"{self.problem_path},{self.bandit},{self.reward},{self.timeout}"
 
+    def __hash__(self):
+        return hash(astuple(self))
+
 
 @dataclass
 class MultipleArgs:
@@ -169,7 +173,7 @@ class MultipleArgs:
         self._write_config()
 
     def _write_config(self):
-        IGNORED_KEYS = ("require_gpu", "n_repeats", "seed", "n_jobs")
+        IGNORED_KEYS = ("require_gpu", "n_repeats", "seed", "n_jobs", "reuse_gpu")
         config_path = os.path.join(self.logdir, "config.json")
         self_config_str = orjson.dumps(self)
         self_config: dict = orjson.loads(self_config_str)
@@ -276,13 +280,67 @@ def single_run(args: SingleArgs):
     )
 
 
-def multiple_runs(args: MultipleArgs):
-    if args._require_gpu and torch.cuda.device_count() == 0:
+def perform_runs(
+    single_args: list[SingleArgs],
+    pool_size: int,
+    results_file: TextIOWrapper,
+    reuse_gpu: bool,
+    csv_columns: Optional[list[str]] = None,
+):
+    queue = single_args.copy()
+    del single_args
+    success = list[Result]()
+    running = dict[SingleArgs, AsyncResult[Result]]()
+    failure = list[SingleArgs]()
+    total_n_runs = len(queue)
+    with mp.Pool(pool_size) as pool:
+        start = datetime.now()
+        for _ in range(pool_size):
+            sa = queue.pop(0)
+            running[sa] = pool.apply_async(single_run, (sa,))
+        logging.info(f"Started {len(running)}/{total_n_runs} runs.")
+        while len(running) > 0 or len(queue) > 0:
+            to_remove = list[SingleArgs]()
+            new_runs = dict[SingleArgs, AsyncResult[Result]]()
+            for args, handle in running.items():
+                if handle.ready():
+                    to_remove.append(args)
+                    try:
+                        result = handle.get()
+                        success.append(result)
+                        if csv_columns is None:
+                            csv_columns = result.get_columns()
+                            results_file.write(",".join(csv_columns) + "\n")
+                        results_file.write(result.as_csv(csv_columns) + "\n")
+                        results_file.flush()
+                    except Exception as e:
+                        logging.error(f"Error processing result: {e}", exc_info=True)
+                        failure.append(args)
+                    if len(queue) > 0:
+                        next_args = queue.pop(0)
+                        if reuse_gpu:
+                            next_args.device = args.device
+                        new_runs[next_args] = pool.apply_async(single_run, (next_args,))
+            for i in to_remove:
+                running.pop(i)
+            running = running | new_runs
+            if len(to_remove) > 0:
+                n_finished = len(success) + len(failure)
+                n_remaining = total_n_runs - n_finished
+                avg_time = (datetime.now() - start) / n_finished
+                remaining = n_remaining * avg_time
+                logging.info(f"[{len(success)} success|{len(failure)} failure|{n_remaining} remaining] ETA: {remaining}")
+            time.sleep(0.2)  # Avoid busy waiting
+    return success, failure
+
+
+def multiple_runs(multi_args: MultipleArgs):
+    if multi_args._require_gpu and torch.cuda.device_count() == 0:
         logging.error("No GPU devices found for multiple runs. Exiting.")
         exit()
     csv_columns = None
-    os.makedirs(args.logdir, exist_ok=True)
-    results_filename = os.path.join(args.logdir, "results.csv")
+    os.makedirs(multi_args.logdir, exist_ok=True)
+    results_filename = os.path.join(multi_args.logdir, "results.csv")
     if os.path.exists(results_filename):
         with open(results_filename, "r") as f:
             first_line = f.readline().strip()
@@ -294,56 +352,16 @@ def multiple_runs(args: MultipleArgs):
                 csv_columns = first_line.split(",")
     else:
         mode = "w"
-    results = list[Result]()
-    single_args = list(args.single_args())
-    handles = list[AsyncResult[Result]]()
-    total_n_runs = len(single_args)
-    with mp.Pool(args.n_jobs) as pool, open(results_filename, mode) as results_file:
-        start = datetime.now()
-        for _ in range(args.n_jobs):
-            handles.append(pool.apply_async(single_run, (single_args.pop(0),)))
-        # Collect the results as they become available
-        dirty = True
-        while len(handles) > 0 or len(single_args) > 0:
-            if dirty:
-                if len(results) > 0:
-                    avg_time = (datetime.now() - start) / len(results)
-                    remaining = (total_n_runs - len(results)) * avg_time
-                else:
-                    remaining = "?"
-                logging.info(f"Waiting for {total_n_runs - len(results)}/{total_n_runs} results... Estimated time remaining: {remaining}")
-                dirty = False
-            to_remove = []
-            for handle in handles:
-                if handle.ready():
-                    try:
-                        result = handle.get()
-                        results.append(result)
-                        to_remove.append(handle)
-                        if csv_columns is None:
-                            csv_columns = result.get_columns()
-                            results_file.write(",".join(csv_columns) + "\n")
-                        results_file.write(result.as_csv(csv_columns) + "\n")
-                        results_file.flush()
-                        next_device = str(result.device)
-                    except Exception as e:
-                        logging.error(f"Error processing result: {e}", exc_info=True)
-                        to_remove.append(handle)
-                        if args._require_gpu:
-                            next_device = "auto-gpu"
-                        else:
-                            next_device = "auto"
-                    if len(single_args) > 0:
-                        next_args = single_args.pop(0)
-                        if args.reuse_gpu:
-                            next_args.device = next_device
-                        handles.append(pool.apply_async(single_run, (next_args,)))
-            for handle in to_remove:
-                dirty = True
-                handles.remove(handle)
-            time.sleep(0.1)  # Avoid busy waiting
-    logging.info(f"Results written to {results_filename}")
-    return results
+    single_args = list(multi_args.single_args())
+    with open(results_filename, mode) as results_file:
+        successes, failures = perform_runs(single_args, multi_args.n_jobs, results_file, multi_args.reuse_gpu, csv_columns)
+        if len(failures) > 0:
+            logging.warning(f"{len(failures)} runs failed. Retrying failed {len(failures)} runs...")
+            s, failures = perform_runs(failures, len(GPUS), results_file, multi_args.reuse_gpu, csv_columns)
+            successes.extend(s)
+            if len(failures) > 0:
+                logging.error(f"{len(failures)} runs failed again after retrying.")
+    return successes, failures
 
 
 def ask_recompile_with_countdown() -> bool:
@@ -386,20 +404,21 @@ class Args(tap.TypedArgs):
 def main(args: Args):
     if args.compile and ask_recompile_with_countdown():
         subprocess.run("sbt assembly", shell=True, check=True)
-    for reward in ("r1", "r3"):
-        multiple_runs(
-            MultipleArgs(
-                "ppo",
-                "examples/pdptw/testingall.txt",
-                reward,
-                n_jobs=2 * len(GPUS),
-                timeout=900,
-                n_repeats=10,
-                seed=0,
-                require_gpu=True,
-                logdir=f"logs/ppo-fine-tuned-pdptw_all-15m-{reward}",
-            )
+    reward = "r1"
+    multiple_runs(
+        MultipleArgs(
+            "ppo",
+            "examples/pdptw/testingall.txt",
+            reward,
+            n_jobs=2 * len(GPUS),
+            timeout=900,
+            n_repeats=10,
+            seed=10,
+            require_gpu=True,
+            logdir=f"logs/ppo-fine-tuned-pdptw-{reward}",
+            reuse_gpu=True,
         )
+    )
 
 
 if __name__ == "__main__":
