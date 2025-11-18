@@ -51,7 +51,7 @@ def run(args: "Args"):
     bridge = None
     stop = False
     while not stop:
-        logging.info("Waiting for a new connection")
+        logging.info(f"Waiting for a new connection on {args.input_pipe}")
         bridge = args.make_bridge()
         try:
             new_problem = _retrieve_problem_data(bridge, args.device)
@@ -66,8 +66,8 @@ def run(args: "Args"):
                     agent.load(args.load_from)
             env = OptimEnv(problem, bridge, args.device)
             do_run(agent, env, logger, args.train)
-        except ConnectionResetError:
-            logging.info("Connection with remote closed")
+        except ConnectionResetError as e:
+            logging.info("Connection with remote closed", exc_info=e)
             stop = not args.keepalive
         except KeyboardInterrupt:
             logging.info("Stopping runner with Ctrl+C")

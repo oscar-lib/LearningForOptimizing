@@ -10,9 +10,6 @@ from .replay_memory import Batch, ReplayMemory
 
 
 class GraphReplayMemory(ReplayMemory):
-    def __init__(self, max_size: int):
-        super().__init__(max_size)
-
     def _get_batch(self, indices: Sequence[int], device: torch.device) -> Batch[Data]:
         return GraphBatch(self, indices, device)
 

@@ -1,4 +1,3 @@
-import logging
 import struct
 from dataclasses import dataclass
 from typing import Any
@@ -8,6 +7,7 @@ import torch
 from bridge import Bridge
 from bridge.protocol.message import Message, MessageType
 from problem import Problem
+from torch_geometric.data import Data
 
 
 class EpisodeEndException(Exception):
@@ -21,7 +21,7 @@ class RegisterTransition(Exception):
 
 
 @dataclass
-class Observation[T]:
+class Observation[T: torch.Tensor | Data]:
     data: T
     available_actions: torch.Tensor
 
@@ -57,7 +57,7 @@ class OptimEnv[T]:
             data = orjson.loads(req.body)
             available_actions = data["available"]
             data = self.problem.build_agent_input(data, self.device)
-            return Observation(data=data, available_actions=torch.tensor(available_actions, dtype=torch.bool, device=self.device))
+            return Observation(data=data, available_actions=torch.tensor(available_actions, dtype=torch.bool, device=self.device))  # type: ignore
         if req.type == MessageType.END_EPISODE:
             raise EpisodeEndException()
         if req.type == MessageType.TRANSITION:

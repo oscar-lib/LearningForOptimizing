@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import Self
 
-import numpy as np
 import torch
 from optimenv import Observation
 

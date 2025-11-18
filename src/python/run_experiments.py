@@ -295,7 +295,7 @@ def perform_runs(
     total_n_runs = len(queue)
     with mp.Pool(pool_size) as pool:
         start = datetime.now()
-        for _ in range(pool_size):
+        for _ in range(min(pool_size, len(queue))):
             sa = queue.pop(0)
             running[sa] = pool.apply_async(single_run, (sa,))
         logging.info(f"Started {len(running)}/{total_n_runs} runs.")
@@ -404,18 +404,18 @@ class Args(tap.TypedArgs):
 def main(args: Args):
     if args.compile and ask_recompile_with_countdown():
         subprocess.run("sbt assembly", shell=True, check=True)
-    reward = "r1"
+    reward = "r2"
     multiple_runs(
         MultipleArgs(
             "ppo",
-            "examples/pdptw/testingall.txt",
+            "examples/tsp/testingall.txt",
             reward,
-            n_jobs=2 * len(GPUS),
+            n_jobs=3 * len(GPUS),
             timeout=900,
-            n_repeats=10,
-            seed=10,
+            n_repeats=5,
+            seed=0,
             require_gpu=True,
-            logdir=f"logs/ppo-fine-tuned-pdptw-{reward}",
+            logdir=f"logs/ppo-fine-tuned-tsp-{reward}",
             reuse_gpu=True,
         )
     )

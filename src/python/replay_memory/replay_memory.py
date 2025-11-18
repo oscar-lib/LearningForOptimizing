@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from collections import deque
-from typing import Optional, Sequence
+from typing import Sequence
 from torch_geometric.data import Data
 import numpy as np
 import torch
@@ -11,7 +11,7 @@ from functools import cached_property
 class ReplayMemory[T: torch.Tensor | Data](ABC):
     max_size: int
 
-    def __init__(self, max_size: Optional[int]):
+    def __init__(self, max_size: int):
         self._actions = deque[int](maxlen=max_size)
         self._rewards = deque[float](maxlen=max_size)
         self._obs = deque[Observation[T]](maxlen=max_size)

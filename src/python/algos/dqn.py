@@ -66,8 +66,10 @@ class DQN(Algo):
         else:
             data = obs.data
         qvalues: torch.Tensor = self.qnetwork.forward(data).squeeze(0)  # Squeeze the batch dimension
+        logs = {f"qvalue-{i}": v for i, v in enumerate(qvalues.tolist())}
+        qvalues[~obs.available_actions] = float("-inf")
         action = int(qvalues.argmax())
-        return action, {f"qvalue-{i}": v for i, v in enumerate(qvalues.tolist())}
+        return action, logs
 
     def notify_episode_end(self):
         self.memory.end_episode()
