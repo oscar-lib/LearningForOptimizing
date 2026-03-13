@@ -7,6 +7,7 @@ import logging
 import shutil
 import typed_argparse as tap
 from run_experiments import multiple_runs, MultipleArgs
+from optuna.trial import TrialState
 
 
 def ppo_parameters(trial: optuna.Trial, timeout: int):
@@ -32,17 +33,17 @@ def ppo_parameters(trial: optuna.Trial, timeout: int):
 
 
 def dqn_parameters(trial: optuna.Trial, timeout: int):
-    eps_start = trial.suggest_float("epsilon_start", 0.0, 1.0)
-    eps_end = trial.suggest_float("epsilon_end", 0.0, eps_start, step=0.01)
+    eps_start = trial.suggest_float("epsilon_start", 0.5, 1.0, step=0.01)
     return {
         "learningRate": trial.suggest_float("lr", 1e-5, 1e-2, log=True),
-        "batchSize": trial.suggest_int("batchSize", 128, 256, step=32),
+        "batchSize": trial.suggest_int("batchSize", 16, 256, step=32),
         "clipping": trial.suggest_float("clipping", 0.0, 50.0),
-        "memorySize": trial.suggest_int("memory size", 20_000, 100_000, step=1_000),
+        "memorySize": trial.suggest_int("memory size", 500, 3_000, step=100),
         "epsilonStart": eps_start,
-        "epsilonEnd": eps_end,
+        "epsilonEnd": trial.suggest_float("epsilon_end", 0.0, 0.5, step=0.01),
         "epsilonNSecs": trial.suggest_int("epsilon_n_secs", 0, timeout, step=5),
-        "epsilonDecay": trial.suggest_categorical("epsilon_decay", ("linear", "exponential")),
+        "epsilonDecay": "linear",
+        "ddqn": trial.suggest_categorical("ddqn", (True, False)),
     }
 
 
@@ -57,51 +58,69 @@ class Args(tap.TypedArgs):
 def main(args: Args):
     if args.compile:
         subprocess.run("sbt assembly", shell=True, check=True)
-    reward = "r2"
-    bandit = "ppo"
-    problem = "tsp"
-    timeout = 10
-
-    def run(trial: optuna.Trial):
-        args = ppo_parameters(trial, timeout)
-        args = MultipleArgs(
-            bandit=bandit,
-            problems_file=f"examples/{problem}/training_subset.txt",
-            reward=reward,
-            n_jobs=20,
-            timeout=timeout,
-            n_repeats=1,
-            require_gpu=True,
-            args=args,
-            reuse_gpu=True,
-        )
-        logging.info(args)
-        results, failures = multiple_runs(args)
-        shutil.rmtree(args.logdir)
-        total = 0.0
-        mmax = 0
-        for result in results:
+    for bandit in ("dqn", "ppo"):
+        for problem in ("tsp", "pdptw", "csp"):
             if problem == "csp":
-                if not result.is_optimal():
-                    total += result.best_obj * result.n_secs_to_best_obj
-                    mmax = max(mmax, result.n_secs_to_best_obj)
+                timeout = 900
             else:
-                total += result.integral_primal_gap
-                mmax = max(mmax, result.integral_primal_gap)
-        if len(failures) > 0:
-            # Add the maximum penalty for failures
-            penalty = mmax * len(failures)
-            logging.warning(f"Trial {trial.number} had {len(failures)} failures, adding penalty of {mmax} x {len(failures)} = {penalty}")
-            total += penalty
-        return total
+                timeout = 300
+            for reward in ("r1", "r2", "r3"):
 
-    study = optuna.create_study(
-        direction="minimize",
-        study_name=f"{bandit.upper()}-{problem.upper()}-{reward.upper()}",
-        storage="sqlite:///tuning.db",
-        load_if_exists=True,
-    )  # , sampler=RandomSampler())
-    study.optimize(run, n_trials=100)
+                def run(trial: optuna.Trial):
+                    assert reward in ("r1", "r2", "r3")
+                    match bandit:
+                        case "dqn":
+                            params = dqn_parameters(trial, timeout)
+                        case "ppo":
+                            params = ppo_parameters(trial, timeout)
+                        case other:
+                            raise NotImplementedError(f"Not implemented for {other}")
+                    args = MultipleArgs(
+                        bandit=bandit,
+                        problems_file=f"examples/{problem}/training_subset.txt",
+                        reward=reward,
+                        n_jobs=24,
+                        timeout=timeout,
+                        n_repeats=2,
+                        require_gpu=True,
+                        args=params,
+                        reuse_gpu=True,
+                        tolerate_failures=False,
+                    )
+                    logging.info(args)
+                    try:
+                        results, failures = multiple_runs(args)
+                    except Exception as e:
+                        logging.error(f"Trial {trial.number} failed with exception: {e}", exc_info=True)
+                        return float("inf")
+                    shutil.rmtree(args.logdir)
+                    total = 0.0
+                    mmax = 0
+                    for result in results:
+                        if problem == "csp":
+                            if not result.is_optimal():
+                                total += result.best_obj * result.n_secs_to_best_obj
+                                mmax = max(mmax, result.n_secs_to_best_obj)
+                        else:
+                            total += result.integral_primal_gap
+                            mmax = max(mmax, result.integral_primal_gap)
+                    if len(failures) > 0:
+                        # Add the maximum penalty for failures
+                        penalty = mmax * len(failures)
+                        logging.warning(
+                            f"Trial {trial.number} had {len(failures)} failures, adding penalty of {mmax} x {len(failures)} = {penalty}"
+                        )
+                        total += penalty
+                    return total
+
+                study = optuna.create_study(
+                    direction="minimize",
+                    study_name=f"{bandit.upper()}-{problem.upper()}-{reward.upper()}",
+                    storage="sqlite:///tuning.db",
+                    load_if_exists=True,
+                )
+                remaining = 100 - len([t for t in study.trials if t.state == TrialState.COMPLETE])
+                study.optimize(run, n_trials=remaining)
 
 
 if __name__ == "__main__":

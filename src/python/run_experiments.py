@@ -127,6 +127,7 @@ class MultipleArgs:
     _require_gpu: bool
     logdir: str
     reuse_gpu: bool
+    tolerate_failures: bool
 
     def __init__(
         self,
@@ -142,6 +143,7 @@ class MultipleArgs:
         args: dict[str, Any] | str | None = None,
         require_gpu: bool = True,
         reuse_gpu: bool = False,
+        tolerate_failures: bool = True,
     ):
         logdir_is_none = logdir is None
         if logdir is None or len(logdir) == 0:
@@ -157,6 +159,7 @@ class MultipleArgs:
         self.logdir = logdir
         self.bandit = bandit
         self.training = training
+        self.tolerate_failures = tolerate_failures
         if problems_file in ("csp", "tsp", "pdptw"):
             self.problems_file = os.path.join("examples", problems_file, "testingall.txt")
         else:
@@ -286,6 +289,8 @@ def perform_runs(
     results_file: TextIOWrapper,
     reuse_gpu: bool,
     csv_columns: Optional[list[str]] = None,
+    *,
+    tolerate_failures: bool = True,
 ):
     queue = single_args.copy()
     del single_args
@@ -315,6 +320,8 @@ def perform_runs(
                         results_file.flush()
                     except Exception as e:
                         logging.error(f"Error processing result: {e}", exc_info=True)
+                        if not tolerate_failures:
+                            raise Exception("Aborting due to failure and tolerate_failures=False") from e
                         failure.append(args)
                     if len(queue) > 0:
                         next_args = queue.pop(0)
@@ -357,7 +364,16 @@ def multiple_runs(multi_args: MultipleArgs):
         successes, failures = perform_runs(single_args, multi_args.n_jobs, results_file, multi_args.reuse_gpu, csv_columns)
         if len(failures) > 0:
             logging.warning(f"{len(failures)} runs failed. Retrying failed {len(failures)} runs...")
-            s, failures = perform_runs(failures, len(GPUS), results_file, multi_args.reuse_gpu, csv_columns)
+            for gpu, arg in zip(GPUS, failures):
+                arg.device = f"cuda:{gpu}"
+            s, failures = perform_runs(
+                failures,
+                len(GPUS),
+                results_file,
+                reuse_gpu=True,
+                csv_columns=csv_columns,
+                tolerate_failures=multi_args.tolerate_failures,
+            )
             successes.extend(s)
             if len(failures) > 0:
                 logging.error(f"{len(failures)} runs failed again after retrying.")
@@ -405,17 +421,19 @@ def main(args: Args):
     if args.compile and ask_recompile_with_countdown():
         subprocess.run("sbt assembly", shell=True, check=True)
     reward = "r2"
+    bandit = "ppo"
+    problem = "pdptw"
     multiple_runs(
         MultipleArgs(
             "ppo",
-            "examples/tsp/testingall.txt",
+            f"examples/{problem}/testingall.txt",
             reward,
             n_jobs=3 * len(GPUS),
             timeout=900,
             n_repeats=5,
             seed=0,
             require_gpu=True,
-            logdir=f"logs/ppo-fine-tuned-tsp-{reward}",
+            logdir=f"logs/{bandit}-fine-tuned-{problem}-{reward}",
             reuse_gpu=True,
         )
     )
